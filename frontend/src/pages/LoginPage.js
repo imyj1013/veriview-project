@@ -1,8 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
+    const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center relative px-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center relative px-6">
       {/* 상단 로그인 / 회원가입 */}
       <div className="absolute top-10 right-10 space-x-6 text-sm font-medium text-gray-700">
         <button className="hover:underline">로그인</button>
@@ -14,7 +16,8 @@ function LoginPage() {
         <img
           src="/images/Logo_image.png"
           alt="logo"
-          className="mx-auto w-[500px] mb-2"
+          className="mx-auto w-[500px] mb-2 cursor-pointer"
+          onClick={() => navigate("/")}
         />
       </div>
 

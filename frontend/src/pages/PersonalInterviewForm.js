@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function PersonalInterviewForm() {
+    const navigate = useNavigate();
   const [gender, setGender] = useState(null);
   const [job, setJob] = useState(null);
   const [career, setCareer] = useState(null);
@@ -21,7 +23,8 @@ function PersonalInterviewForm() {
       <img
         src="/images/Logo_image.png"
         alt="logo"
-        className="w-[350px] mb-10"
+        className="w-[400px] mb-10 cursor-pointer"
+        onClick={() => navigate("/")}
       />
 
       <form className="w-full max-w-2xl bg-white p-10 rounded-xl shadow space-y-8">

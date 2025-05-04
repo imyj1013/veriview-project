@@ -29,7 +29,7 @@ function HomePage() {
         <HomeButton
           title="AI 토론면접"
           icon="/images/icon_debate.png"
-          onClick={() => navigate("/debate-description")}
+          onClick={() => navigate("/debate-intro")}
         />
         <HomeButton
           title="AI 개인면접"
