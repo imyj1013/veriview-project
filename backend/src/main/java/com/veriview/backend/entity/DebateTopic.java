@@ -6,24 +6,25 @@ import jakarta.persistence.*;
 public class DebateTopic {
 
     @Id
-    private Long id; // @GeneratedValue 제거
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int debateTopicId;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String topic;
 
     public DebateTopic() {}
 
-    public DebateTopic(Long id, String topic) {
-        this.id = id;
+    public DebateTopic(int id, String topic) {
+        this.debateTopicId = id;
         this.topic = topic;
     }
 
-    public Long getId() {
-        return id;
+    public int getId() {
+        return debateTopicId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setId(int id) {
+        this.debateTopicId = id;
     }
 
     public String getTopic() {
