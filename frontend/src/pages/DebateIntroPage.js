@@ -1,6 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
+/*
+src/pages/
+├── DebateStartPage.js        ← 주제/입장/카운트다운
+├── DebateOpeningPage.js      ← 사용자 입론 녹화
+├── AIOpeningPage.js          ← AI 입론 출력
+├── DebateRebuttalPage.js     ← 사용자 반론 녹화
+├── AIRebuttalPage.js         ← AI 반론 출력
+├── DebateCounterPage.js      ← 사용자 재반론 녹화
+├── AICounterPage.js          ← AI 재반론 출력
+├── DebateClosingPage.js      ← 사용자 최종변론
+├── AIFeedbackPage.js         ← 전체 피드백 및 종료
+*/
+
 function DebateIntroPage() {
   const navigate = useNavigate();
 
@@ -56,7 +69,7 @@ function DebateIntroPage() {
 
       {/* 시작 버튼 */}
       <button
-        onClick={() => navigate("/debate")}
+        onClick={() => navigate("/debate-start")}
         className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
       >
         AI 토론면접 시작하기

@@ -1,49 +1,95 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useRef, useState } from 'react';
+import Webcam from 'react-webcam';
 
-function DebatePage() {
-  const navigate = useNavigate();
+const DebateRecorder = ({ debateId }) => {
+  const webcamRef = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [videoBlob, setVideoBlob] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const startRecording = () => {
+    const stream = webcamRef.current.video.srcObject;
+    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    const chunks = [];
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      setVideoBlob(blob);
+    };
+
+    recorder.start();
+    setMediaRecorder(recorder);
+    setRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      setRecording(false);
+    }
+  };
+
+  const uploadVideo = async () => {
+    if (!videoBlob) return;
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('video', videoBlob, 'opening.webm');
+
+    try {
+      const response = await fetch(`/api/debate/${debateId}/opening-video`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log('Upload success:', result);
+      alert('업로드 완료!');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('업로드 실패');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center py-10 px-6">
-      {/* 로고 */}
-      <img src="/images/Logo_image.png" 
-      alt="logo"
-      className="w-[400px] mb-8 cursor-pointer"
-      onClick={() => navigate("/")}
-      />
-      
-
-      {/* 예시 질문/응답 박스 */}
-      <div className="w-full max-w-3xl bg-gray-100 p-4 rounded-lg mb-4 text-center">
-        <p className="text-gray-700 text-base font-medium">
-          Q. 재택근무가 대면근무보다 효율적인가? (예시질문)
-        </p>
+    <div className="flex flex-col items-center gap-4">
+      <Webcam ref={webcamRef} audio={true} />
+      <div className="flex gap-4 mt-2">
+        {!recording ? (
+          <button onClick={startRecording} className="px-4 py-2 bg-green-600 text-white rounded">
+            녹화 시작
+          </button>
+        ) : (
+          <button onClick={stopRecording} className="px-4 py-2 bg-red-600 text-white rounded">
+            녹화 중지
+          </button>
+        )}
+        <button
+          onClick={uploadVideo}
+          disabled={!videoBlob || uploading}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          {uploading ? '업로드 중...' : '영상 업로드'}
+        </button>
       </div>
-
-      <div className="w-full max-w-3xl bg-gray-100 p-6 rounded-lg mb-6 relative flex items-start gap-4">
-        <img
-          src="/images/Debate_image3.png"
-          alt="왼쪽 사람"
-          className="w-24 h-24 absolute left-[-150px] top-6"
+      {videoBlob && (
+        <video
+          controls
+          src={URL.createObjectURL(videoBlob)}
+          className="mt-4 max-w-md rounded shadow"
         />
-        <p className="text-gray-800 px-6 py-6 text-sm text-left leading-relaxed">
-          A: “재택근무는 직원들의 업무 자율성을 높이고, 출퇴근 시간이 절약되어 업무 생산성이 향상됩니다.
-          특히, IT 업계는 창의적인 직군에서는 조용한 환경에서 집중할 수 있어 더 좋은 결과를 만들 수 있습니다.
-          또한, 원격 협업 도구가 발달하면서 소통의 문제도 최소화되었습니다.”
-        </p>
-        <img
-          src="/images/Debate_image4.png"
-          alt="오른쪽 사람"
-          className="w-24 h-24 absolute right-[-150px] top-6"
-        />
-      </div>
-
-      {/* 발화 버튼 */}
-      <button className="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg text-sm text-gray-800 transition">
-        발화 버튼
-      </button>
+      )}
     </div>
   );
-}
+};
 
-export default DebatePage;
+export default DebateRecorder;

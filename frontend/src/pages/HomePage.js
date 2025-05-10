@@ -1,22 +1,52 @@
-// src/pages/HomePage.js
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function HomePage() {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // 로컬스토리지에서 토큰 존재 여부로 로그인 상태 체크
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    setIsLoggedIn(false);
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center relative px-6">
-      {/* 상단 로그인 / 회원가입 */}
+      {/* 상단 로그인 / 로그아웃 */}
       <div className="absolute top-10 right-10 space-x-6 text-sm font-medium text-gray-700">
-        <button onClick={() => navigate("/login")} className="hover:underline">
-          로그인
-        </button>
-        <button className="hover:underline">회원가입</button>
+        {isLoggedIn ? (
+          <button onClick={handleLogout} className="hover:underline">
+            로그아웃
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={() => navigate("/login")}
+              className="hover:underline"
+            >
+              로그인
+            </button>
+            <button
+              onClick={() => navigate("/signup")}
+              className="hover:underline"
+            >
+              회원가입
+            </button>
+          </>
+        )}
       </div>
 
       {/* 로고 */}
-      <div className="text-center mb-12">
+      <div
+        className="text-center mb-12 cursor-pointer"
+        onClick={() => navigate("/")}
+      >
         <img
           src="/images/Logo_image.png"
           alt="logo"
@@ -39,7 +69,7 @@ function HomePage() {
         <HomeButton
           title="기업 추천"
           icon="/images/icon_company.png"
-            onClick={() => alert("아직 준비중입니다")} 
+          onClick={() => alert("아직 준비중입니다")}
         />
       </div>
     </div>
