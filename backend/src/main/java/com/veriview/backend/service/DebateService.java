@@ -16,7 +16,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
+import java.util.List;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.io.File;
 import java.util.Optional;
@@ -69,11 +71,11 @@ public class DebateService {
         flaskRequest.put("debate_id", debate.getDebateId());
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-        flaskUrl,
-        org.springframework.http.HttpMethod.POST,
-        new HttpEntity<>(flaskRequest),
-        new org.springframework.core.ParameterizedTypeReference<>() {}
-    );
+            flaskUrl,
+            org.springframework.http.HttpMethod.POST,
+            new HttpEntity<>(flaskRequest),
+            new org.springframework.core.ParameterizedTypeReference<>() {}
+        );
 
         Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask AI opening response is null"));
 
@@ -124,10 +126,21 @@ public class DebateService {
 
         // 4. Feedback 저장
         DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
-        feedback.setContentScore(((Number) res.get("content_score")).floatValue());
+
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
         feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
         feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
         feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
         debateFeedbackRepository.save(feedback);
 
         return "사용자의 입론 영상이 성공적으로 저장되었습니다.";
@@ -186,10 +199,21 @@ public class DebateService {
 
         // 4. Feedback 저장
         DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
-        feedback.setContentScore(((Number) res.get("content_score")).floatValue());
+
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
         feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
         feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
         feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
         debateFeedbackRepository.save(feedback);
 
         return "사용자의 반론 영상이 성공적으로 저장되었습니다.";
@@ -248,10 +272,21 @@ public class DebateService {
 
         // 4. Feedback 저장
         DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
-        feedback.setContentScore(((Number) res.get("content_score")).floatValue());
+
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
         feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
         feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
         feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
         debateFeedbackRepository.save(feedback);
 
         return "사용자의 재반론 영상이 성공적으로 저장되었습니다.";
@@ -306,12 +341,59 @@ public class DebateService {
 
         // 4. Feedback 저장
         DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
-        feedback.setContentScore(((Number) res.get("content_score")).floatValue());
+
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
         feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
         feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
         feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
         debateFeedbackRepository.save(feedback);
 
         return "사용자의 최종변론 영상이 성공적으로 저장되었습니다.";
+    }
+
+    public DebateFeedbackResponse getDebateFeedback(int debateId) {
+        Debate debate = debateRepository.findById(debateId).orElseThrow(() -> new RuntimeException("Debate not found"));
+
+        List<DebateFeedbackDto> debate_feedback = new ArrayList<>();
+
+        for (DebateAnswer.Phase phase : DebateAnswer.Phase.values()) {
+            DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, phase).orElseThrow(() -> new RuntimeException(phase + " phase not found"));
+            DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("Feedback not found for " + phase));
+    
+            DebateFeedbackDto dto = new DebateFeedbackDto(
+                answer.getTranscript(),
+                feedback.getInitiativeScore(),
+                feedback.getCollaborativeScore(),
+                feedback.getCommunicationScore(),
+                feedback.getLogicScore(),
+                feedback.getProblemSolvingScore(),
+    
+                feedback.getInitiativeFeedback(),
+                feedback.getCollaborativeFeedback(),
+                feedback.getCommunicationFeedback(),
+                feedback.getLogicFeedback(),
+                feedback.getProblemSolvingFeedback(),
+    
+                feedback.getFeedback(),
+                feedback.getSampleAnswer()
+            );
+    
+            debate_feedback.add(dto);
+        }
+        
+        return new DebateFeedbackResponse(
+            debate.getDebateId(),
+            debate_feedback
+        );
     }
 }

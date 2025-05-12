@@ -85,4 +85,11 @@ public class DebateController {
         }
     }
 
+    @GetMapping("{debateId}/feedback")
+    public ResponseEntity<DebateFeedbackResponse> getDebateFeedback(@PathVariable int debateId) {
+
+        DebateFeedbackResponse response = debateService.getDebateFeedback(debateId);
+        return ResponseEntity.ok(response);
+    }
+
 }
