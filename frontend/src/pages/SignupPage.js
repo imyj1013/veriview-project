@@ -75,12 +75,11 @@ function SignupPage() {
   };
 
   return (
-    /* 로고 */
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
       <img
         src="/images/Logo_image.png"
         alt="logo"
-       className="mx-auto w-[500px] mb-2 cursor-pointer"
+        className="mx-auto w-[500px] mb-2 cursor-pointer"
         onClick={() => navigate("/")}
       />
 
@@ -108,11 +107,9 @@ function SignupPage() {
             {idMessage}
           </p>
         )}
-        {errors.user_id && (
-          <p className="text-sm text-red-500">{errors.user_id}</p>
-        )}
+        {errors.user_id && <p className="text-sm text-red-500">{errors.user_id}</p>}
 
-        {/* 비밀번호, 이름, 이메일 */}
+        {/* 비밀번호 */}
         <input
           type="password"
           name="password"
@@ -123,6 +120,7 @@ function SignupPage() {
         />
         {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
 
+        {/* 이름 */}
         <input
           type="text"
           name="name"
@@ -133,6 +131,7 @@ function SignupPage() {
         />
         {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
 
+        {/* 이메일 */}
         <input
           type="email"
           name="email"

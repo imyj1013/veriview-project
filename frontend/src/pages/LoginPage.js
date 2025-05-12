@@ -16,7 +16,7 @@ function LoginPage() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setError(""); // 입력 변경 시 에러 초기화
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -27,7 +27,8 @@ function LoginPage() {
         password: form.password,
       });
 
-      login(res.data.access_token); // 토큰 저장
+      // 명세서: access_token 저장
+      login(res.data.access_token);
       navigate("/"); // 홈으로 이동
     } catch (err) {
       setError(
@@ -37,24 +38,27 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-10">
-      {/* 상단 로고 */}
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+      {/* 로고 */}
       <img
         src="/images/Logo_image.png"
         alt="logo"
-        className="w-72 mb-10 cursor-pointer"
+        className="w-[500px] mb-10 cursor-pointer"
         onClick={() => navigate("/")}
       />
 
       {/* 로그인 폼 */}
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+      <form 
+        onSubmit={handleSubmit} 
+        className="w-full max-w-xs space-y-4 text-sm"
+      >
         <input
           type="text"
           name="user_id"
           placeholder="ID"
           value={form.user_id}
           onChange={handleChange}
-          className="w-full border px-4 py-2 rounded"
+          className="w-full border px-5 py-3 rounded"
         />
         <input
           type="password"
@@ -74,7 +78,7 @@ function LoginPage() {
           로그인
         </button>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-2">
           <button
             type="button"
             className="text-sm text-gray-600 hover:underline"

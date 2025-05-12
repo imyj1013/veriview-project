@@ -2,28 +2,27 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-function AiRebuttalPage() {
+function AIClosingPage() {
   const navigate = useNavigate();
   const { state } = useLocation(); // topic, position, debateId
-
-  const [aiRebuttalText, setAiRebuttalText] = useState("");
+  const [aiFinalText, setAiFinalText] = useState("");
 
   useEffect(() => {
-    const fetchAiRebuttal = async () => {
+    const fetchAiFinal = async () => {
       try {
-        const res = await axios.get(`/api/debate/${state.debateId}/ai-rebuttal`);
-        setAiRebuttalText(res.data.ai_rebuttal_text);
+        const res = await axios.get(`/api/debate/${state.debateId}/ai-closing`);
+        setAiFinalText(res.data.ai_closing_text);
       } catch (err) {
-        console.error("AI 반론 가져오기 실패:", err);
-        setAiRebuttalText("AI 반론 데이터를 불러오는 데 실패했습니다.");
+        console.error("AI 최종변론 불러오기 실패:", err);
+        setAiFinalText("AI 최종변론을 불러오지 못했습니다.");
       }
     };
 
-    fetchAiRebuttal();
+    fetchAiFinal();
   }, [state]);
 
   const handleNext = () => {
-    navigate("/debate/user-counter", { state });
+    navigate("/debate/feedback", { state });
   };
 
   return (
@@ -45,25 +44,24 @@ function AiRebuttalPage() {
       </div>
 
       {/* 질문 */}
-      <div className="bg-gray-100 px-6 py-4 rounded-lg shadow mb-6 text-center text-lg font-semibold w-full max-w-3xl">
-        Q. {state?.topic || "질문을 불러올 수 없습니다."}
+      <div className="bg-gray-100 px-6 py-4 rounded-lg shadow mb-4 text-center text-lg font-semibold w-full max-w-3xl">
+        Q. {state?.topic || "질문이 없습니다."}
       </div>
 
-      {/* AI 반론 */}
-      <div className="bg-gray-50 border px-6 py-6 text-gray-800 rounded-lg shadow w-full max-w-3xl mb-10 leading-relaxed whitespace-pre-line">
-        <strong className="block mb-2 text-black-700">AI 토론자의 반론:</strong>
-        {aiRebuttalText || "AI 반론 생성 중..."}
+      {/* AI 최종변론 */}
+      <div className="bg-gray-50 border text-gray-800 px-6 py-6 rounded-lg shadow w-full max-w-3xl text-base mb-6 leading-relaxed whitespace-pre-line">
+        <strong>AI 토론자의 최종변론:</strong><br />
+        {aiFinalText || "AI 최종변론을 불러오는 중..."}
       </div>
 
-      {/* 재반론 */}
       <button
         onClick={handleNext}
         className="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700 transition"
       >
-        재반론 시작
+        결과 피드백 보기
       </button>
     </div>
   );
 }
 
-export default AiRebuttalPage;
+export default AIClosingPage;

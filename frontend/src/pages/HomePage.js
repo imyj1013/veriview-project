@@ -5,7 +5,6 @@ function HomePage() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 로컬스토리지에서 토큰 존재 여부로 로그인 상태 체크
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     setIsLoggedIn(!!token);
@@ -14,11 +13,12 @@ function HomePage() {
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     setIsLoggedIn(false);
+    navigate("/login"); // 로그아웃 후 로그인 페이지로 이동
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center relative px-6">
-      {/* 상단 로그인 / 로그아웃 */}
+      {/* 로그인 / 로그아웃 */}
       <div className="absolute top-10 right-10 space-x-6 text-sm font-medium text-gray-700">
         {isLoggedIn ? (
           <button onClick={handleLogout} className="hover:underline">
@@ -26,16 +26,10 @@ function HomePage() {
           </button>
         ) : (
           <>
-            <button
-              onClick={() => navigate("/login")}
-              className="hover:underline"
-            >
+            <button onClick={() => navigate("/login")} className="hover:underline">
               로그인
             </button>
-            <button
-              onClick={() => navigate("/signup")}
-              className="hover:underline"
-            >
+            <button onClick={() => navigate("/signup")} className="hover:underline">
               회원가입
             </button>
           </>
@@ -54,7 +48,7 @@ function HomePage() {
         />
       </div>
 
-      {/* 버튼 3개 */}
+      {/* 홈 버튼들 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
         <HomeButton
           title="AI 토론면접"
@@ -80,9 +74,10 @@ function HomeButton({ title, icon, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="w-[200px] h-[200px] cursor-pointer hover:scale-105 transition"
+      className="w-[200px] h-[200px] cursor-pointer hover:scale-105 transition text-center"
     >
-      <img src={icon} alt={title} className="w-[210px] h-[210px] mb-0" />
+      <img src={icon} alt={title} className="w-[240px] h-[240px] mb-0" />
+      <p className="mt-2 text-lg font-medium"></p>
     </div>
   );
 }

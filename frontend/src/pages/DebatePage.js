@@ -1,95 +1,172 @@
-import React, { useRef, useState } from 'react';
-import Webcam from 'react-webcam';
+// src/pages/DebateStartPage.js
+/*import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const DebateRecorder = ({ debateId }) => {
-  const webcamRef = useRef(null);
-  const [recording, setRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [videoBlob, setVideoBlob] = useState(null);
-  const [uploading, setUploading] = useState(false);
+function DebateStartPage() {
+  const navigate = useNavigate();
+  const [topic, setTopic] = useState("");
+  const [position, setPosition] = useState("");
+  const [debateId, setDebateId] = useState(null);
+  const [countdown, setCountdown] = useState(10);
 
-  const startRecording = () => {
-    const stream = webcamRef.current.video.srcObject;
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-    const chunks = [];
+  const userId = localStorage.getItem("user_id"); 
 
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunks.push(event.data);
+  useEffect(() => {
+    const fetchDebate = async () => {
+      try {
+        const res = await axios.post("/api/debate/start", {
+          user_id: userId || "kimoo", // 임시 fallback
+        });
+
+        setTopic(res.data.topic);
+        setPosition(res.data.position === "PRO" ? "찬성" : "반대");
+        setDebateId(res.data.debate_id);
+      } catch (err) {
+        console.error("토론 시작 실패:", err);
+
       }
     };
 
-    recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      setVideoBlob(blob);
-    };
+    fetchDebate();
+  }, [userId]);
 
-    recorder.start();
-    setMediaRecorder(recorder);
-    setRecording(true);
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      setRecording(false);
+  useEffect(() => {
+    if (debateId && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  };
 
-  const uploadVideo = async () => {
-    if (!videoBlob) return;
-    setUploading(true);
-
-    const formData = new FormData();
-    formData.append('video', videoBlob, 'opening.webm');
-
-    try {
-      const response = await fetch(`/api/debate/${debateId}/opening-video`, {
-        method: 'POST',
-        body: formData,
+    if (countdown === 0 && debateId) {
+      navigate("/debate/opening", {
+        state: {
+          topic,
+          position,
+          debateId,
+        },
       });
-
-      const result = await response.json();
-      console.log('Upload success:', result);
-      alert('업로드 완료!');
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert('업로드 실패');
-    } finally {
-      setUploading(false);
     }
-  };
+  }, [countdown, debateId, navigate, topic, position]);
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <Webcam ref={webcamRef} audio={true} />
-      <div className="flex gap-4 mt-2">
-        {!recording ? (
-          <button onClick={startRecording} className="px-4 py-2 bg-green-600 text-white rounded">
-            녹화 시작
-          </button>
-        ) : (
-          <button onClick={stopRecording} className="px-4 py-2 bg-red-600 text-white rounded">
-            녹화 중지
-          </button>
-        )}
-        <button
-          onClick={uploadVideo}
-          disabled={!videoBlob || uploading}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          {uploading ? '업로드 중...' : '영상 업로드'}
-        </button>
-      </div>
-      {videoBlob && (
-        <video
-          controls
-          src={URL.createObjectURL(videoBlob)}
-          className="mt-4 max-w-md rounded shadow"
-        />
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+      <img src="/images/Logo_image.png" alt="logo" className="w-[250px] mb-8" />
+
+      {topic && (
+        <>
+          <div className="bg-gray-100 text-lg px-6 py-3 rounded-lg shadow mb-6 text-center w-full max-w-2xl">
+            <span className="font-semibold">Q. {topic}</span>
+          </div>
+
+          <div className="bg-gray-800 text-white text-2xl text-center px-8 py-12 rounded-lg shadow-lg w-full max-w-xl">
+            <p className="mb-2">귀하는 “<span className="font-bold">{position}</span>”의 입장입니다.</p>
+            <p className="text-base mt-4">{countdown}초 후에 녹화가 시작됩니다.</p>
+            <p className="text-base">입론을 준비하세요.</p>
+          </div>
+        </>
       )}
     </div>
   );
-};
+}
 
-export default DebateRecorder;
+export default DebateStartPage;
+*/
+// src/pages/DebateStartPage.js
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+// import axios from "axios"; // 나중에 연동할 때 사용
+
+function DebateStartPage() {
+  const navigate = useNavigate();
+  const [topic, setTopic] = useState("");
+  const [position, setPosition] = useState("");
+  const [debateId, setDebateId] = useState(null);
+  const [countdown, setCountdown] = useState(10);
+
+  // ⚙️ 추후 연동할 user_id (현재는 사용 안함)
+  // const userId = localStorage.getItem("user_id");
+
+  useEffect(() => {
+    // ✅ 백엔드 없이 더미 데이터로 초기화
+    const dummyResponse = {
+      topic: "AI는 인간의 일자리를 대체할 것인가?",
+      position: Math.random() > 0.5 ? "PRO" : "CON", // 랜덤 찬성/반대
+      debate_id: 1,
+    };
+
+    // 나중에 여기에 백엔드 호출 코드 붙이기
+    // const fetchDebate = async () => {
+    //   try {
+    //     const res = await axios.post("/api/debate/start", {
+    //       user_id: userId || "kimoo", // 임시 ID
+    //     });
+    //     setTopic(res.data.topic);
+    //     setPosition(res.data.position === "PRO" ? "찬성" : "반대");
+    //     setDebateId(res.data.debate_id);
+    //   } catch (err) {
+    //     console.error("토론 시작 실패:", err);
+    //   }
+    // };
+    // fetchDebate();
+
+    // 지금은 더미 데이터 사용
+    setTopic(dummyResponse.topic);
+    setPosition(dummyResponse.position === "PRO" ? "찬성" : "반대");
+    setDebateId(dummyResponse.debate_id);
+  }, []);
+
+  useEffect(() => {
+    if (debateId && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+
+    if (countdown === 0 && debateId) {
+      navigate("/debate/opening", {
+        state: {
+          topic,
+          position,
+          debateId,
+        },
+      });
+    }
+  }, [countdown, debateId, navigate, topic, position]);
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+      <img
+        src="/images/Logo_image.png"
+        alt="logo"
+        className="w-[240px] cursor-pointer"
+        onClick={() => navigate("/")}
+      />
+      <button
+        onClick={() => navigate("/")}
+        className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
+      >
+        나가기
+      </button>
+    </div>
+      {topic && (
+        <>
+          <div className="bg-gray-100 text-lg px-6 py-3 rounded-lg shadow mb-6 text-center w-full max-w-2xl">
+            <span className="font-semibold">Q. {topic}</span>
+          </div>
+
+          <div className="bg-gray-800 text-white text-2xl text-center px-8 py-12 rounded-lg shadow-lg w-full max-w-xl">
+            <p className="mb-2">귀하는 “<span className="font-bold">{position}</span>”의 입장입니다.</p>
+            <p className="text-base mt-4">{countdown}초 후에 녹화가 시작됩니다.</p>
+            <p className="text-base">입론을 준비하세요.</p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default DebateStartPage;
