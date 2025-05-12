@@ -1,3 +1,5 @@
+// src/pages/DebateClosingPage.js
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -34,8 +36,8 @@ function DebateClosingPage() {
           }
         };
 
-        mediaRecorder.start();
         mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.start();
         setRecording(true);
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
@@ -60,7 +62,7 @@ function DebateClosingPage() {
       mediaRecorderRef.current.onstop = async () => {
         const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
         const formData = new FormData();
-        formData.append("file", blob, "closing-video.webm");
+        formData.append("video", blob, "closing-video.webm");
 
         try {
           await axios.post(

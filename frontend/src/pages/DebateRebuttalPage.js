@@ -1,3 +1,5 @@
+// src/pages/DebateUserRebuttalPage.js
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -35,8 +37,8 @@ function DebateUserRebuttalPage() {
           }
         };
 
-        mediaRecorder.start();
         mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.start();
         setRecording(true);
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
@@ -61,13 +63,12 @@ function DebateUserRebuttalPage() {
       mediaRecorderRef.current.onstop = async () => {
         const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
         const formData = new FormData();
-        formData.append("file", blob, "rebuttal-video.webm");
+        formData.append("video", blob, "rebuttal-video.webm");
 
         try {
           await axios.post(`/api/debate/${state.debateId}/rebuttal-video`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
           });
-
           navigate("/debate/ai-rebuttal", { state });
         } catch (err) {
           alert("반론 영상 업로드 실패");

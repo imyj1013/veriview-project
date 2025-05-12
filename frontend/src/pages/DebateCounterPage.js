@@ -1,3 +1,5 @@
+// src/pages/DebateCounterPage.js
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -33,8 +35,8 @@ function DebateCounterPage() {
           }
         };
 
-        recorder.start();
         mediaRecorderRef.current = recorder;
+        recorder.start();
         setRecording(true);
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
@@ -59,7 +61,7 @@ function DebateCounterPage() {
       mediaRecorderRef.current.onstop = async () => {
         const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
         const formData = new FormData();
-        formData.append("file", blob, "counter-rebuttal-video.webm");
+        formData.append("video", blob, "counter-rebuttal-video.webm");
 
         try {
           await axios.post(
