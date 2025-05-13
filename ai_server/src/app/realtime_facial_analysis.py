@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class RealtimeFacialAnalysis:
-    def __init__(self, openface_path=os.getenv("OPENFACE_PATH", r"C:\OpenFace\FeatureExtraction.exe"), 
+    def __init__(self, openface_path=os.getenv("OPENFACE_PATH", r"..\tools\FeatureExtraction.exe"), 
                  output_dir=os.path.join(os.getcwd(), "facial_output")):
         self.openface_path = openface_path
         self.output_dir = output_dir
