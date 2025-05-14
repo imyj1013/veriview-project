@@ -9,14 +9,16 @@ export default function useAuth() {
     setIsLoggedIn(!!token);
   }, []);
 
-  const login = (token) => {
+  const login = (token, user_id) => {
     localStorage.setItem("access_token", token);
+    localStorage.setItem("user_id", user_id);
     axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; 
     setIsLoggedIn(true);
   };
 
   const logout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_id");
     delete axios.defaults.headers.common["Authorization"];
     setIsLoggedIn(false);
   };
