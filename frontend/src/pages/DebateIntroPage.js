@@ -1,36 +1,17 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 function DebateIntroPage() {
   const navigate = useNavigate();
 
-  const handleStartDebate = async () => {
+  const handleStartDebate = () => {
     const userId = localStorage.getItem("user_id");
     if (!userId) {
       alert("로그인이 필요합니다.");
       navigate("/login");
       return;
     }
-
-    try {
-      const res = await axios.post("/api/debate/start", { user_id: userId });
-
-      const { topic, position, debate_id, ai_opening_text } = res.data;
-
-      // debate-start 페이지로 이동하면서 받은 정보 전달
-      navigate("/debate-start", {
-        state: {
-          topic,
-          position,
-          debate_id,
-          ai_opening_text,
-        },
-      });
-    } catch (err) {
-      alert("토론 시작에 실패했습니다.");
-      console.error(err);
-    }
+    navigate("/debate-start");
   };
 
   return (

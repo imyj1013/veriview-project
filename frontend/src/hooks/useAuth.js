@@ -5,14 +5,17 @@ export default function useAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const token = getToken();
-    setIsLoggedIn(!!token);
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setIsLoggedIn(true);
+    }
   }, []);
 
   const login = (token, user_id) => {
     localStorage.setItem("access_token", token);
     localStorage.setItem("user_id", user_id);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; 
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     setIsLoggedIn(true);
   };
 
@@ -23,7 +26,5 @@ export default function useAuth() {
     setIsLoggedIn(false);
   };
 
-  const getToken = () => localStorage.getItem("access_token");
-
-  return { isLoggedIn, login, logout, getToken };
+  return { isLoggedIn, login, logout };
 }
