@@ -25,7 +25,7 @@ function DebateClosingPage() {
         }
 
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "video/mp4",
+          mimeType: "video/webm",
         });
 
         recordedChunksRef.current = [];
@@ -60,9 +60,9 @@ function DebateClosingPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
-        const blob = new Blob(recordedChunksRef.current, { type: "video/mp4" });
+        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
         const formData = new FormData();
-        formData.append("file", blob, "closing-video.mp4");
+        formData.append("file", blob, "closing-video.webm");
 
         try {
           await axios.post(

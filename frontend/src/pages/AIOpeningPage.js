@@ -7,22 +7,22 @@ function DebateAiOpeningPage() {
   const { state } = useLocation(); // topic, position, debateId
   const [aiOpeningText, setAiOpeningText] = useState("");
 
-  useEffect(() => {
-    const fetchAiOpening = async () => {
-      try {
-        const res = await axios.post(`/ai/debate/${state.debateId}/ai-opening`, {
-          topic: state.topic,
-          position: state.position === "찬성" ? "CON" : "PRO", 
-          debate_id: state.debateId,
-        });
-        setAiOpeningText(res.data.ai_opening_text);
-      } catch (err) {
-        console.error("AI 입론 가져오기 실패:", err);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchAiOpening = async () => {
+  //     try {
+  //       const res = await axios.post(`/ai/debate/${state.debateId}/ai-opening`, {
+  //         topic: state.topic,
+  //         position: state.position === "찬성" ? "CON" : "PRO", 
+  //         debate_id: state.debateId,
+  //       });
+  //       setAiOpeningText(res.data.ai_opening_text);
+  //     } catch (err) {
+  //       console.error("AI 입론 가져오기 실패:", err);
+  //     }
+  //   };
 
-    fetchAiOpening();
-  }, [state]);
+  //   fetchAiOpening();
+  // }, [state]);
 
   const handleNext = () => {
     navigate("/debate/user-rebuttal", { state });

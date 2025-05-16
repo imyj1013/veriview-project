@@ -90,7 +90,7 @@ public class DebateService {
 
     public String saveOpeningVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "opening_" + debateId + "_" + System.currentTimeMillis() + ".mp4";
+        String fileName = "opening_" + debateId + "_" + System.currentTimeMillis() + ".webm";
         String baseDirPath = new File(System.getProperty("user.dir"))
                 .getParentFile()
                 .getAbsolutePath() + "/videos";
@@ -174,8 +174,17 @@ public class DebateService {
 
     public String saveRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "rebuttal_" + debateId + "_" + System.currentTimeMillis() + ".mp4";
-        String filePath = "src/main/resources/videos/" + fileName;
+        String fileName = "rebuttal_" + debateId + "_" + System.currentTimeMillis() + ".webm";
+        String baseDirPath = new File(System.getProperty("user.dir"))
+                .getParentFile()
+                .getAbsolutePath() + "/videos";
+
+        File baseDir = new File(baseDirPath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs();
+        }
+
+        String filePath = baseDirPath + "/" + fileName;
         File dest = new File(filePath);
         videoFile.transferTo(dest);
 
@@ -249,8 +258,17 @@ public class DebateService {
 
     public String saveCounterRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "counter_rebuttal_" + debateId + "_" + System.currentTimeMillis() + ".mp4";
-        String filePath = "src/main/resources/videos/" + fileName;
+        String fileName = "counter_rebuttal_" + debateId + "_" + System.currentTimeMillis() + ".webm";
+        String baseDirPath = new File(System.getProperty("user.dir"))
+                .getParentFile()
+                .getAbsolutePath() + "/videos";
+
+        File baseDir = new File(baseDirPath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs();
+        }
+
+        String filePath = baseDirPath + "/" + fileName;
         File dest = new File(filePath);
         videoFile.transferTo(dest);
 
@@ -324,8 +342,17 @@ public class DebateService {
 
     public String saveClosingVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "closing_" + debateId + "_" + System.currentTimeMillis() + ".mp4";
-        String filePath = "src/main/resources/videos/" + fileName;
+        String fileName = "closing_" + debateId + "_" + System.currentTimeMillis() + ".webm";
+        String baseDirPath = new File(System.getProperty("user.dir"))
+                .getParentFile()
+                .getAbsolutePath() + "/videos";
+
+        File baseDir = new File(baseDirPath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs();
+        }
+
+        String filePath = baseDirPath + "/" + fileName;
         File dest = new File(filePath);
         videoFile.transferTo(dest);
 
