@@ -27,9 +27,8 @@ function LoginPage() {
         password: form.password,
       });
 
-      // 명세서: access_token 저장
-      login(res.data.access_token);
-      navigate("/"); // 홈으로 이동
+      login(res.data.access_token, form.user_id);
+      navigate("/"); 
     } catch (err) {
       setError(
         err.response?.data?.error || "아이디 또는 비밀번호가 잘못되었습니다."

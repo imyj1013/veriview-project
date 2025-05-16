@@ -1,4 +1,4 @@
-// src/pages/DebateOpeningPage.js
+
 
 import React, { useRef, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
