@@ -25,7 +25,7 @@ function DebateOpeningPage() {
         }
 
         const mediaRecorder = new MediaRecorder(userStream, {
-          mimeType: "video/webm",
+          mimeType: "video/mp4",
         });
 
         mediaRecorder.ondataavailable = (e) => {
@@ -58,9 +58,9 @@ function DebateOpeningPage() {
     mediaRecorderRef.current?.stop();
 
     mediaRecorderRef.current.onstop = async () => {
-      const blob = new Blob(chunks, { type: "video/webm" });
+      const blob = new Blob(chunks, { type: "video/mp4" });
       const formData = new FormData();
-      formData.append("video", blob);
+      formData.append("file", blob);
 
       try {
         await axios.post(`/api/debate/${state.debateId}/opening-video`, formData, {

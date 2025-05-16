@@ -26,7 +26,7 @@ function DebateUserRebuttalPage() {
         setStream(userStream);
 
         const mediaRecorder = new MediaRecorder(userStream, {
-          mimeType: "video/webm",
+          mimeType: "video/mp4",
         });
 
         recordedChunksRef.current = [];
@@ -61,9 +61,9 @@ function DebateUserRebuttalPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
-        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+        const blob = new Blob(recordedChunksRef.current, { type: "video/mp4" });
         const formData = new FormData();
-        formData.append("video", blob, "rebuttal-video.webm");
+        formData.append("file", blob, "rebuttal-video.mp4");
 
         try {
           await axios.post(`/api/debate/${state.debateId}/rebuttal-video`, formData, {
