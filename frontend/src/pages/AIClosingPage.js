@@ -18,12 +18,16 @@ function AIClosingPage() {
       }
     };
 
-    fetchAiFinal();
-  }, [state]);
+    if (state?.debateId) {
+      fetchAiFinal();
+    }
+  }, [state?.debateId]);
 
   const handleNext = () => {
     navigate("/debate/feedback", { state });
   };
+
+  if (!state?.topic || !aiFinalText) return null;
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
@@ -45,13 +49,13 @@ function AIClosingPage() {
 
       {/* 질문 */}
       <div className="bg-gray-100 px-6 py-4 rounded-lg shadow mb-4 text-center text-lg font-semibold w-full max-w-3xl">
-        Q. {state?.topic || "질문이 없습니다."}
+        Q. {state.topic}
       </div>
 
       {/* AI 최종변론 */}
       <div className="bg-gray-50 border text-gray-800 px-6 py-6 rounded-lg shadow w-full max-w-3xl text-base mb-6 leading-relaxed whitespace-pre-line">
-        <strong>AI 토론자의 최종변론:</strong><br />
-        {aiFinalText || "AI 최종변론을 불러오는 중..."}
+        <strong className="block mb-2">AI 토론자의 최종변론:</strong>
+        {aiFinalText}
       </div>
 
       <button

@@ -4,35 +4,51 @@ import axios from "axios";
 
 function DebateFeedbackPage() {
   const navigate = useNavigate();
-  const { state } = useLocation(); // state.debateId
+  const { state } = useLocation(); 
   const [feedbackData, setFeedbackData] = useState([]);
 
   useEffect(() => {
     const fetchFeedback = async () => {
       try {
         const res = await axios.get(`/api/debate/${state.debateId}/feedback`);
-        const raw = res.data.debate_feedback;
+        const raw = res.data.debate_feedback || [];
 
         const titles = ["입론", "반론", "재반론", "최종변론"];
-        const keys = [
-          "user_opening_text",
-          "user_rebuttal_text",
-          "user_counter_rebuttal_text",
-          "user_closing_text",
-        ];
 
-        const parsed = raw.map((item, i) => {
+        const parsed = titles.map((title, i) => {
+          const item = raw[i] || {}; 
+
           return {
-            title: titles[i],
-            userAnswer: item[keys[i]],
-            feedback: item.feedback,
-            sampleAnswer: item.sample_answer,
+            title,
+            userAnswer: item.user_text || "", 
+            feedback: item.feedback || "",
+            sampleAnswer: item.sample_answer || "",
             scores: [
-              { title: "협력적 태도", score: item.collaborative_score, comment: item.collaborative_feedback },
-              { title: "의사소통능력", score: item.communication_score, comment: item.communication_feedback },
-              { title: "적극성", score: item.initiative_score, comment: item.initiative_feedback },
-              { title: "논리력", score: item.logic_score, comment: item.logic_feedback },
-              { title: "문제해결력", score: item.problem_solving_score, comment: item.problem_solving_feedback },
+              {
+                title: "협력적 태도",
+                score: item.collaborative_score ?? 0,
+                comment: item.collaborative_feedback || "",
+              },
+              {
+                title: "의사소통능력",
+                score: item.communication_score ?? 0,
+                comment: item.communication_feedback || "",
+              },
+              {
+                title: "적극성",
+                score: item.initiative_score ?? 0,
+                comment: item.initiative_feedback || "",
+              },
+              {
+                title: "논리력",
+                score: item.logic_score ?? 0,
+                comment: item.logic_feedback || "",
+              },
+              {
+                title: "문제해결력",
+                score: item.problem_solving_score ?? 0,
+                comment: item.problem_solving_feedback || "",
+              },
             ],
           };
         });
@@ -67,7 +83,7 @@ function DebateFeedbackPage() {
         </button>
       </div>
 
-      {/* 전체 피드백 */}
+      {/* 피드백 */}
       <div className="w-full max-w-4xl px-3">
         {feedbackData.map((section, idx) => (
           <div key={idx} className="mb-12">
@@ -77,21 +93,21 @@ function DebateFeedbackPage() {
             <div className="mb-4">
               <h3 className="text-lg font-semibold">사용자 답변</h3>
               <div className="border rounded p-4 text-sm bg-white">
-                {section.userAnswer}
+                {section.userAnswer || "(답변이 없습니다.)"}
               </div>
             </div>
 
             <div className="mb-4">
               <h3 className="text-lg font-semibold">피드백</h3>
               <div className="border rounded p-4 text-sm bg-white">
-                {section.feedback}
+                {section.feedback || "(피드백이 없습니다.)"}
               </div>
             </div>
 
             <div className="mb-4">
               <h3 className="text-lg font-semibold">모범답안</h3>
               <div className="border rounded p-4 text-sm bg-white whitespace-pre-wrap">
-                {section.sampleAnswer}
+                {section.sampleAnswer || "(모범답안이 없습니다.)"}
               </div>
             </div>
 
@@ -113,7 +129,7 @@ function DebateFeedbackPage() {
                     {renderStars(item.score)} ({item.score?.toFixed(1)})
                   </div>
                   <div className="col-span-3">{item.title}</div>
-                  <div className="col-span-7">{item.comment}</div>
+                  <div className="col-span-7">{item.comment || "피드백 없음"}</div>
                 </div>
               ))}
             </div>

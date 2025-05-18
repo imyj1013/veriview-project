@@ -1,8 +1,9 @@
-// src/pages/DebateClosingPage.js
+
 
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import fixWebmDuration from "webm-duration-fix"; 
 
 function DebateClosingPage() {
   const videoRef = useRef(null);
@@ -60,11 +61,13 @@ function DebateClosingPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
-        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-        const formData = new FormData();
-        formData.append("file", blob, "closing-video.webm");
+        const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
 
         try {
+          const fixedBlob = await fixWebmDuration(originalBlob); 
+          const formData = new FormData();
+          formData.append("file", fixedBlob, "closing-video.webm");
+
           await axios.post(
             `/api/debate/${state.debateId}/closing-video`,
             formData,
@@ -114,14 +117,17 @@ function DebateClosingPage() {
         className="w-full max-w-3xl h-[480px] bg-black rounded-lg mb-6"
       />
 
-      {/* 종료 */}
-      <button
-        onClick={handleEnd}
-        disabled={!recording}
-        className="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
-      >
-        최종변론 종료
-      </button>
+      {/* 녹화 상태 표시, 종료 */}
+      <div className="flex gap-4">
+        <span className="text-green-700 font-semibold">녹화 중...</span>
+        <button
+          onClick={handleEnd}
+          disabled={!recording}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          최종변론 종료
+        </button>
+      </div>
     </div>
   );
 }

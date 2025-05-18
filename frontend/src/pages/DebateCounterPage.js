@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import fixWebmDuration from "webm-duration-fix"; 
 
 function DebateCounterPage() {
   const videoRef = useRef(null);
@@ -59,11 +60,16 @@ function DebateCounterPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
-        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-        const formData = new FormData();
-        formData.append("file", blob, "counter-rebuttal-video.webm");
+        const originalBlob = new Blob(recordedChunksRef.current, {
+          type: "video/webm",
+        });
 
         try {
+          const fixedBlob = await fixWebmDuration(originalBlob); 
+
+          const formData = new FormData();
+          formData.append("file", fixedBlob, "counter-rebuttal-video.webm");
+
           await axios.post(
             `/api/debate/${state.debateId}/counter-rebuttal-video`,
             formData,
@@ -114,13 +120,16 @@ function DebateCounterPage() {
       />
 
       {/* 재반론 종료 */}
-      <button
-        onClick={handleEnd}
-        disabled={!recording}
-        className="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
-      >
-        재반론 종료
-      </button>
+      <div className="flex gap-4">
+        <span className="text-green-700 font-semibold">녹화 중...</span>
+        <button
+          onClick={handleEnd}
+          disabled={!recording}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          재반론 종료
+        </button>
+      </div>
     </div>
   );
 }
