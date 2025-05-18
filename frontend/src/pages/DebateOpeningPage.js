@@ -1,42 +1,45 @@
-
-
 import React, { useRef, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import fixWebmDuration from "webm-duration-fix";
 
 function DebateOpeningPage() {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const [stream, setStream] = useState(null);
-  const [chunks, setChunks] = useState([]);
+  const recordedChunksRef = useRef([]);
+  const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
   const { state } = useLocation(); // topic, position, debateId
 
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const userStream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
-        setStream(userStream);
+
         if (videoRef.current) {
-          videoRef.current.srcObject = userStream;
+          videoRef.current.srcObject = stream;
         }
 
-        const mediaRecorder = new MediaRecorder(userStream, {
+        const mediaRecorder = new MediaRecorder(stream, {
           mimeType: "video/webm",
         });
 
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            setChunks((prev) => [...prev, e.data]);
+        recordedChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunksRef.current.push(event.data);
           }
         };
 
         mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.start();
+        setRecording(true);
       } catch (err) {
-        alert("웹캠 사용이 허용되지 않았습니다.");
+        alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
       }
     };
@@ -48,38 +51,42 @@ function DebateOpeningPage() {
         videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [state, navigate]);
 
-  const handleStart = () => {
-    mediaRecorderRef.current?.start();
-  };
+  const handleEnd = () => {
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
 
-  const handleEnd = async () => {
-    mediaRecorderRef.current?.stop();
+      mediaRecorderRef.current.onstop = async () => {
+        const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
 
-    mediaRecorderRef.current.onstop = async () => {
-      const blob = new Blob(chunks, { type: "video/webm" });
-      const formData = new FormData();
-      formData.append("file", blob, "opening-video.webm");
-      console.log(blob); 
-      console.log(blob.size);
+        try {
+          const fixedBlob = await fixWebmDuration(originalBlob); 
 
-      try {
-        await axios.post(`/api/debate/${state.debateId}/opening-video`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        navigate("/debate/ai-opening", { state });
-      } catch (err) {
-        console.error("영상 업로드 실패:", err);
-        alert("영상 업로드에 실패했습니다.");
-      }
-    };
+          const formData = new FormData();
+          formData.append("file", fixedBlob, "opening-video.webm");
+
+          await axios.post(
+            `/api/debate/${state.debateId}/opening-video`,
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            }
+          );
+
+          navigate("/debate/ai-opening", { state });
+        } catch (err) {
+          alert("입론 영상 업로드 실패");
+          console.error(err);
+        }
+      };
+    }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
+      {/* 상단 로고 + 나가기 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
@@ -95,10 +102,12 @@ function DebateOpeningPage() {
         </button>
       </div>
 
-      <div className="bg-gray-100 px-6 py-4 rounded-lg shadow mb-6 text-center text-lg font-semibold w-full max-w-3xl">
-        Q. {state?.topic || "질문이 없습니다."}
+      {/* 질문 표시 */}
+      <div className="bg-gray-100 text-lg font-semibold px-6 py-4 rounded-lg shadow mb-6 w-full max-w-3xl text-center">
+        Q. {state?.topic || "질문을 불러올 수 없습니다."}
       </div>
 
+      {/* 비디오 미리보기 */}
       <video
         ref={videoRef}
         autoPlay
@@ -107,18 +116,15 @@ function DebateOpeningPage() {
         className="w-full max-w-3xl h-[480px] bg-black rounded-lg mb-6"
       />
 
+      {/* 녹화 상태 표시 및 종료 */}
       <div className="flex gap-4">
-        <button
-          onClick={handleStart}
-          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-        >
-          녹화 시작
-        </button>
+        <span className="text-green-700 font-semibold">녹화 중...</span>
         <button
           onClick={handleEnd}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          disabled={!recording}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          발언 종료 (업로드)
+          입론 종료
         </button>
       </div>
     </div>

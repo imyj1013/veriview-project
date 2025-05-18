@@ -7,22 +7,18 @@ function DebateAiOpeningPage() {
   const { state } = useLocation(); // topic, position, debateId
   const [aiOpeningText, setAiOpeningText] = useState("");
 
-  // useEffect(() => {
-  //   const fetchAiOpening = async () => {
-  //     try {
-  //       const res = await axios.post(`/ai/debate/${state.debateId}/ai-opening`, {
-  //         topic: state.topic,
-  //         position: state.position === "찬성" ? "CON" : "PRO", 
-  //         debate_id: state.debateId,
-  //       });
-  //       setAiOpeningText(res.data.ai_opening_text);
-  //     } catch (err) {
-  //       console.error("AI 입론 가져오기 실패:", err);
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchAiOpening = async () => {
+      try {
+        const res = await axios.get(`/api/debate/${state.debateId}/ai-opening`);
+        setAiOpeningText(res.data.ai_opening_text);
+      } catch (err) {
+        console.error("AI 입론 가져오기 실패:", err);
+      }
+    };
 
-  //   fetchAiOpening();
-  // }, [state]);
+    fetchAiOpening();
+  }, [state.debateId]);
 
   const handleNext = () => {
     navigate("/debate/user-rebuttal", { state });
@@ -54,7 +50,7 @@ function DebateAiOpeningPage() {
       {/* AI 입론 */}
       <div className="bg-gray-50 border px-6 py-6 text-gray-800 rounded-lg shadow w-full max-w-3xl mb-10 leading-relaxed whitespace-pre-line">
         <strong className="block mb-2 text-base text-black-700">AI 토론자의 입장:</strong>
-        {aiOpeningText || "AI 입론 생성 중..."}
+        {aiOpeningText}
       </div>
 
       {/* 반론 시작 */}

@@ -19,12 +19,16 @@ function AICounterPage() {
       }
     };
 
-    fetchAICounter();
-  }, [state]);
+    if (state?.debateId) {
+      fetchAICounter();
+    }
+  }, [state?.debateId]);
 
   const handleNext = () => {
     navigate("/debate/user-closing", { state });
   };
+
+  if (!state?.topic || !aiCounterText) return null;
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
@@ -46,13 +50,13 @@ function AICounterPage() {
 
       {/* 질문 */}
       <div className="bg-gray-100 px-6 py-4 rounded-lg shadow mb-6 text-center text-lg font-semibold w-full max-w-3xl">
-        Q. {state?.topic || "질문이 없습니다."}
+        Q. {state.topic}
       </div>
 
       {/* AI 재반론 */}
       <div className="bg-gray-50 border px-6 py-6 text-gray-800 rounded-lg shadow w-full max-w-3xl mb-10 leading-relaxed whitespace-pre-line">
         <strong className="block mb-2">AI 토론자의 재반론:</strong>
-        {aiCounterText || "AI 재반론 생성 중..."}
+        {aiCounterText}
       </div>
 
       {/* 최종변론 시작 */}
