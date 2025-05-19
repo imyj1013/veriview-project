@@ -8,19 +8,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DebateFeedbackDto {
-    private String userText;
-    private float initiativeScore;
-    private float collaborativeScore;
-    private float communicationScore;
-    private float logicScore;
-    private float problemSolvingScore;
+    private String user_text;
+    private float initiative_score;
+    private float collaborative_score;
+    private float communication_score;
+    private float logic_score;
+    private float problem_solving_score;
 
-    private String initiativeFeedback;
-    private String collaborativeFeedback;
-    private String communicationFeedback;
-    private String logicFeedback;
-    private String problemSolvingFeedback;
+    private String initiative_feedback;
+    private String collaborative_feedback;
+    private String communication_feedback;
+    private String logic_feedback;
+    private String problem_solving_feedback;
 
     private String feedback;
-    private String sampleAnswer;
+    private String sample_answer;
 }

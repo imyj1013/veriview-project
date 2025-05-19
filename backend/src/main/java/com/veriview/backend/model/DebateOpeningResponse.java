@@ -5,9 +5,9 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class DebateRebuttalResponse {
+public class DebateOpeningResponse {
     private String topic;
     private String position;
     private int debate_id;
-    private String ai_rebuttal_text;
+    private String ai_opening_text;
 }

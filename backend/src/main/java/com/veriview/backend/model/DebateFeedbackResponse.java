@@ -10,6 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DebateFeedbackResponse {
-    private int debateId;
+    private int debate_id;
     private List<DebateFeedbackDto> debate_feedback;
 }
