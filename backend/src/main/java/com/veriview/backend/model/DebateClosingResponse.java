@@ -8,6 +8,6 @@ import lombok.Data;
 public class DebateClosingResponse {
     private String topic;
     private String position;
-    private int debateId;
-    private String aiClosingText;
+    private int debate_id;
+    private String ai_closing_text;
 }

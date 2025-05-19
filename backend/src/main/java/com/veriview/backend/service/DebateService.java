@@ -18,8 +18,10 @@ import org.springframework.http.MediaType;
 import java.util.Map;
 import java.util.List;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.io.BufferedReader;
 import java.io.File;
 import java.util.Optional;
 import java.util.Random;
@@ -88,9 +90,25 @@ public class DebateService {
         return new DebateStartResponse("토론주제입니다", "PRO", 5, "ai의 입론입니다");
     }
 
+    public DebateOpeningResponse getAIOpening(int debateId) {
+        Debate debate = debateRepository.findById(debateId).orElseThrow(() -> new RuntimeException("Debate not found"));
+    
+        DebateAnswer opening = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+    
+        // return new DebateOpeningResponse(
+        //     debate.getTopic().getTopic(),
+        //     debate.getStance().name(),
+        //     debate.getDebateId(),
+        //     opening.getAiAnswer()
+        // );
+
+        return new DebateOpeningResponse("토론주제입니다","PRO",5,"ai 입론입니다");
+    }
+
     public String saveOpeningVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "opening_" + debateId + "_" + System.currentTimeMillis() + ".webm";
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String fileName = "opening_" + debateId + "_" + timestamp + ".webm";
         String baseDirPath = new File(System.getProperty("user.dir"))
                 .getParentFile()
                 .getAbsolutePath() + "/videos";
@@ -101,8 +119,36 @@ public class DebateService {
         }
 
         String filePath = baseDirPath + "/" + fileName;
-        File dest = new File(filePath);
-        videoFile.transferTo(dest);
+        File webmdest = new File(filePath);
+        videoFile.transferTo(webmdest);
+
+        String mp4FileName = "opening_" + debateId + "_" + timestamp + ".mp4";
+        File dest = new File(baseDirPath + "/" + mp4FileName);
+
+        // FFmpeg로 webm -> mp4 변환
+        String command = String.format("ffmpeg -i %s -c:v libx264 -preset fast -crf 23 %s",
+                webmdest.getAbsolutePath(), dest.getAbsolutePath());
+
+        ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line); // 로그 출력
+            }
+        }
+
+        try {
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("FFmpeg 변환 실패 (exitCode=" + exitCode + ")");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Process was interrupted", e);
+        }
 
         // // 2. Flask 서버로 전송
         // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/opening-video";
@@ -174,7 +220,8 @@ public class DebateService {
 
     public String saveRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "rebuttal_" + debateId + "_" + System.currentTimeMillis() + ".webm";
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String fileName = "rebuttal_" + debateId + "_" + timestamp + ".webm";
         String baseDirPath = new File(System.getProperty("user.dir"))
                 .getParentFile()
                 .getAbsolutePath() + "/videos";
@@ -185,8 +232,36 @@ public class DebateService {
         }
 
         String filePath = baseDirPath + "/" + fileName;
-        File dest = new File(filePath);
-        videoFile.transferTo(dest);
+        File webmdest = new File(filePath);
+        videoFile.transferTo(webmdest);
+
+        String mp4FileName = "rebuttal_" + debateId + "_" + timestamp + ".mp4";
+        File dest = new File(baseDirPath + "/" + mp4FileName);
+
+        // FFmpeg로 webm -> mp4 변환
+        String command = String.format("ffmpeg -i %s -c:v libx264 -preset fast -crf 23 %s",
+                webmdest.getAbsolutePath(), dest.getAbsolutePath());
+
+        ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line); // 로그 출력
+            }
+        }
+
+        try {
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("FFmpeg 변환 실패 (exitCode=" + exitCode + ")");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Process was interrupted", e);
+        }
 
         // // 2. Flask 서버로 전송
         // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/rebuttal-video";
@@ -258,7 +333,8 @@ public class DebateService {
 
     public String saveCounterRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "counter_rebuttal_" + debateId + "_" + System.currentTimeMillis() + ".webm";
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String fileName = "counter_rebuttal_" + debateId + "_" + timestamp + ".webm";
         String baseDirPath = new File(System.getProperty("user.dir"))
                 .getParentFile()
                 .getAbsolutePath() + "/videos";
@@ -269,8 +345,36 @@ public class DebateService {
         }
 
         String filePath = baseDirPath + "/" + fileName;
-        File dest = new File(filePath);
-        videoFile.transferTo(dest);
+        File webmdest = new File(filePath);
+        videoFile.transferTo(webmdest);
+
+        String mp4FileName = "counter_rebuttal_" + debateId + "_" + timestamp + ".mp4";
+        File dest = new File(baseDirPath + "/" + mp4FileName);
+
+        // FFmpeg로 webm -> mp4 변환
+        String command = String.format("ffmpeg -i %s -c:v libx264 -preset fast -crf 23 %s",
+                webmdest.getAbsolutePath(), dest.getAbsolutePath());
+
+        ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line); // 로그 출력
+            }
+        }
+
+        try {
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("FFmpeg 변환 실패 (exitCode=" + exitCode + ")");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Process was interrupted", e);
+        }
 
         // // 2. Flask 서버로 전송
         // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/counter-rebuttal-video";
@@ -337,12 +441,13 @@ public class DebateService {
         //     closing.getAiAnswer()
         // );
 
-        return new DebateClosingResponse("토론주제입니다","PRO",5,"ai 결론입니다");
+        return new DebateClosingResponse("토론주제입니다","PRO",5,"ai 최종변론입니다");
     }
 
     public String saveClosingVideo(int debateId, MultipartFile videoFile) throws IOException {
         // 1. 저장 경로 설정
-        String fileName = "closing_" + debateId + "_" + System.currentTimeMillis() + ".webm";
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String fileName = "closing_" + debateId + "_" + timestamp + ".webm";
         String baseDirPath = new File(System.getProperty("user.dir"))
                 .getParentFile()
                 .getAbsolutePath() + "/videos";
@@ -353,8 +458,36 @@ public class DebateService {
         }
 
         String filePath = baseDirPath + "/" + fileName;
-        File dest = new File(filePath);
-        videoFile.transferTo(dest);
+        File webmdest = new File(filePath);
+        videoFile.transferTo(webmdest);
+
+        String mp4FileName = "closing_" + debateId + "_" + timestamp + ".mp4";
+        File dest = new File(baseDirPath + "/" + mp4FileName);
+
+        // FFmpeg로 webm -> mp4 변환
+        String command = String.format("ffmpeg -i %s -c:v libx264 -preset fast -crf 23 %s",
+                webmdest.getAbsolutePath(), dest.getAbsolutePath());
+
+        ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line); // 로그 출력
+            }
+        }
+
+        try {
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("FFmpeg 변환 실패 (exitCode=" + exitCode + ")");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Process was interrupted", e);
+        }
 
         // // 2. Flask 서버로 전송
         // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/closing-video";

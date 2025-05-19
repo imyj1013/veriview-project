@@ -24,6 +24,14 @@ public class DebateController {
         return ResponseEntity.ok(response);
     }
 
+    
+    @GetMapping("/{debateId}/ai-opening")
+    public ResponseEntity<DebateOpeningResponse> getAIOpening(@PathVariable int debateId) {
+
+        DebateOpeningResponse response = debateService.getAIOpening(debateId);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{debateId}/opening-video")
     public ResponseEntity<Map<String, String>> uploadOpeningVideo(@PathVariable int debateId, @RequestParam("file") MultipartFile videoFile) {
         try {
