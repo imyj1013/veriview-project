@@ -1,5 +1,5 @@
 import numpy as np
-import whisper
+import whisper  # openai-whisper 패키지는 여전히 whisper로 import
 import logging
 import time
 import librosa
@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class RealtimeSpeechToText:
-    def __init__(self, model="base", sample_rate=16000):
+    def __init__(self, model="tiny", sample_rate=16000):
         self.model = whisper.load_model(model)
         self.sample_rate = sample_rate
 
