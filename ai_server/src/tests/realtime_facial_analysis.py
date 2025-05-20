@@ -106,7 +106,7 @@ class RealtimeFacialAnalysis:
 
     def evaluate_emotion(self, analysis_result):
         if not analysis_result:
- excel            return "분석 결과 없음"
+            return "분석 결과 없음"
         au01 = analysis_result.get("AU01_r", 0)
         au02 = analysis_result.get("AU02_r", 0)
         gaze_x = analysis_result.get("gaze_angle_x", 0)
