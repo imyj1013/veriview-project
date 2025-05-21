@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import fixWebmDuration from "webm-duration-fix";
 
 function InterviewQ4() {
   const navigate = useNavigate();
@@ -10,39 +12,45 @@ function InterviewQ4() {
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [intervalId, setIntervalId] = useState(null);
+  const [question, setQuestion] = useState("");
 
   useEffect(() => {
+    const fetchQuestion = async () => {
+      const interviewId = localStorage.getItem("interview_id");
+      try {
+        const res = await axios.get(`/api/interview/${interviewId}/question`);
+        const q = res.data.questions.find((q) => q.question_type === "TECH");
+        setQuestion(q?.question_text || "질문을 불러올 수 없습니다.");
+      } catch (err) {
+        console.error("질문 로드 실패", err);
+        setQuestion("질문을 불러올 수 없습니다.");
+      }
+    };
+
     const startCamera = async () => {
       try {
-        const userStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = userStream;
-        }
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
       }
     };
 
+    fetchQuestion();
     startCamera();
 
     return () => {
       if (videoRef.current?.srcObject) {
         videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       }
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 
   const formatTime = (seconds) => {
-    const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const secs = String(seconds % 60).padStart(2, '0');
+    const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
     return `${mins}:${secs}`;
   };
 
@@ -50,9 +58,7 @@ function InterviewQ4() {
     const stream = videoRef.current?.srcObject;
     if (!stream) return;
 
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: "video/webm",
-    });
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -60,15 +66,9 @@ function InterviewQ4() {
       }
     };
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-      const url = URL.createObjectURL(blob);
-      console.log("녹화 완료, 미리보기 URL:", url);
-    };
-
+    mediaRecorderRef.current = mediaRecorder;
     recordedChunksRef.current = [];
     mediaRecorder.start();
-    mediaRecorderRef.current = mediaRecorder;
     setIsRecording(true);
 
     const id = setInterval(() => {
@@ -78,15 +78,33 @@ function InterviewQ4() {
   };
 
   const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
+    if (!mediaRecorderRef.current) return;
+    mediaRecorderRef.current.stop();
     setIsRecording(false);
     clearInterval(intervalId);
-    navigate("/interview/feedback");
+
+    mediaRecorderRef.current.onstop = async () => {
+      const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+      try {
+        const fixedBlob = await fixWebmDuration(originalBlob);
+        const formData = new FormData();
+        const interviewId = localStorage.getItem("interview_id");
+        formData.append("file", fixedBlob, "tech.webm");
+
+        await axios.post(`/api/interview/${interviewId}/TECH/answer-video`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        navigate("/interview/feedback"); // 다음 페이지 경로에 맞게 수정
+      } catch (err) {
+        alert("영상 업로드 실패");
+        console.error(err);
+      }
+    };
   };
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
-
     if (isPaused) {
       mediaRecorderRef.current.resume();
       setIsPaused(false);
@@ -117,12 +135,10 @@ function InterviewQ4() {
       {/* 면접관과 사용자 화면 */}
       <div className="flex flex-col items-center border-4 px-6 py-8 rounded-xl">
         <div className="flex gap-6 mb-4">
-          {/* AI 면접관 화면 */}
           <div className="flex flex-col items-center">
             <div className="w-[400px] h-[300px] bg-gray-600 rounded-md"></div>
             <p className="mt-2 text-center text-sm font-medium">AI 면접관</p>
           </div>
-          {/* 사용자 화면 (웹캠) */}
           <div className="flex flex-col items-center">
             <video
               ref={videoRef}
@@ -131,8 +147,8 @@ function InterviewQ4() {
               playsInline
               className="w-[400px] h-[300px] bg-black rounded-md"
             />
-            <p className="mt-2 text-center text-sm font-medium">
-            <i className="fas fa-microphone text-teal-500"></i>
+            <p className="mt-2 text-center text-sm">
+              <i className="fas fa-microphone text-teal-500"></i>{" "}
               {isRecording ? formatTime(elapsedTime) : ""}
             </p>
           </div>
@@ -140,7 +156,7 @@ function InterviewQ4() {
 
         {/* 질문 */}
         <div className="bg-gray-100 w-full text-center py-4 px-4 rounded text-lg font-medium mb-4">
-          자기소개를 해주세요.
+          {question}
         </div>
 
         {/* 버튼 */}

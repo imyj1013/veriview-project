@@ -1,11 +1,21 @@
+
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-function PersonalInterviewForm() {
-    const navigate = useNavigate();
+function InterviewPortfolioPage() {
+  const navigate = useNavigate();
   const [gender, setGender] = useState(null);
   const [job, setJob] = useState(null);
   const [career, setCareer] = useState(null);
+  const [educationLevel, setEducationLevel] = useState("");
+  const [educationStatus, setEducationStatus] = useState("");
+  const [experience, setExperience] = useState("");
+  const [tech, setTech] = useState("");
+  const [personality, setPersonality] = useState("");
+  const [userName, setUserName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
 
   const jobOptions = [
     "경영/사무",
@@ -17,6 +27,39 @@ function PersonalInterviewForm() {
     "예술/디자인",
   ];
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const res = await axios.post("/api/interview/portfolio", {
+        user_id: userId,
+        job_category: job,
+        workexperience: career === "경력" ? "경력 유" : "신입",
+        education: `${educationLevel} ${educationStatus}`.trim(),
+        experience_description: experience,
+        tech_stack: tech,
+        personality,
+      });
+
+      if (res.data.interview_id) {
+        localStorage.setItem("interview_id", res.data.interview_id);
+        navigate("/interview/intro");
+      } else {
+        alert("면접 정보 저장 실패");
+      }
+    } catch (err) {
+      alert("서버 요청 실패");
+      console.error(err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white py-12 px-4 flex flex-col items-center">
       {/* 로고 */}
@@ -27,13 +70,18 @@ function PersonalInterviewForm() {
         onClick={() => navigate("/")}
       />
 
-      <form className="w-full max-w-2xl bg-white p-10 rounded-xl shadow space-y-8">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-2xl bg-white p-10 rounded-xl shadow space-y-8"
+      >
         {/* 이름 */}
         <div>
           <label className="block mb-2 font-semibold">이름</label>
           <input
             type="text"
             placeholder="이름을 입력하세요"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             className="w-full border border-gray-300 rounded px-4 py-2"
           />
         </div>
@@ -44,6 +92,8 @@ function PersonalInterviewForm() {
           <input
             type="text"
             placeholder="ex) 20021030"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
             className="w-full border border-gray-300 rounded px-4 py-2"
           />
         </div>
@@ -58,9 +108,7 @@ function PersonalInterviewForm() {
                 type="button"
                 onClick={() => setGender(g)}
                 className={`border px-4 py-2 rounded ${
-                  gender === g
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-800"
+                  gender === g ? "bg-blue-600 text-white" : "bg-white text-gray-800"
                 }`}
               >
                 {g}
@@ -73,8 +121,12 @@ function PersonalInterviewForm() {
         <div>
           <label className="block mb-2 font-semibold">학력사항</label>
           <div className="grid grid-cols-2 gap-4">
-            <select className="border border-gray-300 rounded px-4 py-2">
-              <option>최종학력</option>
+            <select
+              className="border border-gray-300 rounded px-4 py-2"
+              value={educationLevel}
+              onChange={(e) => setEducationLevel(e.target.value)}
+            >
+              <option value="">최종학력</option>
               <option>초등학교</option>
               <option>중학교</option>
               <option>고등학교</option>
@@ -82,8 +134,12 @@ function PersonalInterviewForm() {
               <option>대학교(4년제)</option>
               <option>대학원</option>
             </select>
-            <select className="border border-gray-300 rounded px-4 py-2">
-              <option>상태</option>
+            <select
+              className="border border-gray-300 rounded px-4 py-2"
+              value={educationStatus}
+              onChange={(e) => setEducationStatus(e.target.value)}
+            >
+              <option value="">상태</option>
               <option>재학</option>
               <option>졸업</option>
               <option>중퇴</option>
@@ -101,9 +157,7 @@ function PersonalInterviewForm() {
                 type="button"
                 onClick={() => setJob(j)}
                 className={`px-4 py-2 rounded border ${
-                  job === j
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-800"
+                  job === j ? "bg-blue-600 text-white" : "bg-white text-gray-800"
                 }`}
               >
                 {j}
@@ -122,9 +176,7 @@ function PersonalInterviewForm() {
                 type="button"
                 onClick={() => setCareer(c)}
                 className={`border px-4 py-2 rounded ${
-                  career === c
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-800"
+                  career === c ? "bg-blue-600 text-white" : "bg-white text-gray-800"
                 }`}
               >
                 {c}
@@ -138,6 +190,8 @@ function PersonalInterviewForm() {
           <label className="block mb-2 font-semibold">직무관련경험서술</label>
           <textarea
             placeholder="직무관련 경험을 서술하세요."
+            value={experience}
+            onChange={(e) => setExperience(e.target.value)}
             className="w-full h-28 border border-gray-300 rounded px-4 py-2"
           />
         </div>
@@ -147,6 +201,8 @@ function PersonalInterviewForm() {
           <label className="block mb-2 font-semibold">보유기술</label>
           <textarea
             placeholder="보유하고 있는 기술을 서술하세요."
+            value={tech}
+            onChange={(e) => setTech(e.target.value)}
             className="w-full h-28 border border-gray-300 rounded px-4 py-2"
           />
         </div>
@@ -156,6 +212,8 @@ function PersonalInterviewForm() {
           <label className="block mb-2 font-semibold">강점/가치관</label>
           <textarea
             placeholder="자신의 강점과 가치관을 서술하세요."
+            value={personality}
+            onChange={(e) => setPersonality(e.target.value)}
             className="w-full h-28 border border-gray-300 rounded px-4 py-2"
           />
         </div>
@@ -164,7 +222,6 @@ function PersonalInterviewForm() {
         <div className="text-center">
           <button
             type="submit"
-            onClick={() => navigate("/interview/intro")}
             className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
           >
             완료
@@ -175,4 +232,4 @@ function PersonalInterviewForm() {
   );
 }
 
-export default PersonalInterviewForm;
+export default InterviewPortfolioPage;

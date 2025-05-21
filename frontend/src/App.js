@@ -32,6 +32,7 @@ import InterviewQ1 from "./pages/InterviewQ1";
 import InterviewQ2 from "./pages/InterviewQ2";
 import InterviewQ3 from "./pages/InterviewQ3";
 import InterviewQ4 from "./pages/InterviewQ4";
+import InterviewQ5 from "./pages/InterviewQ5";
 
 //공고추천
 
@@ -63,6 +64,7 @@ function App() {
         <Route path="/interview/q2" element={<InterviewQ2 />} />
         <Route path="/interview/q3" element={<InterviewQ3 />} />
         <Route path="/interview/q4" element={<InterviewQ4 />} />
+        <Route path="/interview/q5" element={<InterviewQ5 />} />
       </Routes>
   );
 }

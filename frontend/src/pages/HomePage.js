@@ -14,7 +14,7 @@ function HomePage() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("user_id"); 
     setIsLoggedIn(false);
-    navigate("/login"); // 로그아웃 후 로그인 페이지로 이동
+    navigate("/login"); 
   };
 
   return (

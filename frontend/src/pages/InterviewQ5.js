@@ -1,9 +1,11 @@
+// src/pages/InterviewQ5.js
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import fixWebmDuration from "webm-duration-fix";
 
-function InterviewQ3() {
+function InterviewQ5() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -12,18 +14,18 @@ function InterviewQ3() {
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [intervalId, setIntervalId] = useState(null);
-  const [question, setQuestion] = useState("");
+  const [questionText, setQuestionText] = useState("");
 
   useEffect(() => {
-    const fetchQuestion = async () => {
-      const interviewId = localStorage.getItem("interview_id");
+    const interviewId = localStorage.getItem("interview_id");
+
+    const fetchFollowupQuestion = async () => {
       try {
-        const res = await axios.get(`/api/interview/${interviewId}/question`);
-        const q = res.data.questions.find((q) => q.question_type === "PERSONALITY");
-        setQuestion(q?.question_text || "질문을 불러올 수 없습니다.");
+        const res = await axios.get(`/api/interview/${interviewId}/followup-question`);
+        setQuestionText(res.data.question_text || "꼬리질문을 불러올 수 없습니다.");
       } catch (err) {
-        console.error("질문 로드 실패", err);
-        setQuestion("질문을 불러올 수 없습니다.");
+        console.error("꼬리질문 불러오기 실패", err);
+        setQuestionText("꼬리질문을 불러올 수 없습니다.");
       }
     };
 
@@ -37,7 +39,7 @@ function InterviewQ3() {
       }
     };
 
-    fetchQuestion();
+    fetchFollowupQuestion();
     startCamera();
 
     return () => {
@@ -85,17 +87,22 @@ function InterviewQ3() {
 
     mediaRecorderRef.current.onstop = async () => {
       const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+
       try {
         const fixedBlob = await fixWebmDuration(originalBlob);
         const formData = new FormData();
         const interviewId = localStorage.getItem("interview_id");
-        formData.append("file", fixedBlob, "personality.webm");
+        formData.append("file", fixedBlob, "followup.webm");
 
-        await axios.post(`/api/interview/${interviewId}/PERSONALITY/answer-video`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axios.post(
+          `/api/interview/${interviewId}/FOLLOWUP/answer-video`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
 
-        navigate("/interview/q4");
+        navigate("/interview/feedback");
       } catch (err) {
         alert("영상 업로드 실패");
         console.error(err);
@@ -116,7 +123,7 @@ function InterviewQ3() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
-      {/* 로고, 나가기 */}
+      {/* 상단바 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
@@ -132,12 +139,12 @@ function InterviewQ3() {
         </button>
       </div>
 
-      {/* 면접관과 사용자 화면 */}
+      {/* 면접관 + 사용자 영상 */}
       <div className="flex flex-col items-center border-4 px-6 py-8 rounded-xl">
         <div className="flex gap-6 mb-4">
           <div className="flex flex-col items-center">
             <div className="w-[400px] h-[300px] bg-gray-600 rounded-md"></div>
-            <p className="mt-2 text-center text-sm font-medium">AI 면접관</p>
+            <p className="mt-2 text-sm font-medium">AI 면접관</p>
           </div>
           <div className="flex flex-col items-center">
             <video
@@ -147,39 +154,29 @@ function InterviewQ3() {
               playsInline
               className="w-[400px] h-[300px] bg-black rounded-md"
             />
-            <p className="mt-2 text-center text-sm">
-              <i className="fas fa-microphone text-teal-500"></i>{" "}
-              {isRecording ? formatTime(elapsedTime) : ""}
+            <p className="mt-2 text-sm">
+              <i className="fas fa-microphone text-teal-500"></i> {isRecording ? formatTime(elapsedTime) : ""}
             </p>
           </div>
         </div>
 
-        {/* 질문 */}
+        {/* 꼬리질문 */}
         <div className="bg-gray-100 w-full text-center py-4 px-4 rounded text-lg font-medium mb-4">
-          {question}
+          {questionText}
         </div>
 
         {/* 버튼 */}
         <div className="flex gap-4">
           {!isRecording ? (
-            <button
-              onClick={startRecording}
-              className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300"
-            >
+            <button onClick={startRecording} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
               발화버튼
             </button>
           ) : (
             <>
-              <button
-                onClick={togglePause}
-                className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300"
-              >
+              <button onClick={togglePause} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
                 {isPaused ? "재개" : "일시정지"}
               </button>
-              <button
-                onClick={stopRecording}
-                className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300"
-              >
+              <button onClick={stopRecording} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
                 발화종료
               </button>
             </>
@@ -190,4 +187,4 @@ function InterviewQ3() {
   );
 }
 
-export default InterviewQ3;
+export default InterviewQ5;

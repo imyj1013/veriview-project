@@ -1,5 +1,9 @@
+// src/pages/InterviewQ2.js
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import fixWebmDuration from "webm-duration-fix";
 
 function InterviewQ2() {
   const navigate = useNavigate();
@@ -10,33 +14,39 @@ function InterviewQ2() {
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [intervalId, setIntervalId] = useState(null);
+  const [question, setQuestion] = useState("");
 
   useEffect(() => {
+    const fetchQuestion = async () => {
+      const interviewId = localStorage.getItem("interview_id");
+      try {
+        const res = await axios.get(`/api/interview/${interviewId}/question`);
+        const fit = res.data.questions.find(q => q.question_type === "FIT");
+        setQuestion(fit?.question_text || "질문을 불러올 수 없습니다.");
+      } catch (err) {
+        console.error("질문 로드 실패", err);
+        setQuestion("질문을 불러올 수 없습니다.");
+      }
+    };
+
     const startCamera = async () => {
       try {
-        const userStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = userStream;
-        }
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
       }
     };
 
+    fetchQuestion();
     startCamera();
 
     return () => {
       if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       }
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 
@@ -50,9 +60,7 @@ function InterviewQ2() {
     const stream = videoRef.current?.srcObject;
     if (!stream) return;
 
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: "video/webm",
-    });
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -60,45 +68,61 @@ function InterviewQ2() {
       }
     };
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-      const url = URL.createObjectURL(blob);
-      console.log("녹화 완료, 미리보기 URL:", url);
-    };
-
+    mediaRecorderRef.current = mediaRecorder;
     recordedChunksRef.current = [];
     mediaRecorder.start();
-    mediaRecorderRef.current = mediaRecorder;
     setIsRecording(true);
 
     const id = setInterval(() => {
-      setElapsedTime((prev) => prev + 1);
+      setElapsedTime(prev => prev + 1);
     }, 1000);
     setIntervalId(id);
   };
 
   const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
+    if (!mediaRecorderRef.current) return;
+    mediaRecorderRef.current.stop();
     setIsRecording(false);
     clearInterval(intervalId);
-    navigate("/interview/q3");
+
+    mediaRecorderRef.current.onstop = async () => {
+      const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+      try {
+        const fixedBlob = await fixWebmDuration(originalBlob);
+        const formData = new FormData();
+        const interviewId = localStorage.getItem("interview_id");
+        formData.append("file", fixedBlob, "fit.webm");
+
+        await axios.post(`/api/interview/${interviewId}/FIT/answer-video`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        navigate("/interview/q3");
+      } catch (err) {
+        alert("영상 업로드 실패");
+        console.error(err);
+      }
+    };
   };
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
-
     if (isPaused) {
       mediaRecorderRef.current.resume();
+      const id = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+      setIntervalId(id);
       setIsPaused(false);
     } else {
       mediaRecorderRef.current.pause();
+      clearInterval(intervalId);
       setIsPaused(true);
     }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
-      {/* 로고, 나가기 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
@@ -114,15 +138,12 @@ function InterviewQ2() {
         </button>
       </div>
 
-      {/* 면접관과 사용자 화면 */}
       <div className="flex flex-col items-center border-4 px-6 py-8 rounded-xl">
         <div className="flex gap-6 mb-4">
-          {/* AI 면접관 화면 */}
           <div className="flex flex-col items-center">
             <div className="w-[400px] h-[300px] bg-gray-600 rounded-md"></div>
             <p className="mt-2 text-center text-sm font-medium">AI 면접관</p>
           </div>
-          {/* 사용자 화면 (웹캠) */}
           <div className="flex flex-col items-center">
             <video
               ref={videoRef}
@@ -131,39 +152,27 @@ function InterviewQ2() {
               playsInline
               className="w-[400px] h-[300px] bg-black rounded-md"
             />
-            <p className="mt-2 text-center text-sm font-medium">
-            <i className="fas fa-microphone text-teal-500"></i>
-              {isRecording ? formatTime(elapsedTime) : ""}
+            <p className="mt-2 text-center text-sm">
+              <i className="fas fa-microphone text-teal-500"></i> {isRecording ? formatTime(elapsedTime) : ""}
             </p>
           </div>
         </div>
 
-        {/* 질문 */}
         <div className="bg-gray-100 w-full text-center py-4 px-4 rounded text-lg font-medium mb-4">
-          자기소개를 해주세요.
+          {question}
         </div>
 
-        {/* 버튼 */}
         <div className="flex gap-4">
           {!isRecording ? (
-            <button
-              onClick={startRecording}
-              className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300"
-            >
+            <button onClick={startRecording} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
               발화버튼
             </button>
           ) : (
             <>
-              <button
-                onClick={togglePause}
-                className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300"
-              >
+              <button onClick={togglePause} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
                 {isPaused ? "재개" : "일시정지"}
               </button>
-              <button
-                onClick={stopRecording}
-                className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300"
-              >
+              <button onClick={stopRecording} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
                 발화종료
               </button>
             </>
