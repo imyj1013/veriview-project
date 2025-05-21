@@ -164,6 +164,7 @@ function PersonalInterviewForm() {
         <div className="text-center">
           <button
             type="submit"
+            onClick={() => navigate("/interview/intro")}
             className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
           >
             완료
