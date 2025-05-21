@@ -1,9 +1,9 @@
-
+// src/pages/DebateClosingPage.js
 
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import fixWebmDuration from "webm-duration-fix"; 
+import fixWebmDuration from "webm-duration-fix";
 
 function DebateClosingPage() {
   const videoRef = useRef(null);
@@ -11,7 +11,20 @@ function DebateClosingPage() {
   const recordedChunksRef = useRef([]);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
-  const { state } = useLocation(); 
+  const { state } = useLocation();
+
+  //22일 수정 웹캠 끄기
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const handleLeavePage = (path) => {
+    stopCamera();
+    navigate(path);
+  };
 
   useEffect(() => {
     const startCamera = async () => {
@@ -30,7 +43,7 @@ function DebateClosingPage() {
         });
 
         recordedChunksRef.current = [];
-
+        //
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             recordedChunksRef.current.push(event.data);
@@ -48,10 +61,9 @@ function DebateClosingPage() {
 
     startCamera();
 
+    // 컴포넌트 언마운트 시 카메라 꺼주기
     return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
+      stopCamera();
     };
   }, []);
 
@@ -61,15 +73,14 @@ function DebateClosingPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
-        const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+        const originalBlob = new Blob(recordedChunksRef.current, {
+          type: "video/webm",
+        });
 
-        if (videoRef.current?.srcObject) {
-          videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-          videoRef.current.srcObject = null; 
-        }
+        stopCamera();
 
         try {
-          const fixedBlob = await fixWebmDuration(originalBlob); 
+          const fixedBlob = await fixWebmDuration(originalBlob);
           const formData = new FormData();
           formData.append("file", fixedBlob, "closing-video.webm");
 
@@ -98,10 +109,10 @@ function DebateClosingPage() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={() => handleLeavePage("/")}
         />
         <button
-          onClick={() => navigate("/")}
+          onClick={() => handleLeavePage("/")}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기

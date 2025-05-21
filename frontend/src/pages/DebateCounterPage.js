@@ -3,12 +3,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import fixWebmDuration from "webm-duration-fix"; 
+import fixWebmDuration from "webm-duration-fix";
 
 function DebateCounterPage() {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const streamRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
   const { state } = useLocation(); // topic, position, debateId
@@ -20,6 +21,8 @@ function DebateCounterPage() {
           video: true,
           audio: true,
         });
+        streamRef.current = stream;
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -48,11 +51,19 @@ function DebateCounterPage() {
     startCamera();
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
+      stopCamera();
     };
   }, []);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
   const handleEnd = async () => {
     if (mediaRecorderRef.current && recording) {
@@ -60,12 +71,14 @@ function DebateCounterPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
+        stopCamera();
+
         const originalBlob = new Blob(recordedChunksRef.current, {
           type: "video/webm",
         });
 
         try {
-          const fixedBlob = await fixWebmDuration(originalBlob); 
+          const fixedBlob = await fixWebmDuration(originalBlob);
 
           const formData = new FormData();
           formData.append("file", fixedBlob, "counter-rebuttal-video.webm");
@@ -87,6 +100,11 @@ function DebateCounterPage() {
     }
   };
 
+  const handleExit = () => {
+    stopCamera();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
       {/* 로고, 나가기 */}
@@ -95,10 +113,10 @@ function DebateCounterPage() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={handleExit}
         />
         <button
-          onClick={() => navigate("/")}
+          onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기
