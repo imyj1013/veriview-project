@@ -9,7 +9,7 @@ function DebateOpeningPage() {
   const recordedChunksRef = useRef([]);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
-  const { state } = useLocation(); // topic, position, debateId
+  const { state } = useLocation(); 
 
   useEffect(() => {
     const startCamera = async () => {

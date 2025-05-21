@@ -11,7 +11,7 @@ function DebateClosingPage() {
   const recordedChunksRef = useRef([]);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
-  const { state } = useLocation(); // topic, position, debateId
+  const { state } = useLocation(); 
 
   useEffect(() => {
     const startCamera = async () => {
@@ -62,6 +62,11 @@ function DebateClosingPage() {
 
       mediaRecorderRef.current.onstop = async () => {
         const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+
+        if (videoRef.current?.srcObject) {
+          videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+          videoRef.current.srcObject = null; 
+        }
 
         try {
           const fixedBlob = await fixWebmDuration(originalBlob); 
