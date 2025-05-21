@@ -61,7 +61,6 @@ function DebateClosingPage() {
 
     startCamera();
 
-    // 컴포넌트 언마운트 시 카메라 꺼주기
     return () => {
       stopCamera();
     };

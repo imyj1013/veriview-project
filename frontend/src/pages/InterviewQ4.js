@@ -95,7 +95,7 @@ function InterviewQ4() {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
-        navigate("/interview/feedback"); // 다음 페이지 경로에 맞게 수정
+        navigate("/interview/q5"); 
       } catch (err) {
         alert("영상 업로드 실패");
         console.error(err);
