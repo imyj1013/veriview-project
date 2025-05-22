@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # 전역 변수로 분석기 초기화
 facial_analyzer = None
 speech_analyzer = None
+# speech_analyzer = None
 
 def initialize_analyzers():
     """분석기 초기화 함수"""
