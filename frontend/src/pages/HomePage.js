@@ -12,8 +12,9 @@ function HomePage() {
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_id"); 
     setIsLoggedIn(false);
-    navigate("/login"); // 로그아웃 후 로그인 페이지로 이동
+    navigate("/login"); 
   };
 
   return (
@@ -58,7 +59,7 @@ function HomePage() {
         <HomeButton
           title="AI 개인면접"
           icon="/images/icon_personal.png"
-          onClick={() => navigate("/personal")}
+          onClick={() => navigate("interview/portfolio")}
         />
         <HomeButton
           title="기업 추천"
@@ -76,7 +77,7 @@ function HomeButton({ title, icon, onClick }) {
       onClick={onClick}
       className="w-[200px] h-[200px] cursor-pointer hover:scale-105 transition text-center"
     >
-      <img src={icon} alt={title} className="w-[240px] h-[240px] mb-0" />
+      <img src={icon} alt={title} className="w-[250px] h-[250px] mb-0" />
       <p className="mt-2 text-lg font-medium"></p>
     </div>
   );

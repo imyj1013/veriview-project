@@ -3,13 +3,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import fixWebmDuration from "webm-duration-fix"; // ✅ duration fix 라이브러리 추가
+import fixWebmDuration from "webm-duration-fix";
 
 function DebateUserRebuttalPage() {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
-  const [stream, setStream] = useState(null);
+  const streamRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
   const { state } = useLocation(); // topic, position, debateId
@@ -21,10 +21,12 @@ function DebateUserRebuttalPage() {
           video: true,
           audio: true,
         });
+
+        streamRef.current = userStream;
+
         if (videoRef.current) {
           videoRef.current.srcObject = userStream;
         }
-        setStream(userStream);
 
         const mediaRecorder = new MediaRecorder(userStream, {
           mimeType: "video/webm",
@@ -50,11 +52,19 @@ function DebateUserRebuttalPage() {
     startCamera();
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
+      stopCamera();
     };
   }, []);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
   const handleEnd = async () => {
     if (mediaRecorderRef.current && recording) {
@@ -62,17 +72,25 @@ function DebateUserRebuttalPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
-        const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+        stopCamera();
+
+        const originalBlob = new Blob(recordedChunksRef.current, {
+          type: "video/webm",
+        });
 
         try {
-          const fixedBlob = await fixWebmDuration(originalBlob); // ✅ duration 보정
+          const fixedBlob = await fixWebmDuration(originalBlob);
 
           const formData = new FormData();
           formData.append("file", fixedBlob, "rebuttal-video.webm");
 
-          await axios.post(`/api/debate/${state.debateId}/rebuttal-video`, formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+          await axios.post(
+            `/api/debate/${state.debateId}/rebuttal-video`,
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            }
+          );
 
           navigate("/debate/ai-rebuttal", { state });
         } catch (err) {
@@ -83,6 +101,11 @@ function DebateUserRebuttalPage() {
     }
   };
 
+  const handleExit = () => {
+    stopCamera();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
       {/* 로고, 나가기 */}
@@ -91,10 +114,10 @@ function DebateUserRebuttalPage() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={handleExit}
         />
         <button
-          onClick={() => navigate("/")}
+          onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기

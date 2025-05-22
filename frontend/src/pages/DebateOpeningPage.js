@@ -1,3 +1,5 @@
+// src/pages/DebateOpeningPage.js
+
 import React, { useRef, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -7,9 +9,10 @@ function DebateOpeningPage() {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const streamRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
-  const { state } = useLocation(); // topic, position, debateId
+  const { state } = useLocation(); 
 
   useEffect(() => {
     const startCamera = async () => {
@@ -18,6 +21,8 @@ function DebateOpeningPage() {
           video: true,
           audio: true,
         });
+
+        streamRef.current = stream;
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -47,11 +52,19 @@ function DebateOpeningPage() {
     startCamera();
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
+      stopCamera();
     };
-  }, [state, navigate]);
+  }, []);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
   const handleEnd = () => {
     if (mediaRecorderRef.current && recording) {
@@ -59,10 +72,14 @@ function DebateOpeningPage() {
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
-        const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+        stopCamera();
+
+        const originalBlob = new Blob(recordedChunksRef.current, {
+          type: "video/webm",
+        });
 
         try {
-          const fixedBlob = await fixWebmDuration(originalBlob); 
+          const fixedBlob = await fixWebmDuration(originalBlob);
 
           const formData = new FormData();
           formData.append("file", fixedBlob, "opening-video.webm");
@@ -84,6 +101,11 @@ function DebateOpeningPage() {
     }
   };
 
+  const handleExit = () => {
+    stopCamera();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
       {/* 상단 로고 + 나가기 */}
@@ -92,10 +114,10 @@ function DebateOpeningPage() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={handleExit}
         />
         <button
-          onClick={() => navigate("/")}
+          onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기
