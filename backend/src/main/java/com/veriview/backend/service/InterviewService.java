@@ -71,45 +71,58 @@ public class InterviewService {
             feedbackRepository.save(feedback);
         }
 
-        // 2. Flask에 질문 생성 요청
-        String flaskUrl = "http://localhost:5000/ai/interview/generate-question";
+        // // 2. Flask에 질문 생성 요청
+        // String flaskUrl = "http://localhost:5000/ai/interview/generate-question";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        // HttpHeaders headers = new HttpHeaders();
+        // headers.setContentType(MediaType.APPLICATION_JSON);
 
-        Map<String, Object> request = new HashMap<>();
-        request.put("interview_id", savedInterview.getInterviewId());
-        request.put("job_category", dto.getJob_category());
-        request.put("workexperience", dto.getWorkexperience());
-        request.put("education", dto.getEducation());
-        request.put("experience_description", dto.getExperience_description());
-        request.put("tech_stack", dto.getTech_stack());
-        request.put("personality", dto.getPersonality());
+        // Map<String, Object> request = new HashMap<>();
+        // request.put("interview_id", savedInterview.getInterviewId());
+        // request.put("job_category", dto.getJob_category());
+        // request.put("workexperience", dto.getWorkexperience());
+        // request.put("education", dto.getEducation());
+        // request.put("experience_description", dto.getExperience_description());
+        // request.put("tech_stack", dto.getTech_stack());
+        // request.put("personality", dto.getPersonality());
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+        // HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(flaskUrl, entity, Map.class);
+        // ResponseEntity<Map> response = restTemplate.postForEntity(flaskUrl, entity, Map.class);
 
-        List<Map<String, String>> questions = (List<Map<String, String>>) response.getBody().get("questions");
-        for (Map<String, String> q : questions) {
-            InterviewQuestion question = questionRepository.findByInterview_InterviewIdAndQuestionType(savedInterview.getInterviewId(), InterviewQuestion.QuestionType.valueOf(q.get("question_type"))).orElseThrow(() -> new RuntimeException("Question not found"));
-            question.setInterview(savedInterview);
-            question.setQuestionText(q.get("question_text"));
-            questionRepository.save(question);
-        }
+        // List<Map<String, String>> questions = (List<Map<String, String>>) response.getBody().get("questions");
+        // for (Map<String, String> q : questions) {
+        //     InterviewQuestion question = questionRepository.findByInterview_InterviewIdAndQuestionType(savedInterview.getInterviewId(), InterviewQuestion.QuestionType.valueOf(q.get("question_type"))).orElseThrow(() -> new RuntimeException("Question not found"));
+        //     question.setInterview(savedInterview);
+        //     question.setQuestionText(q.get("question_text"));
+        //     questionRepository.save(question);
+        // }
 
-        return savedInterview.getInterviewId();
+        // return savedInterview.getInterviewId();
+
+        return 1;
     }
     
 
     public InterviewQuestionResponse getInterviewQuestions(int interviewId) {
+        // List<InterviewQuestion> questions = questionRepository.findByInterview_InterviewId(interviewId);
+
+        // List<InterviewQuestionDto> questionDtoList = questions.stream().filter(q -> !q.getQuestionType().name().equals("FOLLOWUP"))
+        //     .map(q -> new InterviewQuestionDto(
+        //         q.getInterviewQuestionId(),
+        //         q.getQuestionType().name(),
+        //         q.getQuestionText()))
+        //     .collect(Collectors.toList());
+
+        // return new InterviewQuestionResponse(interviewId, questionDtoList);
+
         List<InterviewQuestion> questions = questionRepository.findByInterview_InterviewId(interviewId);
 
         List<InterviewQuestionDto> questionDtoList = questions.stream().filter(q -> !q.getQuestionType().name().equals("FOLLOWUP"))
             .map(q -> new InterviewQuestionDto(
                 q.getInterviewQuestionId(),
                 q.getQuestionType().name(),
-                q.getQuestionText()))
+                "면접질문입니다"))
             .collect(Collectors.toList());
 
         return new InterviewQuestionResponse(interviewId, questionDtoList);
@@ -178,36 +191,96 @@ public class InterviewService {
             throw new RuntimeException("Video file not found: " + answer.getVideoPath());
         }
 
-        // Flask 서버로 전송
-        String flaskUrl = "http://localhost:5000/ai/interview/" + interviewId + "/genergate-followup-question";
+        // // Flask 서버로 전송
+        // String flaskUrl = "http://localhost:5000/ai/interview/" + interviewId + "/genergate-followup-question";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        // HttpHeaders headers = new HttpHeaders();
+        // headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new FileSystemResource(videoFile));
+        // MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        // body.add("file", new FileSystemResource(videoFile));
 
-        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-            flaskUrl,
-            org.springframework.http.HttpMethod.POST,
-            requestEntity,
-            new org.springframework.core.ParameterizedTypeReference<>() {}
-        );
+        // HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        // ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+        //     flaskUrl,
+        //     org.springframework.http.HttpMethod.POST,
+        //     requestEntity,
+        //     new org.springframework.core.ParameterizedTypeReference<>() {}
+        // );
     
-        Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+        // Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
-        InterviewQuestion followupquestion = questionRepository.findByInterview_InterviewIdAndQuestionType(interviewId, InterviewQuestion.QuestionType.valueOf("FOLLOWUP")).orElseThrow(() -> new RuntimeException("Question not found"));
-        followupquestion.setQuestionText((String) res.get("question_text"));
-        questionRepository.save(followupquestion);
+        // InterviewQuestion followupquestion = questionRepository.findByInterview_InterviewIdAndQuestionType(interviewId, InterviewQuestion.QuestionType.valueOf("FOLLOWUP")).orElseThrow(() -> new RuntimeException("Question not found"));
+        // followupquestion.setQuestionText((String) res.get("question_text"));
+        // questionRepository.save(followupquestion);
 
 
-        return new InterviewFollowupResponse(interviewId, followupquestion.getInterviewQuestionId(), "FOLLOWUP", followupquestion.getQuestionText());
+        // return new InterviewFollowupResponse(interviewId, followupquestion.getInterviewQuestionId(), "FOLLOWUP", followupquestion.getQuestionText());
+
+        return new InterviewFollowupResponse(interviewId, 5, "FOLLOWUP", "꼬리질문입니다.");
     }
 
     public InterviewFeedbackResponse getFeedback(int interviewId) {
 
         List<InterviewFeedbackDto> interview_feedback = new ArrayList<>();
+
+        // for (InterviewQuestion.QuestionType questionType : InterviewQuestion.QuestionType.values()) {
+        //     InterviewQuestion question = questionRepository.findByInterview_InterviewIdAndQuestionType(interviewId, questionType).orElseThrow(() -> new RuntimeException("Question not found"));
+        //     InterviewAnswer answer = answerRepository.findByInterviewQuestion_InterviewQuestionId(question.getInterviewQuestionId()).orElseThrow(() -> new RuntimeException("Answer not found"));
+
+        //     File videoFile = new File(answer.getVideoPath());
+
+        //     if (!videoFile.exists()) {
+        //         throw new RuntimeException("Video file not found: " + answer.getVideoPath());
+        //     }
+
+        //     // Flask 서버로 전송
+        //     String flaskUrl = "http://localhost:5000/ai/interview/" + interviewId + "/" + questionType.name() + "/answer-video";
+
+        //     HttpHeaders headers = new HttpHeaders();
+        //     headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        //     MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        //     body.add("file", new FileSystemResource(videoFile));
+
+        //     HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        //     ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+        //         flaskUrl,
+        //         org.springframework.http.HttpMethod.POST,
+        //         requestEntity,
+        //         new org.springframework.core.ParameterizedTypeReference<>() {}
+        //     );
+        
+        //     Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+
+        //     answer.setTranscript((String) res.get("answer_text"));
+        //     answerRepository.save(answer);
+
+        //     InterviewFeedback feedback = feedbackRepository.findByInterviewAnswer_InterviewAnswerId(answer.getInterviewAnswerId()).orElseThrow(() -> new RuntimeException("Question not found"));
+        //     feedback.setContentScore((Float) res.get("content_score"));
+        //     feedback.setVoiceScore((Float) res.get("voice_score"));
+        //     feedback.setActionScore((Float) res.get("action_score"));
+        //     feedback.setContentFeedback((String) res.get("content_feedback"));
+        //     feedback.setVoiceFeedback((String) res.get("voice_feedback"));
+        //     feedback.setActionFeedback((String) res.get("action_feedback"));
+        //     feedback.setFeedback((String) res.get("feedback"));
+        //     feedbackRepository.save(feedback);
+
+        //     InterviewFeedbackDto feedbackDto = new InterviewFeedbackDto();
+        //     feedbackDto.setQuestion_type((String) questionType.name());
+        //     feedbackDto.setQuestion_text((String) question.getQuestionText());
+        //     feedbackDto.setAnswer_text((String) res.get("answer_text"));
+        //     feedbackDto.setContent_score((Float) res.get("content_score"));
+        //     feedbackDto.setVoice_score((Float) res.get("voice_score"));
+        //     feedbackDto.setAction_score((Float) res.get("action_score"));
+        //     feedbackDto.setContent_feedback((String) res.get("content_feedback"));
+        //     feedbackDto.setVoice_feedback((String) res.get("voice_feedback"));
+        //     feedbackDto.setAction_feedback((String) res.get("action_feedback"));
+        //     feedbackDto.setFeedback((String) res.get("feedback"));
+
+        //     interview_feedback.add(feedbackDto);
+
+        // }
 
         for (InterviewQuestion.QuestionType questionType : InterviewQuestion.QuestionType.values()) {
             InterviewQuestion question = questionRepository.findByInterview_InterviewIdAndQuestionType(interviewId, questionType).orElseThrow(() -> new RuntimeException("Question not found"));
@@ -219,49 +292,49 @@ public class InterviewService {
                 throw new RuntimeException("Video file not found: " + answer.getVideoPath());
             }
 
-            // Flask 서버로 전송
-            String flaskUrl = "http://localhost:5000/ai/interview/" + interviewId + "/" + questionType.name() + "/answer-video";
+            // // Flask 서버로 전송
+            // String flaskUrl = "http://localhost:5000/ai/interview/" + interviewId + "/" + questionType.name() + "/answer-video";
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            // HttpHeaders headers = new HttpHeaders();
+            // headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", new FileSystemResource(videoFile));
+            // MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            // body.add("file", new FileSystemResource(videoFile));
 
-            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                flaskUrl,
-                org.springframework.http.HttpMethod.POST,
-                requestEntity,
-                new org.springframework.core.ParameterizedTypeReference<>() {}
-            );
+            // HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            // ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+            //     flaskUrl,
+            //     org.springframework.http.HttpMethod.POST,
+            //     requestEntity,
+            //     new org.springframework.core.ParameterizedTypeReference<>() {}
+            // );
         
-            Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+            // Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
-            answer.setTranscript((String) res.get("answer_text"));
+            answer.setTranscript((String) "answer_text");
             answerRepository.save(answer);
 
             InterviewFeedback feedback = feedbackRepository.findByInterviewAnswer_InterviewAnswerId(answer.getInterviewAnswerId()).orElseThrow(() -> new RuntimeException("Question not found"));
-            feedback.setContentScore((Float) res.get("content_score"));
-            feedback.setVoiceScore((Float) res.get("voice_score"));
-            feedback.setActionScore((Float) res.get("action_score"));
-            feedback.setContentFeedback((String) res.get("content_feedback"));
-            feedback.setVoiceFeedback((String) res.get("voice_feedback"));
-            feedback.setActionFeedback((String) res.get("action_feedback"));
-            feedback.setFeedback((String) res.get("feedback"));
+            feedback.setContentScore((float) 5);
+            feedback.setVoiceScore((float) 4);
+            feedback.setActionScore((float) 3);
+            feedback.setContentFeedback("content_feedback");
+            feedback.setVoiceFeedback("voice_feedback");
+            feedback.setActionFeedback("action_feedback");
+            feedback.setFeedback("feedback");
             feedbackRepository.save(feedback);
 
             InterviewFeedbackDto feedbackDto = new InterviewFeedbackDto();
             feedbackDto.setQuestion_type((String) questionType.name());
-            feedbackDto.setQuestion_text((String) question.getQuestionText());
-            feedbackDto.setAnswer_text((String) res.get("answer_text"));
-            feedbackDto.setContent_score((Float) res.get("content_score"));
-            feedbackDto.setVoice_score((Float) res.get("voice_score"));
-            feedbackDto.setAction_score((Float) res.get("action_score"));
-            feedbackDto.setContent_feedback((String) res.get("content_feedback"));
-            feedbackDto.setVoice_feedback((String) res.get("voice_feedback"));
-            feedbackDto.setAction_feedback((String) res.get("action_feedback"));
-            feedbackDto.setFeedback((String) res.get("feedback"));
+            feedbackDto.setQuestion_text("question");
+            feedbackDto.setAnswer_text("answer_text");
+            feedbackDto.setContent_score((float) 5);
+            feedbackDto.setVoice_score((float) 4);
+            feedbackDto.setAction_score((float) 3);
+            feedbackDto.setContent_feedback("content_feedback");
+            feedbackDto.setVoice_feedback("voice_feedback");
+            feedbackDto.setAction_feedback("action_feedback");
+            feedbackDto.setFeedback("feedback");
 
             interview_feedback.add(feedbackDto);
 
