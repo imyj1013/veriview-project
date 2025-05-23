@@ -21,13 +21,13 @@ public class JobPostingService {
     private JobPostingRepository repository;
 
     private final Map<String, List<String>> categoryurl = Map.of(
-        "BM", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=102&occ1=101&occ1=100&occ1=210&scale=5&scale=2&scale=4&page="),
-        "SM", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=160&occ1=106&scale=5&scale=2&scale=4&page="),
-        "PS", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ2=225&occ2=631&occ1=140&occ1=103&occ1=190&scale=5&scale=2&scale=4&page="),
-        "RND", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=120&occ1=107&scale=5&scale=2&scale=4&page="),
-        "ICT", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?scale=5&scale=2&scale=4&occ1=150&page="),
-        "ARD", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ2=300&occ2=596&occ1=104&occ1=200&scale=5&scale=2&scale=4&page="),
-        "MM", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=170&scale=5&scale=2&scale=4&page=")
+        "BM", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=102&occ1=101&occ1=100&occ1=210&page="),
+        "SM", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=160&occ1=106&page="),
+        "PS", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ2=225&occ2=631&occ1=140&occ1=103&occ1=190&page="),
+        "RND", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=120&occ1=107&page="),
+        "ICT", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=150&page="),
+        "ARD", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ2=300&occ2=596&occ1=104&occ1=200&page="),
+        "MM", List.of("https://job.incruit.com/jobdb_list/searchjob.asp?occ1=170&page=")
     );
 
 
@@ -40,7 +40,7 @@ public class JobPostingService {
             for (String url : urls) {
 
                 int count = 0;
-                for (int page = 0; page <= 25; page++) {
+                for (int page = 0; page <= 100; page++) {
                     
                     try {
                         // User-Agent 설정 및 요청 간 랜덤 딜레이 추가
@@ -69,19 +69,23 @@ public class JobPostingService {
                                 }
 
                                 Elements conditions = job.select("div.cell_mid div.cl_md span");
-                                if (conditions.size() < 3) continue;
+                                if (conditions.size() < 4) continue;
 
+                                String loc = conditions.get(0).text().trim();
                                 String workexp = conditions.get(1).text().trim();
                                 String education = conditions.get(2).text().trim();
-                                String corp = job.select("div.cell_first a").text().trim();
+                                String emp = conditions.get(3).text().trim();
+                                String corp = job.select("div.cell_first div.cl_top a").text().trim();
 
                                 if (!repository.existsByTitleAndCorporation(title, corp)) {
                                     JobPosting posting = new JobPosting();
                                     posting.setTitle(title);
                                     posting.setDeadline(deadline);
                                     posting.setKeyword(keywordBuilder.toString());
+                                    posting.setLocation(loc);
                                     posting.setWorkexperience(workexp);
                                     posting.setEducation(education);
+                                    posting.setEmploymenttype(emp);
                                     posting.setCorporation(corp);
                                     posting.setCategory(category);
                                     repository.save(posting);
