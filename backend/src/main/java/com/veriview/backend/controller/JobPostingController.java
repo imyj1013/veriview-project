@@ -16,4 +16,9 @@ public class JobPostingController {
         service.crawlAndSaveAll();
         return "채용 공고 크롤링 완료!";
     }
+
+    @PostMapping("/import")
+    public String importCsv() {
+        return service.importCsvData();
+    }
 }
