@@ -62,8 +62,15 @@ function DebateFeedbackPage() {
     fetchFeedback();
   }, [state]);
 
-  const renderStars = (score) =>
-    "★".repeat(Math.round(score)) + "☆".repeat(5 - Math.round(score));
+   const renderStars = (score) => {
+    const fullStars = Math.round(score);
+    return (
+      <span className="text-yellow-400">
+        {"★".repeat(fullStars)}
+        <span className="text-gray-300">{"★".repeat(5 - fullStars)}</span>
+      </span>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white py-10 flex flex-col items-center">
