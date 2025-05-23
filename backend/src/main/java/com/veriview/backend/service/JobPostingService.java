@@ -2,19 +2,24 @@ package com.veriview.backend.service;
 
 import com.veriview.backend.entity.JobPosting;
 import com.veriview.backend.repository.JobPostingRepository;
+import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.concurrent.ThreadLocalRandom;
-
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class JobPostingService {
 
     @Autowired
@@ -128,5 +133,46 @@ public class JobPostingService {
         long mmCount = repository.countByCategory("MM");
         System.out.println("MM 카테고리의 공고 수: " + mmCount);
 
+    }
+
+    public String importCsvData() {
+        int count = 0;
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        new ClassPathResource("job_postings.csv").getInputStream(), StandardCharsets.UTF_8))) {
+
+            String line = reader.readLine(); // header skip
+
+            while ((line = reader.readLine()) != null) {
+                String[] tokens = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+
+                for (int i = 0; i < tokens.length; i++) {
+                    tokens[i] = tokens[i].trim().replaceAll("^\"|\"$", ""); // " 제거
+                }
+
+                if (tokens.length < 10) continue;
+
+                JobPosting posting = new JobPosting();
+                posting.setCategory(tokens[1]);
+                posting.setCorporation(tokens[2]);
+                posting.setDeadline(tokens[3]);
+                posting.setEducation(tokens[4]);
+                posting.setEmploymenttype(tokens[5]);
+                posting.setKeyword(tokens[6]);
+                posting.setLocation(tokens[7]);
+                posting.setTitle(tokens[8]);
+                posting.setWorkexperience(tokens[9]);
+
+                repository.save(posting);
+                count++;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "CSV import failed: " + e.getMessage();
+        }
+
+        return "CSV import completed: " + count + " entries saved.";
     }
 }

@@ -3,7 +3,7 @@ package com.veriview.backend.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "job_postings")
+@Table(name = "job_posting")
 public class JobPosting {
 
     @Id
