@@ -64,7 +64,7 @@ function HomePage() {
         <HomeButton
           title="기업 추천"
           icon="/images/icon_company.png"
-          onClick={() => alert("아직 준비중입니다")}
+          onClick={() => navigate("recruitment/JobRecommendationForm")}
         />
       </div>
     </div>

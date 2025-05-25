@@ -26,8 +26,6 @@ import InterviewIntroPage from "./pages/InterviewIntroPage"; //설명페이지
 import InterviewQuestionPage from "./pages/InterviewQuestionPage"; //시작페이지
 import InterviewEndPage from "./pages/InterviewEndPage"; //시작페이지
 import InterviewFeedbackPage from "./pages/InterviewFeedbackPage"; //시작페이지
-
-// 개인면접 질문별 페이지
 import InterviewQ1 from "./pages/InterviewQ1";
 import InterviewQ2 from "./pages/InterviewQ2";
 import InterviewQ3 from "./pages/InterviewQ3";
@@ -35,6 +33,8 @@ import InterviewQ4 from "./pages/InterviewQ4";
 import InterviewQ5 from "./pages/InterviewQ5";
 
 //공고추천
+import JobRecommendationForm from "./pages/JobRecommendationForm";
+import JobRecommendationPage from "./pages/JobRecommendationPage";
 
 function App() {
   return (
@@ -65,6 +65,9 @@ function App() {
         <Route path="/interview/q3" element={<InterviewQ3 />} />
         <Route path="/interview/q4" element={<InterviewQ4 />} />
         <Route path="/interview/q5" element={<InterviewQ5 />} />
+        {/* 공고추천 */}  
+        <Route path="/recruitment/JobRecommendationForm" element={<JobRecommendationForm />} />
+        <Route path="/recruitment/JobRecommendationPage" element={<JobRecommendationPage />} />
       </Routes>
   );
 }
