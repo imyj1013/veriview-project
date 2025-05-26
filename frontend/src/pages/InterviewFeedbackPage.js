@@ -15,6 +15,7 @@ function InterviewFeedbackPage() {
         const res = await axios.get(`/api/interview/${interviewId}/feedback`);
         const formatted = res.data.interview_feedback.map((item, idx) => ({
           type: `Q${idx + 1}.`,
+          question_type: item.question_type,
           question: item.question_text,
           answer: item.answer_text,
           scores: {
@@ -33,8 +34,13 @@ function InterviewFeedbackPage() {
   }, []);
 
   const renderStars = (score) => {
-    const stars = Math.round(score);
-    return "★★★★★☆☆☆☆☆".slice(5 - stars, 10 - stars);
+    const fullStars = Math.round(score);
+    return (
+      <span className="text-yellow-400">
+        {"★".repeat(fullStars)}
+        <span className="text-gray-300">{"★".repeat(5 - fullStars)}</span>
+      </span>
+    );
   };
 
   return (
@@ -57,56 +63,52 @@ function InterviewFeedbackPage() {
 
       {/* 피드백 섹션 */}
       {feedbackData.map((item, index) => (
-        <div
-          key={index}
-          className="w-full max-w-4xl border-t border-gray-300 pt-6 mb-16"
-        >
-          <h2 className="text-xl font-semibold mb-6">{item.type}</h2>
+        <div key={index} className="w-full max-w-4xl border-t border-gray-300 pt-6 mb-16">
+          <h2 className="text-lg font-bold mb-2">질문유형 : {item.question_type}</h2>
 
-          <div className="mb-5">
-            <span className="inline-block w-28 font-semibold">질문</span>
-            <span>“{item.question}”</span>
-          </div>
+          <table className="table-fixed w-full border border-gray-300 text-sm mb-6">
+            <tbody>
+              <tr className="border-b">
+                <td className="w-28 font-semibold bg-gray-50 p-2">질문</td>
+                <td className="p-2">{item.question}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="font-semibold bg-gray-50 p-2 align-top">사용자 답변</td>
+                <td className="p-2 whitespace-pre-line">{item.answer}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="font-semibold bg-gray-50 p-2 align-top">피드백</td>
+                <td className="p-2 whitespace-pre-line">{item.feedback}</td>
+              </tr>
+            </tbody>
+          </table>
 
-          <div className="mb-5">
-            <span className="inline-block w-28 font-semibold align-top">사용자 답변</span>
-            <span className="inline-block max-w-xl">“{item.answer}”</span>
-          </div>
-
-          <div className="mb-5">
-            <span className="inline-block w-28 font-semibold align-top">내용 점수</span>
-            <div>
-              <span className="inline-block w-28">
-                {renderStars(item.scores.content.value)} ({item.scores.content.value}/5)
-              </span>
-              <p className="text-sm text-gray-600 mt-1 ml-28">{item.scores.content.feedback}</p>
-            </div>
-          </div>
-
-          <div className="mb-5">
-            <span className="inline-block w-28 font-semibold align-top">목소리 점수</span>
-            <div>
-              <span className="inline-block w-28">
-                {renderStars(item.scores.voice.value)} ({item.scores.voice.value}/5)
-              </span>
-              <p className="text-sm text-gray-600 mt-1 ml-28">{item.scores.voice.feedback}</p>
-            </div>
-          </div>
-
-          <div className="mb-9">
-            <span className="inline-block w-28 font-semibold align-top">자세/행동 점수</span>
-            <div>
-              <span className="inline-block w-28">
-                {renderStars(item.scores.behavior.value)} ({item.scores.behavior.value}/5)
-              </span>
-              <p className="text-sm text-gray-600 mt-1 ml-28">{item.scores.behavior.feedback}</p>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <span className="inline-block w-28 font-semibold align-top">종합 피드백</span>
-            <span className="inline-block max-w-xl text-gray-800 text-base">{item.feedback}</span>
-          </div>
+          <table className="table-fixed w-full border border-gray-300 text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="w-24 py-2">점수</th>
+                <th className="w-48 py-2">평가항목</th>
+                <th className="py-2">피드백</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-t">
+                <td className="text-center py-2">{renderStars(item.scores.content.value)} ({item.scores.content.value})</td>
+                <td className="text-center">내용 점수</td>
+                <td className="px-3 py-2">{item.scores.content.feedback}</td>
+              </tr>
+              <tr className="border-t">
+                <td className="text-center py-2">{renderStars(item.scores.voice.value)} ({item.scores.voice.value})</td>
+                <td className="text-center">목소리 점수</td>
+                <td className="px-3 py-2">{item.scores.voice.feedback}</td>
+              </tr>
+              <tr className="border-t">
+                <td className="text-center py-2">{renderStars(item.scores.behavior.value)} ({item.scores.behavior.value})</td>
+                <td className="text-center">자세/행동 점수</td>
+                <td className="px-3 py-2">{item.scores.behavior.feedback}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       ))}
     </div>

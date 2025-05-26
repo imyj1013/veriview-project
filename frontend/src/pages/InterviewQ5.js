@@ -16,6 +16,14 @@ function InterviewQ5() {
   const [intervalId, setIntervalId] = useState(null);
   const [questionText, setQuestionText] = useState("");
 
+  const stopCamera = () => {
+    const stream = videoRef.current?.srcObject;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
+  
   useEffect(() => {
     const interviewId = localStorage.getItem("interview_id");
 

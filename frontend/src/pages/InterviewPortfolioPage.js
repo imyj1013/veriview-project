@@ -150,7 +150,7 @@ function InterviewPortfolioPage() {
         {/* 희망직무 */}
         <div>
           <label className="block mb-2 font-semibold">희망직무</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {jobOptions.map((j) => (
               <button
                 key={j}
