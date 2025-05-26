@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -95,38 +95,50 @@ const JobRecommendationForm = () => {
     certificate: "",
     skills: "",
   });
+  useEffect(() => {
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+    }
+  }, []);
 
   
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const userId = localStorage.getItem("user_id");
-  const fullEducation = `${form.education} ${form.status}`.trim();
-  const location = form.region === "전국" ? "전국" : `${form.region} ${form.subregion}`.trim();
-  localStorage.setItem("user_location", location); //location 저장
-  
-  const payload = {
-    user_id: userId,
-    education: fullEducation,
-    major: form.major,
-    double_major: form.doubleMajor,
-    workexperience: form.experience,
-    qualification: form.certificate,
-    tech_stack: form.skills,
-    location: location,
-    category: form.job,
-    employmenttype: form.type,
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+    const fullEducation = `${form.education} ${form.status}`.trim();
+    const location = form.region === "전국" ? "전국" : `${form.region} ${form.subregion}`.trim();
+    localStorage.setItem("user_location", location); //location 저장
+    
+    const payload = {
+      user_id: userId,
+      education: fullEducation,
+      major: form.major,
+      double_major: form.doubleMajor,
+      workexperience: form.experience,
+      qualification: form.certificate,
+      tech_stack: form.skills,
+      location: location,
+      category: form.job,
+      employmenttype: form.type,
+    };
+
+    try {
+      const response = await axios.post("/api/recruitment/start", payload);
+      localStorage.setItem("job_postings", JSON.stringify(response.data.posting));
+      navigate("/recruitment/JobRecommendationPage");
+    } catch (error) {
+      console.error("채용공고 추천 실패:", error);
+      alert("요청에 실패했습니다.");
+    }
   };
-
-  try {
-    const response = await axios.post("/api/recruitment/start", payload);
-    localStorage.setItem("job_postings", JSON.stringify(response.data.posting));
-    navigate("/recruitment/JobRecommendationPage");
-  } catch (error) {
-    console.error("채용공고 추천 실패:", error);
-    alert("요청에 실패했습니다.");
-  }
-};
 
 
   const handleRegionChange = (e) => {

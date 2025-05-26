@@ -8,6 +8,7 @@ import fixWebmDuration from "webm-duration-fix";
 function InterviewQ5() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const streamRef = useRef(null); // ✅ 스트림 추적용 ref 추가
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -16,14 +17,18 @@ function InterviewQ5() {
   const [intervalId, setIntervalId] = useState(null);
   const [questionText, setQuestionText] = useState("");
 
+  // ✅ 카메라 및 리소스 정리 함수
   const stopCamera = () => {
-    const stream = videoRef.current?.srcObject;
+    const stream = streamRef.current || videoRef.current?.srcObject;
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
+    }
+    if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    streamRef.current = null;
   };
-  
+
   useEffect(() => {
     const interviewId = localStorage.getItem("interview_id");
 
@@ -40,7 +45,10 @@ function InterviewQ5() {
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        streamRef.current = stream; // ✅ 스트림 추적
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
@@ -50,10 +58,9 @@ function InterviewQ5() {
     fetchFollowupQuestion();
     startCamera();
 
+    // ✅ 컴포넌트 언마운트 시 카메라 정리
     return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
+      stopCamera();
       if (intervalId) clearInterval(intervalId);
     };
   }, []);
@@ -89,10 +96,12 @@ function InterviewQ5() {
 
   const stopRecording = () => {
     if (!mediaRecorderRef.current) return;
+
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     clearInterval(intervalId);
 
+    // ✅ 레코딩 종료 후 처리
     mediaRecorderRef.current.onstop = async () => {
       const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
 
@@ -110,6 +119,7 @@ function InterviewQ5() {
           }
         );
 
+        stopCamera(); // ✅ 영상 업로드 후 카메라 정리
         navigate("/interview/feedback");
       } catch (err) {
         alert("영상 업로드 실패");
@@ -129,6 +139,12 @@ function InterviewQ5() {
     }
   };
 
+  // ✅ 페이지 나가기 시 카메라 정리 후 이동
+  const handleExit = () => {
+    stopCamera();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
       {/* 상단바 */}
@@ -137,10 +153,10 @@ function InterviewQ5() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={handleExit} // ✅ 로고 클릭 시 카메라 정리
         />
         <button
-          onClick={() => navigate("/")}
+          onClick={handleExit} // ✅ 나가기 클릭 시 카메라 정리
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기

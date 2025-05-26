@@ -6,7 +6,6 @@ import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
-import InterviewPortfolioPage from "./pages/InterviewPortfolioPage";
 
 // 토론면접 페이지
 import DebateIntroPage from "./pages/DebateIntroPage"; //설명페이지
@@ -23,6 +22,7 @@ import DebateFeedbackPage from "./pages/DebateFeedbackPage"; //피드백 페이�
 //개인면접 페이지
 
 import InterviewIntroPage from "./pages/InterviewIntroPage"; //설명페이지
+import InterviewPortfolioPage from "./pages/InterviewPortfolioPage";
 import InterviewQuestionPage from "./pages/InterviewQuestionPage"; //시작페이지
 import InterviewEndPage from "./pages/InterviewEndPage"; //시작페이지
 import InterviewFeedbackPage from "./pages/InterviewFeedbackPage"; //시작페이지

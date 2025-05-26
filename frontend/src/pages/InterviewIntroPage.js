@@ -11,7 +11,7 @@ function InterviewIntroPage() {
       navigate("/login");
       return;
     }
-    navigate("/interview/question/:step"); 
+    navigate("/interview/InterviewPortfolioPage"); 
   };
 
   return (
