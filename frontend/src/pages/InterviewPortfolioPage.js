@@ -50,10 +50,11 @@ function InterviewPortfolioPage() {
 
       if (res.data.interview_id) {
         localStorage.setItem("interview_id", res.data.interview_id);
-        navigate("/interview/question/q1"); 
+        navigate("/interview/q1"); 
       } else {
         alert("면접 정보 저장 실패");
       }
+      //navigate("/interview/q1"); 
     } catch (err) {
       alert("서버 요청 실패");
       console.error(err);

@@ -49,7 +49,7 @@ function DebateAiOpeningPage() {
 
       {/* AI 입론 */}
       <div className="bg-gray-50 border px-6 py-6 text-gray-800 rounded-lg shadow w-full max-w-3xl mb-10 leading-relaxed whitespace-pre-line">
-        <strong className="block mb-2 text-base text-black-700">AI 토론자의 입장:</strong>
+        <strong className="block mb-2 text-base text-black-700">AI 토론자의 입론:</strong>
         {aiOpeningText}
       </div>
 
