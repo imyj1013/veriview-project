@@ -12,7 +12,7 @@ function DebateCounterPage() {
   const streamRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
-  const { state } = useLocation(); // topic, position, debateId
+  const { state } = useLocation();
 
   useEffect(() => {
     const startCamera = async () => {
@@ -67,10 +67,9 @@ function DebateCounterPage() {
 
   const handleEnd = async () => {
     if (mediaRecorderRef.current && recording) {
-      mediaRecorderRef.current.stop();
-      setRecording(false);
+      const recorder = mediaRecorderRef.current;
 
-      mediaRecorderRef.current.onstop = async () => {
+      recorder.onstop = async () => {
         stopCamera();
 
         const originalBlob = new Blob(recordedChunksRef.current, {
@@ -97,17 +96,22 @@ function DebateCounterPage() {
           console.error(err);
         }
       };
+
+      recorder.stop();
+      setRecording(false);
     }
   };
 
   const handleExit = () => {
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+    }
     stopCamera();
     navigate("/");
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
-      {/* 로고, 나가기 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
@@ -123,12 +127,10 @@ function DebateCounterPage() {
         </button>
       </div>
 
-      {/* 질문 */}
       <div className="bg-gray-100 text-lg font-semibold px-6 py-4 rounded-lg shadow mb-6 w-full max-w-3xl text-center">
         Q. {state?.topic || "질문을 불러올 수 없습니다."}
       </div>
 
-      {/* 영상 */}
       <video
         ref={videoRef}
         autoPlay
@@ -137,7 +139,6 @@ function DebateCounterPage() {
         className="w-full max-w-3xl h-[480px] bg-black rounded-lg mb-6"
       />
 
-      {/* 재반론 종료 */}
       <div className="flex gap-4">
         <span className="text-green-700 font-semibold">녹화 중...</span>
         <button

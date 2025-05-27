@@ -11,6 +11,7 @@ function InterviewQ1() {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const intervalRef = useRef(null);
+  const streamRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -32,6 +33,7 @@ function InterviewQ1() {
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
@@ -43,8 +45,9 @@ function InterviewQ1() {
     startCamera();
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -96,6 +99,11 @@ function InterviewQ1() {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+
         navigate("/interview/q2");
       } catch (err) {
         alert("영상 업로드 실패");
@@ -121,7 +129,6 @@ function InterviewQ1() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
-      {/* 로고, 나가기 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
@@ -137,7 +144,6 @@ function InterviewQ1() {
         </button>
       </div>
 
-      {/* 면접관과 사용자 화면 */}
       <div className="flex flex-col items-center border-4 px-6 py-8 rounded-xl">
         <div className="flex gap-6 mb-4">
           <div className="flex flex-col items-center">
@@ -158,12 +164,10 @@ function InterviewQ1() {
           </div>
         </div>
 
-        {/* 질문 */}
         <div className="bg-gray-100 w-full text-center py-4 px-4 rounded text-lg font-medium mb-4">
           {question}
         </div>
 
-        {/* 버튼 */}
         <div className="flex gap-4">
           {!isRecording ? (
             <button onClick={startRecording} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">
