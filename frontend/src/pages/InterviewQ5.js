@@ -8,16 +8,15 @@ import fixWebmDuration from "webm-duration-fix";
 function InterviewQ5() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
-  const streamRef = useRef(null); // ✅ 스트림 추적용 ref 추가
+  const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [intervalId, setIntervalId] = useState(null);
+  const intervalRef = useRef(null);
   const [questionText, setQuestionText] = useState("");
 
-  // ✅ 카메라 및 리소스 정리 함수
   const stopCamera = () => {
     const stream = streamRef.current || videoRef.current?.srcObject;
     if (stream) {
@@ -37,8 +36,8 @@ function InterviewQ5() {
         const res = await axios.get(`/api/interview/${interviewId}/followup-question`);
         setQuestionText(res.data.question_text || "꼬리질문을 불러올 수 없습니다.");
       } catch (err) {
-        console.error("꼬리질문 불러오기 실패", err);
         setQuestionText("꼬리질문을 불러올 수 없습니다.");
+        console.error(err);
       }
     };
 
@@ -48,7 +47,7 @@ function InterviewQ5() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-        streamRef.current = stream; // ✅ 스트림 추적
+        streamRef.current = stream;
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
@@ -58,10 +57,9 @@ function InterviewQ5() {
     fetchFollowupQuestion();
     startCamera();
 
-    // ✅ 컴포넌트 언마운트 시 카메라 정리
     return () => {
       stopCamera();
-      if (intervalId) clearInterval(intervalId);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
@@ -88,21 +86,17 @@ function InterviewQ5() {
     mediaRecorder.start();
     setIsRecording(true);
 
-    const id = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
     }, 1000);
-    setIntervalId(id);
   };
 
   const stopRecording = () => {
     if (!mediaRecorderRef.current) return;
 
-    mediaRecorderRef.current.stop();
-    setIsRecording(false);
-    clearInterval(intervalId);
-
-    // ✅ 레코딩 종료 후 처리
     mediaRecorderRef.current.onstop = async () => {
+      stopCamera();
+
       const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
 
       try {
@@ -119,51 +113,58 @@ function InterviewQ5() {
           }
         );
 
-        stopCamera(); // ✅ 영상 업로드 후 카메라 정리
         navigate("/interview/feedback");
       } catch (err) {
         alert("영상 업로드 실패");
         console.error(err);
       }
     };
+
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
     if (isPaused) {
       mediaRecorderRef.current.resume();
+      intervalRef.current = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
       setIsPaused(false);
     } else {
       mediaRecorderRef.current.pause();
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setIsPaused(true);
     }
   };
 
-  // ✅ 페이지 나가기 시 카메라 정리 후 이동
   const handleExit = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+    }
     stopCamera();
     navigate("/");
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
-      {/* 상단바 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={handleExit} // ✅ 로고 클릭 시 카메라 정리
+          onClick={handleExit}
         />
         <button
-          onClick={handleExit} // ✅ 나가기 클릭 시 카메라 정리
+          onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기
         </button>
       </div>
 
-      {/* 면접관 + 사용자 영상 */}
       <div className="flex flex-col items-center border-4 px-6 py-8 rounded-xl">
         <div className="flex gap-6 mb-4">
           <div className="flex flex-col items-center">
@@ -184,12 +185,10 @@ function InterviewQ5() {
           </div>
         </div>
 
-        {/* 꼬리질문 */}
         <div className="bg-gray-100 w-full text-center py-4 px-4 rounded text-lg font-medium mb-4">
           {questionText}
         </div>
 
-        {/* 버튼 */}
         <div className="flex gap-4">
           {!isRecording ? (
             <button onClick={startRecording} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">

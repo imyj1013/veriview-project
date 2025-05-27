@@ -59,7 +59,7 @@ function HomePage() {
         <HomeButton
           title="AI 개인면접"
           icon="/images/icon_personal.png"
-          onClick={() => navigate("interview/InterviewIntroPage")}
+          onClick={() => navigate("interview/intro")}
         />
         <HomeButton
           title="기업 추천"

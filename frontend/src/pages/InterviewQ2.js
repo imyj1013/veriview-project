@@ -8,12 +8,13 @@ import fixWebmDuration from "webm-duration-fix";
 function InterviewQ2() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const intervalRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [intervalId, setIntervalId] = useState(null);
   const [question, setQuestion] = useState("");
 
   useEffect(() => {
@@ -32,6 +33,7 @@ function InterviewQ2() {
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
@@ -43,12 +45,19 @@ function InterviewQ2() {
     startCamera();
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      }
-      if (intervalId) clearInterval(intervalId);
+      stopCamera();
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  const stopCamera = () => {
+    const stream = streamRef.current || videoRef.current?.srcObject;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+    streamRef.current = null;
+  };
 
   const formatTime = (seconds) => {
     const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -73,19 +82,17 @@ function InterviewQ2() {
     mediaRecorder.start();
     setIsRecording(true);
 
-    const id = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setElapsedTime(prev => prev + 1);
     }, 1000);
-    setIntervalId(id);
   };
 
   const stopRecording = () => {
     if (!mediaRecorderRef.current) return;
-    mediaRecorderRef.current.stop();
-    setIsRecording(false);
-    clearInterval(intervalId);
 
     mediaRecorderRef.current.onstop = async () => {
+      stopCamera();
+
       const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
       try {
         const fixedBlob = await fixWebmDuration(originalBlob);
@@ -103,22 +110,33 @@ function InterviewQ2() {
         console.error(err);
       }
     };
+
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
     if (isPaused) {
       mediaRecorderRef.current.resume();
-      const id = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setElapsedTime(prev => prev + 1);
       }, 1000);
-      setIntervalId(id);
       setIsPaused(false);
     } else {
       mediaRecorderRef.current.pause();
-      clearInterval(intervalId);
+      clearInterval(intervalRef.current);
       setIsPaused(true);
     }
+  };
+
+  const handleExit = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+    }
+    stopCamera();
+    navigate("/");
   };
 
   return (
@@ -128,10 +146,10 @@ function InterviewQ2() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={handleExit}
         />
         <button
-          onClick={() => navigate("/")}
+          onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기
