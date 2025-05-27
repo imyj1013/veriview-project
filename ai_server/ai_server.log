@@ -1,0 +1,66 @@
+2025-05-27 14:55:02,622 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 14:55:22,305 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.16.17.131:5000
+2025-05-27 14:55:22,305 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-27 14:55:22,316 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 14:55:28,927 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 14:55:36,857 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 14:55:36,873 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 14:57:31,340 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\run.py', reloading
+2025-05-27 14:57:32,353 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 14:57:40,144 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 14:57:48,800 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 14:57:48,830 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:04:07,232 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\system_status.py', reloading
+2025-05-27 15:04:08,093 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:04:15,133 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:04:26,041 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:04:26,065 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:04:28,254 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\system_status.py', reloading
+2025-05-27 15:04:29,298 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:04:36,411 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:04:44,777 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:04:44,795 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:04:49,016 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\system_status.py', reloading
+2025-05-27 15:04:49,877 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:04:56,991 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:05:05,986 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:05:06,005 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:05:10,184 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\current_status_test.py', reloading
+2025-05-27 15:05:11,403 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:05:18,600 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:05:29,749 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:05:29,780 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:05:33,993 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\current_status_test.py', reloading
+2025-05-27 15:05:34,908 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:05:41,438 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:05:50,400 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:05:50,427 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:05:57,688 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\current_status_test.py', reloading
+2025-05-27 15:05:58,852 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:06:05,192 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:06:13,878 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:06:13,895 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:18:10,585 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\main.py', reloading
+2025-05-27 15:18:11,536 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:18:17,977 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:18:26,570 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:18:26,588 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 15:18:56,490 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\test_server.py', reloading
+2025-05-27 15:18:57,403 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 15:19:03,976 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 15:19:12,981 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 15:19:13,000 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 16:35:58,356 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 16:36:09,703 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.16.17.131:5000
+2025-05-27 16:36:09,713 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-27 16:36:09,713 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 16:36:15,122 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 16:36:23,191 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 16:36:23,223 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-27 16:44:09,293 - werkzeug - INFO - 127.0.0.1 - - [27/May/2025 16:44:09] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
