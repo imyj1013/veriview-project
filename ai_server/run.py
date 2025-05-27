@@ -105,7 +105,7 @@ def print_dependencies_status(dependencies: Dict[str, bool]) -> None:
     for category, packages in categories.items():
         print(f"\n[{category}]")
         for package in packages:
-            status = "✅ 설치됨" if dependencies.get(package, False) else "❌ 설치 필요"
+            status = "설치됨" if dependencies.get(package, False) else "설치 필요"
             print(f"  {package}: {status}")
     
     # 필수 패키지 설치 확인
@@ -113,7 +113,7 @@ def print_dependencies_status(dependencies: Dict[str, bool]) -> None:
     essential_missing = [pkg for pkg in essential_packages if not dependencies.get(pkg, False)]
     
     if essential_missing:
-        print("\n⚠️  필수 패키지가 설치되지 않았습니다. 다음 명령어로 설치해주세요:")
+        print("\n 필수 패키지가 설치되지 않았습니다. 다음 명령어로 설치해주세요:")
         print(f"  pip install {' '.join(essential_missing)}")
     
     print("\n추가 패키지 설치 방법:")
@@ -170,11 +170,11 @@ def run_server(mode: str, port: int) -> None:
         # 서버 모듈 임포트 및 실행
         if os.path.exists(f"{module_name}.py"):
             logger.info(f"{server_info['name']} 실행 중 (포트: {port})...")
-            print(f"\n🚀 {server_info['name']} 시작...")
-            print(f"📍 서버 주소: http://localhost:{port}")
-            print(f"🔍 테스트 엔드포인트: http://localhost:{port}/ai/test")
-            print(f"📊 상태 확인 엔드포인트: http://localhost:{port}/ai/health")
-            print(f"🔊 TTS 테스트 엔드포인트: http://localhost:{port}/ai/tts-test?text=안녕하세요")
+            print(f"\n {server_info['name']} 시작...")
+            print(f"서버 주소: http://localhost:{port}")
+            print(f"테스트 엔드포인트: http://localhost:{port}/ai/test")
+            print(f"상태 확인 엔드포인트: http://localhost:{port}/ai/health")
+            print(f"TTS 테스트 엔드포인트: http://localhost:{port}/ai/tts-test?text=안녕하세요")
             
             # 서버 모듈 실행
             if mode == "main":
@@ -185,11 +185,11 @@ def run_server(mode: str, port: int) -> None:
                 test_server.app.run(host="0.0.0.0", port=port, debug=True)
         else:
             logger.error(f"서버 모듈을 찾을 수 없습니다: {module_name}.py")
-            print(f"❌ 오류: {module_name}.py 파일을 찾을 수 없습니다.")
+            print(f"오류: {module_name}.py 파일을 찾을 수 없습니다.")
             sys.exit(1)
     except Exception as e:
         logger.error(f"서버 실행 중 오류 발생: {str(e)}")
-        print(f"❌ 서버 실행 오류: {str(e)}")
+        print(f"서버 실행 오류: {str(e)}")
         sys.exit(1)
 
 def main() -> None:
