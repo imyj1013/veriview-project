@@ -35,7 +35,7 @@ function DebateStartPage() {
     };
 
     fetchDebate();
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     if (debateId && countdown > 0) {
