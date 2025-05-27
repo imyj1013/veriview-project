@@ -106,19 +106,13 @@ const JobRecommendationForm = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const userId = localStorage.getItem("user_id");
-    if (!userId) {
-      alert("로그인이 필요합니다.");
-      navigate("/login");
-      return;
-    }
+ 
     const fullEducation = `${form.education} ${form.status}`.trim();
     const location = form.region === "전국" ? "전국" : `${form.region} ${form.subregion}`.trim();
     localStorage.setItem("user_location", location); //location 저장
     
     const payload = {
-      user_id: userId,
+      user_id: localStorage.getItem("user_id"),
       education: fullEducation,
       major: form.major,
       double_major: form.doubleMajor,

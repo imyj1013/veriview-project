@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function InterviewIntroPage() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ function InterviewIntroPage() {
       navigate("/login");
       return;
     }
-    navigate("/interview/InterviewPortfolioPage"); 
+    navigate("/interview/portfolio"); 
   };
 
   return (
