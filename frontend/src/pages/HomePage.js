@@ -18,9 +18,9 @@ function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center relative px-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-start relative px-6 pt-28 mt-24 ">
       {/* 로그인 / 로그아웃 */}
-      <div className="absolute top-10 right-10 space-x-6 text-sm font-medium text-gray-700">
+      <div className="fixed top-10 right-10 space-x-6 text-sm font-medium text-gray-700">
         {isLoggedIn ? (
           <button onClick={handleLogout} className="hover:underline">
             로그아웃

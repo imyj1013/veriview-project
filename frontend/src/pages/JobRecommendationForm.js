@@ -95,24 +95,26 @@ const JobRecommendationForm = () => {
     certificate: "",
     skills: "",
   });
+
   useEffect(() => {
     const userId = localStorage.getItem("user_id");
     if (!userId) {
-      alert("로그인이 필요합니다.");
+      //alert("로그인이 필요합니다.");
       navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     const userId = localStorage.getItem("user_id");
     if (!userId) {
       alert("로그인이 필요합니다.");
-      navigate("/login");
+      //navigate("/login");
       return;
     }
+
     const fullEducation = `${form.education} ${form.status}`.trim();
     const location = form.region === "전국" ? "전국" : `${form.region} ${form.subregion}`.trim();
     localStorage.setItem("user_location", location); //location 저장
