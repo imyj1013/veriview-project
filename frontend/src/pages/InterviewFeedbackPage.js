@@ -9,6 +9,23 @@ function InterviewFeedbackPage() {
   const [feedbackData, setFeedbackData] = useState([]);
 
   useEffect(() => {
+    // ✅ 웹캠 스트림 해제
+    const cleanupTracks = () => {
+      const videos = document.querySelectorAll("video");
+      videos.forEach((video) => {
+        const stream = video.srcObject;
+        if (stream instanceof MediaStream) {
+          stream.getTracks().forEach((track) => track.stop());
+          video.srcObject = null;
+        }
+      });
+    };
+
+    cleanupTracks(); // 진입 시 바로 실행
+    return cleanupTracks; // 페이지를 벗어날 때도 실행
+  }, []);
+
+  useEffect(() => {
     const fetchFeedback = async () => {
       const interviewId = localStorage.getItem("interview_id");
       try {
