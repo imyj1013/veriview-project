@@ -40,7 +40,7 @@ except ImportError as e:
 
 # 공통 모듈 임포트
 try:
-    from job_recommendation_module import JobRecommendationModule
+    from modules.job_recommendation_module import JobRecommendationModule
     job_recommendation_module = JobRecommendationModule()
     JOB_RECOMMENDATION_AVAILABLE = True
     print("✅ 공고추천 모듈 로드 성공")
@@ -48,6 +48,17 @@ except ImportError as e:
     print(f"❌ 공고추천 모듈 로드 실패: {e}")
     JOB_RECOMMENDATION_AVAILABLE = False
     job_recommendation_module = None
+
+# TF-IDF 공고추천 모듈 임포트
+try:
+    from modules.tfidf_job_recommendation_module import TFIDFJobRecommendationModule
+    tfidf_recommendation_module = TFIDFJobRecommendationModule()
+    TFIDF_RECOMMENDATION_AVAILABLE = True
+    print("✅ TF-IDF 공고추천 모듈 로드 성공")
+except ImportError as e:
+    print(f"❌ TF-IDF 공고추천 모듈 로드 실패: {e}")
+    TFIDF_RECOMMENDATION_AVAILABLE = False
+    tfidf_recommendation_module = None
 
 # 개별 모듈 임포트
 try:
@@ -308,23 +319,6 @@ def extract_audio_from_video(video_path: str) -> Optional[str]:
 
 # ==================== API 엔드포인트 ====================
 
-@app.route('/ai/health', methods=['GET'])
-def health_check():
-    """헬스 체크 엔드포인트"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "server_type": "main_server",
-        "services": {
-            "llm": LLM_MODULE_AVAILABLE,
-            "openface": OPENFACE_INTEGRATION_AVAILABLE,
-            "whisper": WHISPER_AVAILABLE,
-            "tts": TTS_AVAILABLE,
-            "librosa": LIBROSA_AVAILABLE,
-            "job_recommendation": JOB_RECOMMENDATION_AVAILABLE
-        }
-    })
-
 @app.route('/ai/test', methods=['GET'])
 def test_connection():
     """연결 테스트 및 상태 확인 엔드포인트"""
@@ -352,7 +346,8 @@ def test_connection():
             "whisper": "사용 가능" if WHISPER_AVAILABLE else "사용 불가",
             "tts": "사용 가능" if TTS_AVAILABLE else "사용 불가",
             "librosa": "사용 가능" if LIBROSA_AVAILABLE else "사용 불가",
-            "job_recommendation": "사용 가능" if JOB_RECOMMENDATION_AVAILABLE else "사용 불가"
+            "job_recommendation": "사용 가능" if JOB_RECOMMENDATION_AVAILABLE else "사용 불가",
+            "tfidf_recommendation": "사용 가능" if TFIDF_RECOMMENDATION_AVAILABLE else "사용 불가"
         },
         "endpoints": {
             "debate": {
@@ -368,7 +363,10 @@ def test_connection():
             "job_recommendation": {
                 "recommend": "/ai/jobs/recommend",
                 "categories": "/ai/jobs/categories",
-                "recruitment_posting": "/ai/recruitment/posting"
+                "recruitment_posting": "/ai/recruitment/posting",
+                "tfidf_recommend": "/ai/jobs/recommend-tfidf",
+                "rare_skills": "/ai/jobs/rare-skills",
+                "tfidf_posting": "/ai/recruitment/posting-tfidf"
             }
         },
         "mode": "실제 AI 모듈 사용 (LLM + OpenFace + Whisper + TTS + Librosa)"
@@ -381,47 +379,104 @@ def test_connection():
 
 @app.route('/ai/recruitment/posting', methods=['POST'])
 def recruitment_posting():
-    """백엔드 연동용 공고추천 엔드포인트"""
-    if not JOB_RECOMMENDATION_AVAILABLE:
+    """백엔드 연동용 공고추천 엔드포인트 (RecruitmentRequest 형식 지원)"""
+    if not JOB_RECOMMENDATION_AVAILABLE and not TFIDF_RECOMMENDATION_AVAILABLE:
         return jsonify({"error": "공고추천 모듈을 사용할 수 없습니다."}), 500
     
     try:
         data = request.json or {}
         logger.info(f"백엔드 공고추천 요청 받음: {data}")
         
-        category = data.get('category', 'ICT')
+        # RecruitmentRequest 형식에서 데이터 추출
         user_id = data.get('user_id')
+        category = data.get('category', 'ICT')
         
-        # 공고추천 모듈로 추천 생성
-        recommendations = job_recommendation_module.get_recommendations_by_category(category, 10)
-        
-        if recommendations.get('status') == 'success':
-            # 백엔드 응답 형식에 맞춰 변환
-            posting_list = []
-            
-            base_ids = {
-                'ICT': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                'BM': [1, 2, 3, 4, 5],
-                'SM': [1, 2, 3, 4, 5]
-            }
-            
-            category_ids = base_ids.get(category, base_ids['ICT'])
-            
-            for i, job in enumerate(recommendations.get('recommendations', [])):
-                job_posting_id = category_ids[i % len(category_ids)]
+        # TF-IDF 추천을 우선 시도
+        if TFIDF_RECOMMENDATION_AVAILABLE:
+            try:
+                # TF-IDF용 프로필 생성
+                tech_stacks = []
+                if data.get('tech_stack'):
+                    tech_stacks = [s.strip() for s in data.get('tech_stack').split(',') if s.strip()]
                 
-                posting_list.append({
-                    "job_posting_id": job_posting_id,
-                    "title": job.get('title', ''),
-                    "keyword": ', '.join(job.get('keywords', [])),
-                    "corporation": job.get('company', '')
-                })
+                certificates = []
+                if data.get('qualification'):
+                    certificates = [s.strip() for s in data.get('qualification').split(',') if s.strip()]
+                
+                majors = []
+                if data.get('major'):
+                    majors = [s.strip() for s in data.get('major').split(',') if s.strip()]
+                if data.get('double_major'):
+                    majors.extend([s.strip() for s in data.get('double_major').split(',') if s.strip()])
+                
+                profile = {
+                    'userId': user_id,
+                    'techStacks': tech_stacks,
+                    'certificateList': certificates,
+                    'majorList': majors,
+                    'careerYear': data.get('workexperience', 0),
+                    'educationLevel': data.get('education', '')
+                }
+                
+                # TF-IDF 모듈로 추천 생성
+                tfidf_result = tfidf_recommendation_module.get_recommendations_by_profile(profile, 10)
+                
+                if tfidf_result.get('status') == 'success':
+                    # TF-IDF 결과를 백엔드 형식으로 변환
+                    posting_list = []
+                    tfidf_postings = tfidf_result.get('posting', [])
+                    
+                    for posting in tfidf_postings:
+                        posting_list.append({
+                            "job_posting_id": posting.get('jobPostingId'),
+                            "title": posting.get('title', ''),
+                            "keyword": ', '.join(posting.get('techStacks', [])),
+                            "corporation": posting.get('corporation', '')
+                        })
+                    
+                    response = {"posting": posting_list}
+                    logger.info(f"백엔드 TF-IDF 공고추천 응답: {len(posting_list)}개 공고")
+                    return jsonify(response)
+                    
+            except Exception as e:
+                logger.warning(f"TF-IDF 추천 실패, 기본 추천으로 폴백: {str(e)}")
+        
+        # 기본 추천 모듈 사용
+        if JOB_RECOMMENDATION_AVAILABLE:
+            recommendations = job_recommendation_module.get_recommendations_by_category(category, 10)
             
-            response = {"posting": posting_list}
-            logger.info(f"백엔드 공고추천 응답: {len(posting_list)}개 공고")
-            return jsonify(response)
-        else:
-            return jsonify({"error": "추천 생성 실패"}), 500
+            if recommendations.get('status') == 'success':
+                # 백엔드 응답 형식에 맞춰 변환
+                posting_list = []
+                
+                base_ids = {
+                    'ICT': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    'BM': [1, 2, 3, 4, 5],
+                    'SM': [1, 2, 3, 4, 5],
+                    'PS': [1, 2, 3, 4, 5],
+                    'RND': [1, 2, 3, 4, 5],
+                    'ARD': [1, 2, 3, 4, 5],
+                    'MM': [1, 2, 3, 4, 5]
+                }
+                
+                category_ids = base_ids.get(category, base_ids['ICT'])
+                
+                for i, job in enumerate(recommendations.get('recommendations', [])):
+                    job_posting_id = category_ids[i % len(category_ids)]
+                    
+                    posting_list.append({
+                        "job_posting_id": job_posting_id,
+                        "title": job.get('title', ''),
+                        "keyword": ', '.join(job.get('keywords', [])),
+                        "corporation": job.get('company', '')
+                    })
+                
+                response = {"posting": posting_list}
+                logger.info(f"백엔드 기본 공고추천 응답: {len(posting_list)}개 공고")
+                return jsonify(response)
+        
+        # 모든 추천이 실패한 경우
+        return jsonify({"error": "추천 생성 실패"}), 500
             
     except Exception as e:
         error_msg = f"백엔드 공고추천 중 오류 발생: {str(e)}"
@@ -496,6 +551,116 @@ def get_job_statistics():
         return jsonify(result)
     except Exception as e:
         error_msg = f"통계 조회 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+# ==================== TF-IDF 공고추천 API 엔드포인트 ====================
+
+@app.route('/ai/jobs/recommend-tfidf', methods=['POST'])
+def recommend_jobs_tfidf():
+    """TF-IDF 기반 공고 추천 엔드포인트"""
+    if not TFIDF_RECOMMENDATION_AVAILABLE:
+        return jsonify({"error": "TF-IDF 공고추천 모듈을 사용할 수 없습니다."}), 500
+    
+    try:
+        data = request.json or {}
+        logger.info(f"TF-IDF 공고 추천 요청 받음: {data}")
+        
+        # 기술 스택 기반 추천
+        if 'skills' in data:
+            skills = data['skills']
+            limit = data.get('limit', 10)
+            result = tfidf_recommendation_module.get_recommendations_by_skills(skills, limit)
+            logger.info(f"기술 스택 {skills} 기반 TF-IDF 추천 완료")
+            return jsonify(result)
+        
+        # 사용자 프로필 기반 추천
+        elif 'profile' in data:
+            profile = data['profile']
+            limit = data.get('limit', 10)
+            result = tfidf_recommendation_module.get_recommendations_by_profile(profile, limit)
+            logger.info("프로필 기반 TF-IDF 추천 완료")
+            return jsonify(result)
+        
+        else:
+            return jsonify({"error": "skills 또는 profile 데이터가 필요합니다."}), 400
+            
+    except Exception as e:
+        error_msg = f"TF-IDF 공고 추천 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/jobs/rare-skills', methods=['GET'])
+def get_rare_skills():
+    """희소 기술 정보 조회 엔드포인트"""
+    if not TFIDF_RECOMMENDATION_AVAILABLE:
+        return jsonify({"error": "TF-IDF 공고추천 모듈을 사용할 수 없습니다."}), 500
+    
+    try:
+        result = tfidf_recommendation_module.get_rare_skills_info()
+        logger.info("희소 기술 정보 조회 완료")
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"희소 기술 정보 조회 중 오류: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/recruitment/posting-tfidf', methods=['POST'])
+def recruitment_posting_tfidf():
+    """백엔드 연동용 TF-IDF 공고추천 엔드포인트"""
+    if not TFIDF_RECOMMENDATION_AVAILABLE:
+        return jsonify({"error": "TF-IDF 공고추천 모듈을 사용할 수 없습니다."}), 500
+    
+    try:
+        data = request.json or {}
+        logger.info(f"백엔드 TF-IDF 공고추천 요청 받음: {data}")
+        
+        # RecruitmentRequest 형식으로 요청 처리
+        user_id = data.get('userId')
+        profile = {
+            'userId': user_id,
+            'techStacks': data.get('techStacks', []),
+            'certificateList': data.get('certificateList', []),
+            'majorList': data.get('majorList', []),
+            'careerYear': data.get('careerYear'),
+            'educationLevel': data.get('educationLevel')
+        }
+        
+        # TF-IDF 모듈로 추천 생성
+        recommendations = tfidf_recommendation_module.get_recommendations_by_profile(profile, 10)
+        
+        if recommendations.get('status') == 'success':
+            # 백엔드 응답 형식에 맞춰 변환 (이미 모듈에서 처리됨)
+            response = {
+                "posting": recommendations.get('posting', []),
+                "totalCount": recommendations.get('totalCount', 0),
+                "userId": user_id,
+                "recommendationType": "tfidf",
+                "generatedAt": recommendations.get('generatedAt')
+            }
+            
+            logger.info(f"백엔드 TF-IDF 공고추천 응답: {len(response.get('posting', []))}개 공고")
+            return jsonify(response)
+        else:
+            return jsonify({"error": "추천 생성 실패"}), 500
+            
+    except Exception as e:
+        error_msg = f"백엔드 TF-IDF 공고추천 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/jobs/crawl-trigger', methods=['POST'])
+def trigger_job_crawling():
+    """채용공고 크롤링 트리거 엔드포인트"""
+    if not TFIDF_RECOMMENDATION_AVAILABLE:
+        return jsonify({"error": "TF-IDF 공고추천 모듈을 사용할 수 없습니다."}), 500
+    
+    try:
+        result = tfidf_recommendation_module.trigger_crawling()
+        logger.info("채용공고 크롤링 트리거 완료")
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"크롤링 트리거 중 오류: {str(e)}"
         logger.error(error_msg)
         return jsonify({"error": error_msg}), 500
 
@@ -991,6 +1156,10 @@ def modules_status():
             "job_recommendation": {
                 "available": JOB_RECOMMENDATION_AVAILABLE,
                 "functions": ["recommend_jobs", "get_categories"] if JOB_RECOMMENDATION_AVAILABLE else []
+            },
+            "tfidf_recommendation": {
+                "available": TFIDF_RECOMMENDATION_AVAILABLE,
+                "functions": ["recommend_by_skills", "recommend_by_profile", "get_rare_skills", "trigger_crawling"] if TFIDF_RECOMMENDATION_AVAILABLE else []
             }
         }
     })
@@ -1006,6 +1175,8 @@ if __name__ == "__main__":
     print("🎯 토론면접 API: http://localhost:5000/ai/debate/<debate_id>/ai-opening")
     print("💼 개인면접 API: http://localhost:5000/ai/interview/start")
     print("📋 공고추천 API: http://localhost:5000/ai/jobs/recommend")
+    print("🎯 TF-IDF 공고추천 API: http://localhost:5000/ai/jobs/recommend-tfidf")
+    print("🔍 희소기술 정보 API: http://localhost:5000/ai/jobs/rare-skills")
     print("=" * 80)
     print("포함된 AI 모듈:")
     print(f"  - LLM: {'✅' if LLM_MODULE_AVAILABLE else '❌'}")
@@ -1014,6 +1185,13 @@ if __name__ == "__main__":
     print(f"  - TTS: {'✅' if TTS_AVAILABLE else '❌'}")
     print(f"  - Librosa: {'✅' if LIBROSA_AVAILABLE else '❌'}")
     print(f"  - 공고추천: {'✅' if JOB_RECOMMENDATION_AVAILABLE else '❌'}")
+    print(f"  - TF-IDF 공고추천: {'✅' if TFIDF_RECOMMENDATION_AVAILABLE else '❌'}")
     print("=" * 80)
+    if TFIDF_RECOMMENDATION_AVAILABLE:
+        print("특별 기능:")
+        print("  - 희소 기술 보너스 시스템 (PyTorch, NVIDIA DeepStream 등)")
+        print("  - TF-IDF 벡터 유사도 기반 정밀 매칭")
+        print("  - 백엔드 완전 호환 (JobPosting 엔티티)")
+        print("="*80)
     
     app.run(host="0.0.0.0", port=5000, debug=True)

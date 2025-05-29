@@ -41,7 +41,7 @@ SERVER_MODES = {
     "test": {
         "name": "Test Server",
         "description": "LLM 제외, 고정 응답 반환 (OpenFace, Whisper, TTS, Librosa 모듈 사용 가능)",
-        "module": "test_server",
+        "module": "main_server",
         "port": 5000
     }
 }
@@ -180,9 +180,9 @@ def run_server(mode: str, port: int) -> None:
             if mode == "main":
                 import main_server
                 main_server.app.run(host="0.0.0.0", port=port, debug=True)
-            else:
-                import test_server
-                test_server.app.run(host="0.0.0.0", port=port, debug=True)
+            else:  # test 모드도 main_server.py 사용
+                import main_server
+                main_server.app.run(host="0.0.0.0", port=port, debug=True)
         else:
             logger.error(f"서버 모듈을 찾을 수 없습니다: {module_name}.py")
             print(f"오류: {module_name}.py 파일을 찾을 수 없습니다.")

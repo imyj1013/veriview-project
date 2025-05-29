@@ -30,7 +30,7 @@ except ImportError as e:
 
 # 공통 모듈 임포트
 try:
-    from job_recommendation_module import JobRecommendationModule
+    from modules.job_recommendation_module import JobRecommendationModule
     job_recommendation_module = JobRecommendationModule()
     JOB_RECOMMENDATION_AVAILABLE = True
     print("✅ 공고추천 모듈 로드 성공")
