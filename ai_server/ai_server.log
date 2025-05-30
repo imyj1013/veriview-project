@@ -1,0 +1,107 @@
+2025-05-27 19:55:22,119 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 20:03:10,334 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 20:03:13,682 - job_recommendation_module - INFO - °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-05-27 20:03:13,768 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.16.119.110:5000
+2025-05-27 20:03:13,769 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-27 20:03:13,773 - werkzeug - INFO -  * Restarting with stat
+2025-05-27 20:03:16,598 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-27 20:03:20,319 - job_recommendation_module - INFO - °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-05-27 20:03:20,334 - werkzeug - WARNING -  * Debugger is active!
+2025-05-27 20:03:20,342 - werkzeug - INFO -  * Debugger PIN: 119-182-632
+2025-05-30 14:28:12,717 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 14:28:19,845 - job_recommendation_module - INFO - °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-05-30 14:28:19,913 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.30.1.29:5000
+2025-05-30 14:28:19,913 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-30 14:28:19,917 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 14:28:22,929 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 14:28:26,537 - job_recommendation_module - INFO - °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-05-30 14:28:26,550 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 14:28:26,555 - werkzeug - INFO -  * Debugger PIN: 119-182-632
+2025-05-30 14:30:44,267 - test_server - INFO - AI ÀÔ·Ð »ý¼º ¿äÃ»: /ai/debate/48/ai-opening
+2025-05-30 14:30:44,267 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 14:30:44,268 - test_server - INFO - AI ÀÔ·Ð »ý¼º ¿äÃ»: /ai/debate/47/ai-opening
+2025-05-30 14:30:44,270 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:30:44] "POST /ai/debate/48/ai-opening HTTP/1.1" 200 -
+2025-05-30 14:30:44,270 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 14:30:44,270 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:30:44] "POST /ai/debate/47/ai-opening HTTP/1.1" 200 -
+2025-05-30 14:31:06,976 - test_server - INFO - opening ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/48/opening-video
+2025-05-30 14:31:07,325 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 14:31:07,329 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:31:07] "POST /ai/debate/48/opening-video HTTP/1.1" 200 -
+2025-05-30 14:34:05,974 - test_server - INFO - rebuttal ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/48/rebuttal-video
+2025-05-30 14:34:06,148 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 14:34:06,152 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:34:06] "POST /ai/debate/48/rebuttal-video HTTP/1.1" 200 -
+2025-05-30 14:34:23,024 - test_server - INFO - counter_rebuttal ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/48/counter_rebuttal-video
+2025-05-30 14:34:23,162 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 14:34:23,165 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:34:23] "POST /ai/debate/48/counter-rebuttal-video HTTP/1.1" 200 -
+2025-05-30 14:34:43,155 - test_server - INFO - closing ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/48/closing-video
+2025-05-30 14:34:43,338 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:34:43] "POST /ai/debate/48/closing-video HTTP/1.1" 200 -
+2025-05-30 14:36:44,405 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(4³âÁ¦) Á¹¾÷', 'major': 'ÄÄÇ»ÅÍ°øÇÐ', 'double_major': '°æÁ¦ÇÐ', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÀÚ¹Ù, ½ºÇÁ¸µºÎÆ®, aws', 'qualification': 'Á¤º¸Ã³¸®±â»ç, sqld', 'location': '¼­¿ï °­³²±¸', 'category': 'ICT', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 14:36:44,406 - job_recommendation_module - INFO - ICT Ä«Å×°í¸® °ø°í ÃßÃµ »ý¼º Áß...
+2025-05-30 14:36:44,406 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ÀÀ´ä: 10°³ °ø°í
+2025-05-30 14:36:44,407 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:36:44] "POST /ai/recruitment/posting HTTP/1.1" 200 -
+2025-05-30 14:39:17,990 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(4³âÁ¦) ÀçÇÐ', 'major': '¿ª»ç±³À°°ú', 'double_major': '', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÇÑ±¹»ç´É·Â°ËÁ¤½ÃÇè 1±Þ', 'qualification': '¿¢¼¿', 'location': 'ÀÎÃµ ÀüÃ¼', 'category': '°ø°ø/¼­ºñ½º', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 14:39:17,991 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:39:17] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
+2025-05-30 14:39:27,026 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(4³âÁ¦) ÀçÇÐ', 'major': '¿ª»ç±³À°°ú', 'double_major': '', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÇÑ±¹»ç´É·Â°ËÁ¤½ÃÇè 1±Þ', 'qualification': '¿¢¼¿', 'location': 'ÀÎÃµ ÀüÃ¼', 'category': '°ø°ø/¼­ºñ½º', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 14:39:27,027 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:39:27] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
+2025-05-30 14:39:40,803 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(4³âÁ¦) ÀçÇÐ', 'major': '¿ª»ç±³À°°ú', 'double_major': '°æ¿µÇÐ', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÇÑ±¹»ç´É·Â°ËÁ¤½ÃÇè 1±Þ', 'qualification': '¿¢¼¿', 'location': 'ÀÎÃµ ÀüÃ¼', 'category': '°ø°ø/¼­ºñ½º', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 14:39:40,804 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:39:40] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
+2025-05-30 14:39:47,589 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(4³âÁ¦) ÀçÇÐ', 'major': '¿ª»ç±³À°°ú', 'double_major': '°æ¿µÇÐ', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÇÑ±¹»ç´É·Â°ËÁ¤½ÃÇè 1±Þ', 'qualification': '¿¢¼¿', 'location': 'ÀÎÃµ µ¿±¸', 'category': '°ø°ø/¼­ºñ½º', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 14:39:47,590 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:39:47] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
+2025-05-30 14:42:11,042 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(4³âÁ¦) ÀçÇÐ', 'major': '¿ª»ç±³À°°ú', 'double_major': '°æ¿µÇÐ', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÇÑ±¹»ç´É·Â°ËÁ¤½ÃÇè 1±Þ', 'qualification': '¿¢¼¿', 'location': 'ÀÎÃµ µ¿±¸', 'category': '°ø°ø/¼­ºñ½º', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 14:42:11,043 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 14:42:11] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
+2025-05-30 15:00:49,921 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(2,3³âÁ¦) Á¹¾÷', 'major': '±â°è°øÇÐ', 'double_major': '', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÀÚµ¿Â÷ Á¤ºñ', 'qualification': 'ÀÚµ¿Â÷ Á¤ºñ»ç', 'location': '°æ±â ÀüÃ¼', 'category': '»ý»ê/Á¤ºñ', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 15:00:49,923 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 15:00:49] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
+2025-05-30 15:02:05,609 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '´ëÇÐ±³(2,3³âÁ¦) Á¹¾÷', 'major': '±â°è°øÇÐ', 'double_major': '', 'workexperience': '½ÅÀÔ', 'tech_stack': 'ÀÚµ¿Â÷ Á¤ºñ', 'qualification': 'ÀÚµ¿Â÷ Á¤ºñ»ç', 'location': '°æ±â ÀüÃ¼', 'category': 'ICT', 'employmenttype': 'Á¤±ÔÁ÷'}
+2025-05-30 15:02:05,610 - job_recommendation_module - INFO - ICT Ä«Å×°í¸® °ø°í ÃßÃµ »ý¼º Áß...
+2025-05-30 15:02:05,611 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ÀÀ´ä: 10°³ °ø°í
+2025-05-30 15:02:05,611 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 15:02:05] "POST /ai/recruitment/posting HTTP/1.1" 200 -
+2025-05-30 15:15:18,614 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '°íµîÇÐ±³ Á¹¾÷', 'major': '¹ÝµµÃ¼»ý»ê', 'double_major': '', 'workexperience': '½ÅÀÔ', 'tech_stack': '¹ÝµµÃ¼ »ý»ê, °øÁ¤', 'qualification': '¹ÝµµÃ¼ »ý»ê', 'location': '°æ³² »êÃ»±º', 'category': 'MM', 'employmenttype': '°è¾àÁ÷'}
+2025-05-30 15:15:18,615 - job_recommendation_module - INFO - MM Ä«Å×°í¸® °ø°í ÃßÃµ »ý¼º Áß...
+2025-05-30 15:15:18,615 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ÀÀ´ä: 10°³ °ø°í
+2025-05-30 15:15:18,615 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 15:15:18] "POST /ai/recruitment/posting HTTP/1.1" 200 -
+2025-05-30 15:17:04,492 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 15:17:04] "[33mPOST /ai/interview/generate-question HTTP/1.1[0m" 404 -
+2025-05-30 16:16:37,779 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 16:16:37] "[33mPOST /ai/interview/generate-question HTTP/1.1[0m" 404 -
+2025-05-30 16:28:29,698 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 16:28:29] "[33mPOST /ai/interview/generate-question HTTP/1.1[0m" 404 -
+2025-05-30 16:32:18,401 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 16:32:18] "[33mPOST /ai/interview/generate-question HTTP/1.1[0m" 404 -
+2025-05-30 16:33:04,293 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 16:33:04] "[33mGET /ai/interview/generate-question HTTP/1.1[0m" 404 -
+2025-05-30 17:22:04,910 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': '', 'major': '', 'double_major': '', 'workexperience': '', 'tech_stack': '', 'qualification': '', 'location': '', 'category': '', 'employmenttype': None}
+2025-05-30 17:22:04,911 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:22:04] "[35m[1mPOST /ai/recruitment/posting HTTP/1.1[0m" 500 -
+2025-05-30 17:22:24,266 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': 'ÁßÇÐ±³ ÀçÇÐ', 'major': '...', 'double_major': '...', 'workexperience': '½ÅÀÔ', 'tech_stack': '...', 'qualification': '...', 'location': 'Àü±¹', 'category': 'BM', 'employmenttype': 'ÀÎÅÏ'}
+2025-05-30 17:22:24,267 - job_recommendation_module - INFO - BM Ä«Å×°í¸® °ø°í ÃßÃµ »ý¼º Áß...
+2025-05-30 17:22:24,267 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ÀÀ´ä: 9°³ °ø°í
+2025-05-30 17:22:24,268 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:22:24] "POST /ai/recruitment/posting HTTP/1.1" 200 -
+2025-05-30 17:23:27,817 - test_server - INFO - AI ÀÔ·Ð »ý¼º ¿äÃ»: /ai/debate/49/ai-opening
+2025-05-30 17:23:27,818 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:23:27,819 - test_server - INFO - AI ÀÔ·Ð »ý¼º ¿äÃ»: /ai/debate/50/ai-opening
+2025-05-30 17:23:27,819 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:23:27] "POST /ai/debate/49/ai-opening HTTP/1.1" 200 -
+2025-05-30 17:23:27,819 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:23:27,820 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:23:27] "POST /ai/debate/50/ai-opening HTTP/1.1" 200 -
+2025-05-30 17:23:45,498 - test_server - INFO - opening ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/49/opening-video
+2025-05-30 17:23:45,661 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:23:45,665 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:23:45] "POST /ai/debate/49/opening-video HTTP/1.1" 200 -
+2025-05-30 17:23:51,057 - test_server - INFO - rebuttal ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/49/rebuttal-video
+2025-05-30 17:23:51,263 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:23:51,267 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:23:51] "POST /ai/debate/49/rebuttal-video HTTP/1.1" 200 -
+2025-05-30 17:24:03,963 - test_server - INFO - counter_rebuttal ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/49/counter_rebuttal-video
+2025-05-30 17:24:04,331 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:24:04,336 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:24:04] "POST /ai/debate/49/counter-rebuttal-video HTTP/1.1" 200 -
+2025-05-30 17:24:10,565 - test_server - INFO - closing ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/49/closing-video
+2025-05-30 17:24:10,784 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:24:10] "POST /ai/debate/49/closing-video HTTP/1.1" 200 -
+2025-05-30 17:26:19,617 - test_server - INFO - AI ÀÔ·Ð »ý¼º ¿äÃ»: /ai/debate/51/ai-opening
+2025-05-30 17:26:19,617 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:26:19,619 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:26:19] "POST /ai/debate/51/ai-opening HTTP/1.1" 200 -
+2025-05-30 17:26:19,620 - test_server - INFO - AI ÀÔ·Ð »ý¼º ¿äÃ»: /ai/debate/52/ai-opening
+2025-05-30 17:26:19,620 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:26:19,621 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:26:19] "POST /ai/debate/52/ai-opening HTTP/1.1" 200 -
+2025-05-30 17:26:31,559 - test_server - INFO - opening ¿µ»ó Ã³¸® ¿äÃ»: /ai/debate/52/opening-video
+2025-05-30 17:26:31,689 - test_server - WARNING - TTS ¸ðµ¨À» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
+2025-05-30 17:26:31,692 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:26:31] "POST /ai/debate/52/opening-video HTTP/1.1" 200 -
+2025-05-30 17:44:58,392 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ¿äÃ» ¹ÞÀ½: {'user_id': 'kimtest', 'education': 'ÁßÇÐ±³ ÀçÇÐ', 'major': '¼öÇÐ', 'double_major': '', 'workexperience': '½ÅÀÔ', 'tech_stack': '¼öÇÐ', 'qualification': '¼öÇÐ', 'location': '¿ï»ê Áß±¸', 'category': 'ARD', 'employmenttype': 'ÀÎÅÏ'}
+2025-05-30 17:44:58,394 - job_recommendation_module - INFO - ARD Ä«Å×°í¸® °ø°í ÃßÃµ »ý¼º Áß...
+2025-05-30 17:44:58,396 - test_server - INFO - ¹é¿£µå °ø°íÃßÃµ ÀÀ´ä: 10°³ °ø°í
+2025-05-30 17:44:58,398 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:44:58] "POST /ai/recruitment/posting HTTP/1.1" 200 -
