@@ -1,5 +1,3 @@
-// src/pages/DebateClosingPage.js
-
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -10,6 +8,8 @@ function DebateClosingPage() {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const [recording, setRecording] = useState(false);
+  const [cameraOn, setCameraOn] = useState(true); // ✅ 카메라 상태 추가
+
   const navigate = useNavigate();
   const { state } = useLocation();
 
@@ -18,7 +18,7 @@ function DebateClosingPage() {
   const stopCamera = () => {
     const stream = streamRef.current;
     if (stream) {
-      stream.getTracks().forEach((track) => track.stop()); 
+      stream.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -26,10 +26,11 @@ function DebateClosingPage() {
     }
     if (mediaRecorderRef.current) {
       if (mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop(); 
+        mediaRecorderRef.current.stop();
       }
       mediaRecorderRef.current = null;
     }
+    setCameraOn(false); // ✅ 카메라 꺼짐 표시
   };
 
   const handleLeavePage = (path) => {
@@ -45,7 +46,7 @@ function DebateClosingPage() {
           audio: true,
         });
 
-        streamRef.current = stream; 
+        streamRef.current = stream;
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -101,7 +102,7 @@ function DebateClosingPage() {
             }
           );
 
-          stopCamera(); 
+          stopCamera();
           navigate("/debate/ai-closing", { state });
         } catch (err) {
           alert("최종변론 영상 업로드 실패");
@@ -109,7 +110,7 @@ function DebateClosingPage() {
         }
       };
 
-      recorder.stop(); 
+      recorder.stop();
       setRecording(false);
     }
   };
@@ -122,7 +123,7 @@ function DebateClosingPage() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => handleLeavePage("/")} 
+          onClick={() => handleLeavePage("/")}
         />
         <button
           onClick={() => handleLeavePage("/")}
@@ -148,13 +149,22 @@ function DebateClosingPage() {
 
       {/* 녹화 상태 표시, 종료 */}
       <div className="flex gap-4">
-        <span className="text-green-700 font-semibold">녹화 중...</span>
+        {recording && (
+          <span className="text-green-700 font-semibold">녹화 중...</span>
+        )}
         <button
           onClick={handleEnd}
           disabled={!recording}
           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
         >
           최종변론 종료
+        </button>
+        <button
+          onClick={stopCamera}
+          disabled={!cameraOn}
+          className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+        >
+          카메라 끄기
         </button>
       </div>
     </div>

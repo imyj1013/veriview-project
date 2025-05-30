@@ -8,6 +8,22 @@ function AIClosingPage() {
   const [aiFinalText, setAiFinalText] = useState("");
 
   useEffect(() => {
+    const cleanupTracks = () => {
+      const videos = document.querySelectorAll("video");
+      videos.forEach(video => {
+        const stream = video.srcObject;
+        if (stream instanceof MediaStream) {
+          stream.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+        }
+      });
+    };
+
+    cleanupTracks(); 
+    return cleanupTracks; 
+  }, []);
+
+  useEffect(() => {
     const fetchAiFinal = async () => {
       try {
         const res = await axios.get(`/api/debate/${state.debateId}/ai-closing`);
