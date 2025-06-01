@@ -12,10 +12,31 @@ function InterviewQ2() {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const intervalRef = useRef(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [question, setQuestion] = useState("");
+
+  const stopCamera = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -34,7 +55,9 @@ function InterviewQ2() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
@@ -46,18 +69,8 @@ function InterviewQ2() {
 
     return () => {
       stopCamera();
-      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
-
-  const stopCamera = () => {
-    const stream = streamRef.current || videoRef.current?.srcObject;
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
-    if (videoRef.current) videoRef.current.srcObject = null;
-    streamRef.current = null;
-  };
 
   const formatTime = (seconds) => {
     const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -71,26 +84,15 @@ function InterviewQ2() {
 
     const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
+    recordedChunksRef.current = [];
+
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         recordedChunksRef.current.push(event.data);
       }
     };
 
-    mediaRecorderRef.current = mediaRecorder;
-    recordedChunksRef.current = [];
-    mediaRecorder.start();
-    setIsRecording(true);
-
-    intervalRef.current = setInterval(() => {
-      setElapsedTime(prev => prev + 1);
-    }, 1000);
-  };
-
-  const stopRecording = () => {
-    if (!mediaRecorderRef.current) return;
-
-    mediaRecorderRef.current.onstop = async () => {
+    mediaRecorder.onstop = async () => {
       stopCamera();
 
       const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
@@ -104,6 +106,7 @@ function InterviewQ2() {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
+        await new Promise(r => setTimeout(r, 100)); // ⏱ 안정적인 이동
         navigate("/interview/q3");
       } catch (err) {
         alert("영상 업로드 실패");
@@ -111,13 +114,30 @@ function InterviewQ2() {
       }
     };
 
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start();
+    setIsRecording(true);
+
+    intervalRef.current = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+  };
+
+  const stopRecording = () => {
+    if (!mediaRecorderRef.current) return;
+
     mediaRecorderRef.current.stop();
     setIsRecording(false);
-    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
+
     if (isPaused) {
       mediaRecorderRef.current.resume();
       intervalRef.current = setInterval(() => {
@@ -126,15 +146,12 @@ function InterviewQ2() {
       setIsPaused(false);
     } else {
       mediaRecorderRef.current.pause();
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setIsPaused(true);
     }
   };
 
   const handleExit = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-    }
     stopCamera();
     navigate("/");
   };
@@ -171,7 +188,8 @@ function InterviewQ2() {
               className="w-[400px] h-[300px] bg-black rounded-md"
             />
             <p className="mt-2 text-center text-sm">
-              <i className="fas fa-microphone text-teal-500"></i> {isRecording ? formatTime(elapsedTime) : ""}
+              <i className="fas fa-microphone text-teal-500"></i>{" "}
+              {isRecording ? formatTime(elapsedTime) : ""}
             </p>
           </div>
         </div>
