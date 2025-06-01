@@ -531,4 +531,53 @@ class TFIDFJobRecommendationModule:
                 "userId": 1,
                 "techStacks": ["Java", "Spring", "MySQL"],
                 "certificateList": ["정보처리기사"],
-                "majorList
+                "majorList": ["컴퓨터공학"]
+            }
+            profile_result = self.get_recommendations_by_profile(test_profile, 3)
+            test_results["profile_recommendations"] = profile_result
+            
+            # 희소 기술 정보 테스트
+            rare_skills_result = self.get_rare_skills_info()
+            test_results["rare_skills_info"] = rare_skills_result
+            
+            return test_results
+            
+        except Exception as e:
+            logger.error(f"모듈 테스트 오류: {str(e)}")
+            test_results["overall_status"] = "error"
+            test_results["error"] = str(e)
+            return test_results
+
+
+# 실행 예시
+if __name__ == "__main__":
+    print("TF-IDF 기반 공고추천 모듈 테스트")
+    
+    recommender = TFIDFJobRecommendationModule()
+    
+    # 모듈 상태 확인
+    status = recommender.get_module_status()
+    print(f"모듈 상태: {status}")
+    
+    # 기술 스택 기반 추천 테스트
+    print("\n기술 스택 기반 추천 테스트:")
+    skills_result = recommender.get_recommendations_by_skills(["Python", "React", "AWS"], 3)
+    print(f"추천 결과: {skills_result.get('total_count')}개 공고")
+    
+    # 프로필 기반 추천 테스트
+    print("\n프로필 기반 추천 테스트:")
+    test_profile = {
+        "userId": 1,
+        "techStacks": ["Java", "Spring", "MySQL"],
+        "certificateList": ["정보처리기사"],
+        "majorList": ["컴퓨터공학"]
+    }
+    profile_result = recommender.get_recommendations_by_profile(test_profile, 3)
+    print(f"추천 결과: {profile_result.get('totalCount')}개 공고")
+    
+    # 희소 기술 정보 테스트
+    print("\n희소 기술 정보 테스트:")
+    rare_skills_result = recommender.get_rare_skills_info()
+    print(f"희소 기술: {rare_skills_result.get('total_count')}개")
+    
+    print("\nTF-IDF 기반 공고추천 모듈 테스트 완료!")

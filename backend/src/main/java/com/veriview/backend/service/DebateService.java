@@ -42,7 +42,7 @@ public class DebateService {
     public DebateStartResponse startDebate(String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-        int randomId = new Random().nextInt(424) + 1; // 1부터 424 사이의 정수
+        int randomId = new Random().nextInt(9) + 1; // 1부터 424 사이의 정수
         DebateTopic topic = topicRepository.findById(randomId).orElseThrow(() -> new RuntimeException("해당 ID의 주제가 존재하지 않습니다: " + randomId));
 
         Debate.Stance userStance = Math.random() < 0.5 ? Debate.Stance.PRO : Debate.Stance.CON;
@@ -65,44 +65,40 @@ public class DebateService {
             debateFeedbackRepository.save(feedback);
         }
 
-        // // Flask 요청
-        // String flaskUrl = "http://localhost:5000/ai/debate/" + debate.getDebateId() + "/ai-opening";
-        // Map<String, Object> flaskRequest = new HashMap<>();
-        // flaskRequest.put("topic", topic.getTopic());
-        // flaskRequest.put("position", aiStance.name());
-        // flaskRequest.put("debate_id", debate.getDebateId());
+        // Flask 요청
+        String flaskUrl = "http://localhost:5000/ai/debate/" + debate.getDebateId() + "/ai-opening";
+        Map<String, Object> flaskRequest = new HashMap<>();
+        flaskRequest.put("topic", topic.getTopic());
+        flaskRequest.put("position", aiStance.name());
+        flaskRequest.put("debate_id", debate.getDebateId());
 
-        // ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-        //     flaskUrl,
-        //     org.springframework.http.HttpMethod.POST,
-        //     new HttpEntity<>(flaskRequest),
-        //     new org.springframework.core.ParameterizedTypeReference<>() {}
-        // );
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+            flaskUrl,
+            org.springframework.http.HttpMethod.POST,
+            new HttpEntity<>(flaskRequest),
+            new org.springframework.core.ParameterizedTypeReference<>() {}
+        );
 
-        // Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask AI opening response is null"));
+        Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask AI opening response is null"));
 
-        // DebateAnswer openingAnswer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debate.getDebateId(), DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Opening phase not found"));
-        // openingAnswer.setAiAnswer((String) res.get("ai_opening_text"));
-        // debateAnswerRepository.save(openingAnswer);
+        DebateAnswer openingAnswer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debate.getDebateId(), DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Opening phase not found"));
+        openingAnswer.setAiAnswer((String) res.get("ai_opening_text"));
+        debateAnswerRepository.save(openingAnswer);
 
-        // return new DebateStartResponse(topic.getTopic(), userStance.name(), debate.getDebateId(), (String) res.get("ai_opening_text"));
-
-        return new DebateStartResponse("토론주제입니다", "PRO", 5, "ai의 입론입니다");
-    }
+        return new DebateStartResponse(topic.getTopic(), userStance.name(), debate.getDebateId(), (String) res.get("ai_opening_text"));
+        }
 
     public DebateOpeningResponse getAIOpening(int debateId) {
         Debate debate = debateRepository.findById(debateId).orElseThrow(() -> new RuntimeException("Debate not found"));
     
         DebateAnswer opening = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
     
-        // return new DebateOpeningResponse(
-        //     debate.getTopic().getTopic(),
-        //     debate.getStance().name(),
-        //     debate.getDebateId(),
-        //     opening.getAiAnswer()
-        // );
-
-        return new DebateOpeningResponse("토론주제입니다","PRO",5,"ai 입론입니다");
+        return new DebateOpeningResponse(
+            debate.getTopic().getTopic(),
+            debate.getStance().name(),
+            debate.getDebateId(),
+            opening.getAiAnswer()
+        );
     }
 
     public String saveOpeningVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -150,55 +146,55 @@ public class DebateService {
             throw new RuntimeException("Process was interrupted", e);
         }
 
-        // // 2. Flask 서버로 전송
-        // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/opening-video";
+        // 2. Flask 서버로 전송
+        String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/opening-video";
 
-        // HttpHeaders headers = new HttpHeaders();
-        // headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        // MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        // body.add("file", new FileSystemResource(dest));
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource(dest));
 
-        // HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-        // ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-        //     flaskUrl,
-        //     org.springframework.http.HttpMethod.POST,
-        //     requestEntity,
-        //     new org.springframework.core.ParameterizedTypeReference<>() {}
-        // );
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+            flaskUrl,
+            org.springframework.http.HttpMethod.POST,
+            requestEntity,
+            new org.springframework.core.ParameterizedTypeReference<>() {}
+        );
     
-        // Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+        Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
 
-        // // 3. DebateAnswer 저장
-        // DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Opening phase not found"));
-        // answer.setVideoPath(filePath);
-        // answer.setTranscript((String) res.get("user_opening_text"));
-        // debateAnswerRepository.save(answer);
+        // 3. DebateAnswer 저장
+        DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Opening phase not found"));
+        answer.setVideoPath(filePath);
+        answer.setTranscript((String) res.get("user_opening_text"));
+        debateAnswerRepository.save(answer);
 
-        // DebateAnswer ai_answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
-        // ai_answer.setAiAnswer((String) res.get("ai_rebuttal_text"));
-        // debateAnswerRepository.save(ai_answer);
+        DebateAnswer ai_answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+        ai_answer.setAiAnswer((String) res.get("ai_rebuttal_text"));
+        debateAnswerRepository.save(ai_answer);
 
 
-        // // 4. Feedback 저장
-        // DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
+        // 4. Feedback 저장
+        DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
 
-        // feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
-        // feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
-        // feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
-        // feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
-        // feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
-        // feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
-        // feedback.setActionScore(((Number) res.get("action_score")).floatValue());
-        // feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
-        // feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
-        // feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
-        // feedback.setLogicFeedback((String) res.get("logic_feedback"));
-        // feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
-        // feedback.setFeedback((String) res.get("feedback"));
-        // feedback.setSampleAnswer((String) res.get("sample_answer"));
-        // debateFeedbackRepository.save(feedback);
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
+        feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
+        feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
+        feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
+        debateFeedbackRepository.save(feedback);
 
         return "사용자의 입론 영상이 성공적으로 저장되었습니다.";
     }
@@ -208,14 +204,12 @@ public class DebateService {
     
         DebateAnswer rebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
     
-        // return new DebateRebuttalResponse(
-        //     debate.getTopic().getTopic(),
-        //     debate.getStance().name(),
-        //     debate.getDebateId(),
-        //     rebuttal.getAiAnswer()
-        // );
-
-        return new DebateRebuttalResponse("토론주제입니다","PRO",5,"ai 반론입니다");
+        return new DebateRebuttalResponse(
+            debate.getTopic().getTopic(),
+            debate.getStance().name(),
+            debate.getDebateId(),
+            rebuttal.getAiAnswer()
+        );
     }
 
     public String saveRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -263,55 +257,55 @@ public class DebateService {
             throw new RuntimeException("Process was interrupted", e);
         }
 
-        // // 2. Flask 서버로 전송
-        // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/rebuttal-video";
+        // 2. Flask 서버로 전송
+        String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/rebuttal-video";
 
-        // HttpHeaders headers = new HttpHeaders();
-        // headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        // MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        // body.add("file", new FileSystemResource(dest));
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource(dest));
 
-        // HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-        // ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-        //     flaskUrl,
-        //     org.springframework.http.HttpMethod.POST,
-        //     requestEntity,
-        //     new org.springframework.core.ParameterizedTypeReference<>() {}
-        // );
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+            flaskUrl,
+            org.springframework.http.HttpMethod.POST,
+            requestEntity,
+            new org.springframework.core.ParameterizedTypeReference<>() {}
+        );
     
-        // Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+        Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
 
-        // // 3. DebateAnswer 저장
-        // DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
-        // answer.setVideoPath(filePath);
-        // answer.setTranscript((String) res.get("user_rebuttal_text"));
-        // debateAnswerRepository.save(answer);
+        // 3. DebateAnswer 저장
+        DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+        answer.setVideoPath(filePath);
+        answer.setTranscript((String) res.get("user_rebuttal_text"));
+        debateAnswerRepository.save(answer);
 
-        // DebateAnswer ai_answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter-rebuttal phase not found"));
-        // ai_answer.setAiAnswer((String) res.get("ai_counter_rebuttal_text"));
-        // debateAnswerRepository.save(ai_answer);
+        DebateAnswer ai_answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter-rebuttal phase not found"));
+        ai_answer.setAiAnswer((String) res.get("ai_counter_rebuttal_text"));
+        debateAnswerRepository.save(ai_answer);
 
 
-        // // 4. Feedback 저장
-        // DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
+        // 4. Feedback 저장
+        DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
 
-        // feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
-        // feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
-        // feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
-        // feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
-        // feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
-        // feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
-        // feedback.setActionScore(((Number) res.get("action_score")).floatValue());
-        // feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
-        // feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
-        // feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
-        // feedback.setLogicFeedback((String) res.get("logic_feedback"));
-        // feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
-        // feedback.setFeedback((String) res.get("feedback"));
-        // feedback.setSampleAnswer((String) res.get("sample_answer"));
-        // debateFeedbackRepository.save(feedback);
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
+        feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
+        feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
+        feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
+        debateFeedbackRepository.save(feedback);
 
         return "사용자의 반론 영상이 성공적으로 저장되었습니다.";
     }
@@ -321,14 +315,12 @@ public class DebateService {
     
         DebateAnswer counterRebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter rebuttal phase not found"));
     
-        // return new DebateCounterRebuttalResponse(
-        //     debate.getTopic().getTopic(),
-        //     debate.getStance().name(),
-        //     debate.getDebateId(),
-        //     counterRebuttal.getAiAnswer()
-        // );
-
-        return new DebateCounterRebuttalResponse("토론주제입니다","PRO",5,"ai 재반론입니다");
+        return new DebateCounterRebuttalResponse(
+            debate.getTopic().getTopic(),
+            debate.getStance().name(),
+            debate.getDebateId(),
+            counterRebuttal.getAiAnswer()
+        );
     }
 
     public String saveCounterRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -376,55 +368,55 @@ public class DebateService {
             throw new RuntimeException("Process was interrupted", e);
         }
 
-        // // 2. Flask 서버로 전송
-        // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/counter-rebuttal-video";
+        // 2. Flask 서버로 전송
+        String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/counter-rebuttal-video";
 
-        // HttpHeaders headers = new HttpHeaders();
-        // headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        // MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        // body.add("file", new FileSystemResource(dest));
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource(dest));
 
-        // HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-        // ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-        //     flaskUrl,
-        //     org.springframework.http.HttpMethod.POST,
-        //     requestEntity,
-        //     new org.springframework.core.ParameterizedTypeReference<>() {}
-        // );
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+            flaskUrl,
+            org.springframework.http.HttpMethod.POST,
+            requestEntity,
+            new org.springframework.core.ParameterizedTypeReference<>() {}
+        );
     
-        // Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+        Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
 
-        // // 3. DebateAnswer 저장
-        // DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter-rebuttal phase not found"));
-        // answer.setVideoPath(filePath);
-        // answer.setTranscript((String) res.get("user_counter_rebuttal_text"));
-        // debateAnswerRepository.save(answer);
+        // 3. DebateAnswer 저장
+        DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter-rebuttal phase not found"));
+        answer.setVideoPath(filePath);
+        answer.setTranscript((String) res.get("user_counter_rebuttal_text"));
+        debateAnswerRepository.save(answer);
 
-        // DebateAnswer ai_answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
-        // ai_answer.setAiAnswer((String) res.get("ai_closing_text"));
-        // debateAnswerRepository.save(ai_answer);
+        DebateAnswer ai_answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
+        ai_answer.setAiAnswer((String) res.get("ai_closing_text"));
+        debateAnswerRepository.save(ai_answer);
 
 
-        // // 4. Feedback 저장
-        // DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
+        // 4. Feedback 저장
+        DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
 
-        // feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
-        // feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
-        // feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
-        // feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
-        // feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
-        // feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
-        // feedback.setActionScore(((Number) res.get("action_score")).floatValue());
-        // feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
-        // feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
-        // feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
-        // feedback.setLogicFeedback((String) res.get("logic_feedback"));
-        // feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
-        // feedback.setFeedback((String) res.get("feedback"));
-        // feedback.setSampleAnswer((String) res.get("sample_answer"));
-        // debateFeedbackRepository.save(feedback);
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
+        feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
+        feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
+        feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
+        debateFeedbackRepository.save(feedback);
 
         return "사용자의 재반론 영상이 성공적으로 저장되었습니다.";
     }
@@ -434,14 +426,12 @@ public class DebateService {
     
         DebateAnswer closing = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
     
-        // return new DebateClosingResponse(
-        //     debate.getTopic().getTopic(),
-        //     debate.getStance().name(),
-        //     debate.getDebateId(),
-        //     closing.getAiAnswer()
-        // );
-
-        return new DebateClosingResponse("토론주제입니다","PRO",5,"ai 최종변론입니다");
+        return new DebateClosingResponse(
+            debate.getTopic().getTopic(),
+            debate.getStance().name(),
+            debate.getDebateId(),
+            closing.getAiAnswer()
+        );
     }
 
     public String saveClosingVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -489,51 +479,51 @@ public class DebateService {
             throw new RuntimeException("Process was interrupted", e);
         }
 
-        // // 2. Flask 서버로 전송
-        // String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/closing-video";
+        // 2. Flask 서버로 전송
+        String flaskUrl = "http://localhost:5000/ai/debate/" + debateId + "/closing-video";
 
-        // HttpHeaders headers = new HttpHeaders();
-        // headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        // MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        // body.add("file", new FileSystemResource(dest));
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource(dest));
 
-        // HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-        // ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-        //     flaskUrl,
-        //     org.springframework.http.HttpMethod.POST,
-        //     requestEntity,
-        //     new org.springframework.core.ParameterizedTypeReference<>() {}
-        // );
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+            flaskUrl,
+            org.springframework.http.HttpMethod.POST,
+            requestEntity,
+            new org.springframework.core.ParameterizedTypeReference<>() {}
+        );
     
-        // Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+        Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
 
-        // // 3. DebateAnswer 저장
-        // DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
-        // answer.setVideoPath(filePath);
-        // answer.setTranscript((String) res.get("user_closing_text"));
-        // debateAnswerRepository.save(answer);
+        // 3. DebateAnswer 저장
+        DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
+        answer.setVideoPath(filePath);
+        answer.setTranscript((String) res.get("user_closing_text"));
+        debateAnswerRepository.save(answer);
 
 
-        // // 4. Feedback 저장
-        // DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
+        // 4. Feedback 저장
+        DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
 
-        // feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
-        // feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
-        // feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
-        // feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
-        // feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
-        // feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
-        // feedback.setActionScore(((Number) res.get("action_score")).floatValue());
-        // feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
-        // feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
-        // feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
-        // feedback.setLogicFeedback((String) res.get("logic_feedback"));
-        // feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
-        // feedback.setFeedback((String) res.get("feedback"));
-        // feedback.setSampleAnswer((String) res.get("sample_answer"));
-        // debateFeedbackRepository.save(feedback);
+        feedback.setInitiativeScore(((Number) res.get("initiative_score")).floatValue());
+        feedback.setCollaborativeScore(((Number) res.get("collaborative_score")).floatValue());
+        feedback.setCommunicationScore(((Number) res.get("communication_score")).floatValue());
+        feedback.setLogicScore(((Number) res.get("logic_score")).floatValue());
+        feedback.setProblemSolvingScore(((Number) res.get("problem_solving_score")).floatValue());
+        feedback.setVoiceScore(((Number) res.get("voice_score")).floatValue());
+        feedback.setActionScore(((Number) res.get("action_score")).floatValue());
+        feedback.setInitiativeFeedback((String) res.get("initiative_feedback"));
+        feedback.setCollaborativeFeedback((String) res.get("collaborative_feedback"));
+        feedback.setCommunicationFeedback((String) res.get("communication_feedback"));
+        feedback.setLogicFeedback((String) res.get("logic_feedback"));
+        feedback.setProblemSolvingFeedback((String) res.get("problem_solving_feedback"));
+        feedback.setFeedback((String) res.get("feedback"));
+        feedback.setSampleAnswer((String) res.get("sample_answer"));
+        debateFeedbackRepository.save(feedback);
 
         return "사용자의 최종변론 영상이 성공적으로 저장되었습니다.";
     }
@@ -547,52 +537,29 @@ public class DebateService {
             DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, phase).orElseThrow(() -> new RuntimeException(phase + " phase not found"));
             DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("Feedback not found for " + phase));
     
-            // DebateFeedbackDto dto = new DebateFeedbackDto(
-            //     answer.getTranscript(),
-            //     feedback.getInitiativeScore(),
-            //     feedback.getCollaborativeScore(),
-            //     feedback.getCommunicationScore(),
-            //     feedback.getLogicScore(),
-            //     feedback.getProblemSolvingScore(),
-    
-            //     feedback.getInitiativeFeedback(),
-            //     feedback.getCollaborativeFeedback(),
-            //     feedback.getCommunicationFeedback(),
-            //     feedback.getLogicFeedback(),
-            //     feedback.getProblemSolvingFeedback(),
-    
-            //     feedback.getFeedback(),
-            //     feedback.getSampleAnswer()
-            // );
-
             DebateFeedbackDto dto = new DebateFeedbackDto(
-                "사용자의 응답",
-                5,
-                3,
-                2,
-                4,
-                5,
+                answer.getTranscript(),
+                feedback.getInitiativeScore(),
+                feedback.getCollaborativeScore(),
+                feedback.getCommunicationScore(),
+                feedback.getLogicScore(),
+                feedback.getProblemSolvingScore(),
     
-                "적극성 피드백",
-                "협력적태도 피드백",
-                "의사소통능력 피드백",
-                "논리력 피드백",
-                "문제해결능력 피드백",
+                feedback.getInitiativeFeedback(),
+                feedback.getCollaborativeFeedback(),
+                feedback.getCommunicationFeedback(),
+                feedback.getLogicFeedback(),
+                feedback.getProblemSolvingFeedback(),
     
-                "종합 피드백",
-                "예시답안"
+                feedback.getFeedback(),
+                feedback.getSampleAnswer()
             );
     
             debate_feedback.add(dto);
         }
         
-        // return new DebateFeedbackResponse(
-        //     debate.getDebateId(),
-        //     debate_feedback
-        // );
-
         return new DebateFeedbackResponse(
-            5,
+            debate.getDebateId(),
             debate_feedback
         );
     }

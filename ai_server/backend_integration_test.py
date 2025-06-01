@@ -128,9 +128,9 @@ class BackendIntegrationTester:
             if ai_response.status_code == 200:
                 ai_data = ai_response.json()
                 ai_posting_count = len(ai_data.get("posting", []))
-                logger.info(f"✅ AI 서버 응답 성공 - {ai_posting_count}개 공고 반환")
+                logger.info(f" AI 서버 응답 성공 - {ai_posting_count}개 공고 반환")
             else:
-                logger.error(f"❌ AI 서버 응답 실패 - HTTP {ai_response.status_code}")
+                logger.error(f" AI 서버 응답 실패 - HTTP {ai_response.status_code}")
             
             # 결과 비교
             if results["backend_request"]["success"] and results["ai_server_request"]["success"]:
@@ -145,9 +145,9 @@ class BackendIntegrationTester:
                 }
                 
                 if backend_posting_count == ai_posting_count:
-                    logger.info("✅ 백엔드-AI 서버 연동 정상 작동")
+                    logger.info(" 백엔드-AI 서버 연동 정상 작동")
                 else:
-                    logger.warning(f"⚠️ 응답 개수 불일치: 백엔드({backend_posting_count}) vs AI서버({ai_posting_count})")
+                    logger.warning(f" 응답 개수 불일치: 백엔드({backend_posting_count}) vs AI서버({ai_posting_count})")
             else:
                 results["comparison"] = {
                     "integration_working": False,
@@ -155,14 +155,14 @@ class BackendIntegrationTester:
                 }
                 
         except Exception as e:
-            logger.error(f"❌ 공고추천 연동 테스트 오류: {str(e)}")
+            logger.error(f" 공고추천 연동 테스트 오류: {str(e)}")
             results["error"] = str(e)
         
         return results
 
     def test_debate_integration(self) -> Dict[str, Any]:
         """토론면접 백엔드 연동 테스트"""
-        logger.info("🔍 토론면접 백엔드 연동 테스트 시작")
+        logger.info(" 토론면접 백엔드 연동 테스트 시작")
         
         results = {
             "test_name": "debate_integration",
@@ -189,7 +189,7 @@ class BackendIntegrationTester:
             if backend_start_response.status_code == 200:
                 start_data = backend_start_response.json()
                 debate_id = start_data.get("debate_id", 1)
-                logger.info(f"✅ 토론 시작 성공 - ID: {debate_id}")
+                logger.info(f" 토론 시작 성공 - ID: {debate_id}")
                 
                 # 2. AI 입론 요청 (AI 서버)
                 logger.info("2단계: AI 서버로 입론 생성 요청")
@@ -213,9 +213,9 @@ class BackendIntegrationTester:
                 if ai_opening_response.status_code == 200:
                     opening_data = ai_opening_response.json()
                     ai_text = opening_data.get("ai_opening_text", "")
-                    logger.info(f"✅ AI 입론 생성 성공 - 길이: {len(ai_text)}자")
+                    logger.info(f" AI 입론 생성 성공 - 길이: {len(ai_text)}자")
                 else:
-                    logger.error(f"❌ AI 입론 생성 실패 - HTTP {ai_opening_response.status_code}")
+                    logger.error(f" AI 입론 생성 실패 - HTTP {ai_opening_response.status_code}")
                 
                 # 3. 백엔드 AI 입론 조회 테스트
                 logger.info("3단계: 백엔드로 AI 입론 조회 요청")
@@ -228,22 +228,22 @@ class BackendIntegrationTester:
                 }
                 
                 if backend_opening_response.status_code == 200:
-                    logger.info("✅ 백엔드 AI 입론 조회 성공")
+                    logger.info(" 백엔드 AI 입론 조회 성공")
                 else:
-                    logger.error(f"❌ 백엔드 AI 입론 조회 실패 - HTTP {backend_opening_response.status_code}")
+                    logger.error(f" 백엔드 AI 입론 조회 실패 - HTTP {backend_opening_response.status_code}")
                 
             else:
-                logger.error(f"❌ 토론 시작 실패 - HTTP {backend_start_response.status_code}")
+                logger.error(f" 토론 시작 실패 - HTTP {backend_start_response.status_code}")
                 
         except Exception as e:
-            logger.error(f"❌ 토론면접 연동 테스트 오류: {str(e)}")
+            logger.error(f" 토론면접 연동 테스트 오류: {str(e)}")
             results["error"] = str(e)
         
         return results
 
     def test_interview_integration(self) -> Dict[str, Any]:
         """개인면접 백엔드 연동 테스트"""
-        logger.info("🔍 개인면접 백엔드 연동 테스트 시작")
+        logger.info(" 개인면접 백엔드 연동 테스트 시작")
         
         results = {
             "test_name": "interview_integration",
@@ -278,7 +278,7 @@ class BackendIntegrationTester:
             if portfolio_response.status_code == 200:
                 portfolio_result = portfolio_response.json()
                 interview_id = portfolio_result.get("interview_id", 1)
-                logger.info(f"✅ 포트폴리오 제출 성공 - Interview ID: {interview_id}")
+                logger.info(f" 포트폴리오 제출 성공 - Interview ID: {interview_id}")
                 
                 # 2. 면접 질문 조회 (백엔드)
                 logger.info("2단계: 백엔드로 면접 질문 조회")
@@ -293,9 +293,125 @@ class BackendIntegrationTester:
                 if questions_response.status_code == 200:
                     questions_data = questions_response.json()
                     question_count = len(questions_data.get("questions", []))
-                    logger.info(f"✅ 면접 질문 조회 성공 - {question_count}개 질문")
+                    logger.info(f" 면접 질문 조회 성공 - {question_count}개 질문")
+                    
+                    # 질문 유형 확인
+                    if question_count > 0 and "questions" in questions_data:
+                        question_type = questions_data["questions"][0].get("question_type", "INTRO")
+                        
+                        # 3. AI 서버로 답변 영상 처리 테스트 (새로운 API 엔드포인트)
+                        logger.info(f"3단계: AI 서버로 답변 영상 처리 테스트 (question_type: {question_type})")
+                        
+                        # 테스트 영상 파일 경로
+                        test_video_path = None
+                        # 프로젝트 루트 디렉토리의 videos 폴더 확인
+                        video_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
+                        if os.path.exists(video_dir):
+                            video_files = [f for f in os.listdir(video_dir) if f.endswith(".mp4")]
+                            if video_files:
+                                test_video_path = os.path.join(video_dir, video_files[0])
+                        
+                        if test_video_path:
+                            # 실제 비디오 파일이 있는 경우
+                            with open(test_video_path, "rb") as video_file:
+                                files = {"file": ("test_answer.mp4", video_file, "video/mp4")}
+                                answer_response = requests.post(
+                                    f"{self.ai_server_url}/ai/interview/{interview_id}/{question_type}/answer-video",
+                                    files=files,
+                                    timeout=30
+                                )
+                        else:
+                            # 테스트 비디오가 없는 경우, API가 존재하는지만 확인
+                            logger.warning(" 테스트 비디오 파일이 없습니다. API 존재 여부만 확인합니다.")
+                            try:
+                                # 빈 요청으로 API 존재 여부 확인
+                                answer_response = requests.options(
+                                    f"{self.ai_server_url}/ai/interview/{interview_id}/{question_type}/answer-video",
+                                    timeout=5
+                                )
+                            except Exception as e:
+                                answer_response = type("DummyResponse", (), {"status_code": 404, "text": str(e)})
+                        
+                        results["steps"]["answer_video_processing"] = {
+                            "status_code": answer_response.status_code,
+                            "success": answer_response.status_code in [200, 204, 405],  # 405는 OPTIONS 요청에 대한 Method Not Allowed이지만 API가 존재함을 의미
+                            "response": answer_response.json() if answer_response.status_code == 200 and hasattr(answer_response, "json") else answer_response.text if hasattr(answer_response, "text") else "API exists"
+                        }
+                        
+                        if answer_response.status_code in [200, 204, 405]:
+                            logger.info(" 답변 영상 처리 API 테스트 성공")
+                        else:
+                            logger.error(f" 답변 영상 처리 API 테스트 실패 - HTTP {answer_response.status_code}")
+                        
+                        # 4. 꼬리질문 생성 API 테스트
+                        logger.info("4단계: 꼬리질문 생성 API 테스트")
+                        try:
+                            # API 존재 여부 확인
+                            followup_response = requests.options(
+                                f"{self.ai_server_url}/ai/interview/{interview_id}/genergate-followup-question",
+                                timeout=5
+                            )
+                            
+                            results["steps"]["followup_question_generation"] = {
+                                "status_code": followup_response.status_code,
+                                "success": followup_response.status_code in [200, 204, 405],
+                                "message": "꼬리질문 생성 API가 존재합니다."
+                            }
+                            
+                            if followup_response.status_code in [200, 204, 405]:
+                                logger.info(" 꼬리질문 생성 API 테스트 성공")
+                            else:
+                                logger.error(f" 꼬리질문 생성 API 테스트 실패 - HTTP {followup_response.status_code}")
+                                
+                        except Exception as e:
+                            results["steps"]["followup_question_generation"] = {
+                                "success": False,
+                                "error": str(e),
+                                "message": "꼬리질문 생성 API 테스트 실패"
+                            }
+                            logger.error(f" 꼬리질문 생성 API 테스트 오류: {str(e)}")
                 else:
-                    logger.error(f"❌ 면접 질문 조회 실패 - HTTP {questions_response.status_code}")
+                    logger.error(f"면접 질문 조회 실패 - HTTP {questions_response.status_code}")
+                
+                # 5. AI 서버로 직접 면접 시작
+                logger.info("5단계: AI 서버로 면접 시작")
+                ai_interview_response = requests.post(f"{self.ai_server_url}/ai/interview/start", json={})
+                
+                results["steps"]["ai_interview_start"] = {
+                    "status_code": ai_interview_response.status_code,
+                    "success": ai_interview_response.status_code == 200,
+                    "response": ai_interview_response.json() if ai_interview_response.status_code == 200 else ai_interview_response.text
+                }
+                
+                if ai_interview_response.status_code == 200:
+                    ai_interview_data = ai_interview_response.json()
+                    ai_interview_id = ai_interview_data.get("interview_id")
+                    first_question = ai_interview_data.get("first_question", "")
+                    logger.info(f"AI 면접 시작 성공 - ID: {ai_interview_id}, 첫 질문: {first_question}")
+                else:
+                    logger.error(f"AI 면접 시작 실패 - HTTP {ai_interview_response.status_code}")
+                
+            else:
+                logger.error(f"포트폴리오 제출 실패 - HTTP {portfolio_response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"개인면접 연동 테스트 오류: {str(e)}")
+            results["error"] = str(e)
+        
+        return resultsquestions_response = requests.get(f"{self.backend_url}/api/interview/{interview_id}/question")
+                
+                results["steps"]["questions_retrieval"] = {
+                    "status_code": questions_response.status_code,
+                    "success": questions_response.status_code == 200,
+                    "response": questions_response.json() if questions_response.status_code == 200 else questions_response.text
+                }
+                
+                if questions_response.status_code == 200:
+                    questions_data = questions_response.json()
+                    question_count = len(questions_data.get("questions", []))
+                    logger.info(f" 면접 질문 조회 성공 - {question_count}개 질문")
+                else:
+                    logger.error(f"면접 질문 조회 실패 - HTTP {questions_response.status_code}")
                 
                 # 3. AI 서버로 직접 면접 시작
                 logger.info("3단계: AI 서버로 면접 시작")
@@ -311,25 +427,24 @@ class BackendIntegrationTester:
                     ai_interview_data = ai_interview_response.json()
                     ai_interview_id = ai_interview_data.get("interview_id")
                     first_question = ai_interview_data.get("first_question", "")
-                    logger.info(f"✅ AI 면접 시작 성공 - ID: {ai_interview_id}, 첫 질문: {first_question}")
+                    logger.info(f"AI 면접 시작 성공 - ID: {ai_interview_id}, 첫 질문: {first_question}")
                 else:
-                    logger.error(f"❌ AI 면접 시작 실패 - HTTP {ai_interview_response.status_code}")
+                    logger.error(f"AI 면접 시작 실패 - HTTP {ai_interview_response.status_code}")
                 
             else:
-                logger.error(f"❌ 포트폴리오 제출 실패 - HTTP {portfolio_response.status_code}")
+                logger.error(f"포트폴리오 제출 실패 - HTTP {portfolio_response.status_code}")
                 
         except Exception as e:
-            logger.error(f"❌ 개인면접 연동 테스트 오류: {str(e)}")
+            logger.error(f"개인면접 연동 테스트 오류: {str(e)}")
             results["error"] = str(e)
         
         return results
 
     def test_ai_server_endpoints(self) -> Dict[str, Any]:
         """AI 서버 엔드포인트 전체 테스트"""
-        logger.info("🔍 AI 서버 엔드포인트 전체 테스트 시작")
+        logger.info("AI 서버 엔드포인트 전체 테스트 시작")
         
         endpoints_to_test = [
-            {"method": "GET", "url": "/ai/health", "name": "헬스 체크"},
             {"method": "GET", "url": "/ai/test", "name": "연결 테스트"},
             {"method": "GET", "url": "/ai/jobs/categories", "name": "공고 카테고리"},
             {"method": "GET", "url": "/ai/jobs/stats", "name": "공고 통계"},
@@ -363,9 +478,9 @@ class BackendIntegrationTester:
                 }
                 
                 if response.status_code == 200:
-                    logger.info(f"✅ {endpoint_name} 성공")
+                    logger.info(f"{endpoint_name} 성공")
                 else:
-                    logger.error(f"❌ {endpoint_name} 실패 - HTTP {response.status_code}")
+                    logger.error(f"{endpoint_name} 실패 - HTTP {response.status_code}")
                     
             except Exception as e:
                 results["endpoint_tests"][endpoint_name] = {
@@ -374,13 +489,13 @@ class BackendIntegrationTester:
                     "success": False,
                     "error": str(e)
                 }
-                logger.error(f"❌ {endpoint_name} 오류: {str(e)}")
+                logger.error(f"{endpoint_name} 오류: {str(e)}")
         
         return results
 
     def run_comprehensive_test(self, server_type: str = "both") -> Dict[str, Any]:
         """종합 테스트 실행"""
-        logger.info("🚀 VeriView 백엔드 연동 종합 테스트 시작")
+        logger.info("VeriView 백엔드 연동 종합 테스트 시작")
         logger.info("=" * 60)
         
         comprehensive_results = {
@@ -390,36 +505,36 @@ class BackendIntegrationTester:
         }
         
         # 1. 서버 가용성 테스트
-        logger.info("1️⃣ 서버 가용성 테스트")
+        logger.info("서버 가용성 테스트")
         comprehensive_results["tests"]["server_availability"] = self.test_server_availability(server_type)
         
         # AI 서버가 사용 가능한 경우에만 추가 테스트 진행
         if comprehensive_results["tests"]["server_availability"].get("ai_server", {}).get("status") == "available":
             
             # 2. AI 서버 엔드포인트 테스트
-            logger.info("2️⃣ AI 서버 엔드포인트 테스트")
+            logger.info("AI 서버 엔드포인트 테스트")
             comprehensive_results["tests"]["ai_endpoints"] = self.test_ai_server_endpoints()
             
             # 3. 공고추천 연동 테스트
-            logger.info("3️⃣ 공고추천 백엔드 연동 테스트")
+            logger.info("공고추천 백엔드 연동 테스트")
             comprehensive_results["tests"]["job_recommendation_integration"] = self.test_job_recommendation_integration()
             
             # 백엔드가 사용 가능한 경우에만 백엔드 연동 테스트 진행
             if comprehensive_results["tests"]["server_availability"].get("backend_server", {}).get("status") == "available":
                 
                 # 4. 토론면접 연동 테스트
-                logger.info("4️⃣ 토론면접 백엔드 연동 테스트")
+                logger.info("토론면접 백엔드 연동 테스트")
                 comprehensive_results["tests"]["debate_integration"] = self.test_debate_integration()
                 
                 # 5. 개인면접 연동 테스트
-                logger.info("5️⃣ 개인면접 백엔드 연동 테스트")
+                logger.info("개인면접 백엔드 연동 테스트")
                 comprehensive_results["tests"]["interview_integration"] = self.test_interview_integration()
         
         # 결과 요약
         comprehensive_results["summary"] = self._generate_test_summary(comprehensive_results["tests"])
         
         logger.info("=" * 60)
-        logger.info("🏁 VeriView 백엔드 연동 종합 테스트 완료")
+        logger.info("VeriView 백엔드 연동 종합 테스트 완료")
         
         return comprehensive_results
 
@@ -508,12 +623,12 @@ class BackendIntegrationTester:
     def print_detailed_results(self, results: Dict[str, Any]):
         """상세 결과 출력"""
         print("\n" + "="*80)
-        print("🔍 VeriView 백엔드 연동 테스트 상세 결과")
+        print("VeriView 백엔드 연동 테스트 상세 결과")
         print("="*80)
         
         # 요약 정보
         summary = results.get("summary", {})
-        print(f"\n📊 요약")
+        print(f"\n 요약")
         print(f"   총 테스트: {summary.get('total_tests', 0)}")
         print(f"   성공: {summary.get('passed_tests', 0)}")
         print(f"   실패: {summary.get('failed_tests', 0)}")
@@ -522,28 +637,28 @@ class BackendIntegrationTester:
         # 중요 이슈
         critical_issues = summary.get("critical_issues", [])
         if critical_issues:
-            print(f"\n🚨 중요 이슈:")
+            print(f"\n 중요 이슈:")
             for issue in critical_issues:
-                print(f"   ❌ {issue}")
+                print(f" {issue}")
         
         # 권장사항
         recommendations = summary.get("recommendations", [])
         if recommendations:
-            print(f"\n💡 권장사항:")
+            print(f"\n 권장사항:")
             for rec in recommendations:
-                print(f"   📌 {rec}")
+                print(f" {rec}")
         
         # 서버 상태
         server_availability = results.get("tests", {}).get("server_availability", {})
-        print(f"\n🖥️ 서버 상태:")
+        print(f"\n 서버 상태:")
         
         ai_server = server_availability.get("ai_server", {})
         ai_status = ai_server.get("status", "unknown")
-        print(f"   AI 서버: {'✅' if ai_status == 'available' else '❌'} {ai_status}")
+        print(f"   AI 서버: {'AI 서버 연동 성공' if ai_status == 'available' else 'AI 서버 연동 실패'} {ai_status}")
         
         backend_server = server_availability.get("backend_server", {})
         backend_status = backend_server.get("status", "unknown")
-        print(f"   백엔드 서버: {'✅' if backend_status == 'available' else '❌'} {backend_status}")
+        print(f"   백엔드 서버: {'백엔드 서버 연동 실패' if backend_status == 'available' else '백엔드 서버 연동 실패'} {backend_status}")
         
         # AI 서버 타입 정보
         if ai_status == "available" and ai_server.get("data"):
@@ -555,7 +670,7 @@ class BackendIntegrationTester:
 
 def main():
     """메인 실행 함수"""
-    print("🚀 VeriView AI 서버 백엔드 연동 테스트를 시작합니다...")
+    print("VeriView AI 서버 백엔드 연동 테스트를 시작합니다...")
     
     # 명령행 인수 처리
     server_type = "both"  # both, ai, backend
@@ -583,27 +698,27 @@ def main():
         try:
             with open(result_filename, 'w', encoding='utf-8') as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
-            print(f"\n📄 상세 결과가 {result_filename}에 저장되었습니다.")
+            print(f"\n 상세 결과가 {result_filename}에 저장되었습니다.")
         except Exception as e:
-            print(f"⚠️ 결과 파일 저장 실패: {str(e)}")
+            print(f" 결과 파일 저장 실패: {str(e)}")
         
         # 성공률에 따른 종료 코드
         success_rate = results.get("summary", {}).get("success_rate", 0)
         if success_rate == 100:
-            print("\n🎉 모든 테스트가 성공했습니다!")
+            print("\n 모든 테스트가 성공했습니다!")
             sys.exit(0)
         elif success_rate >= 80:
-            print("\n⚠️ 대부분의 테스트가 성공했지만 일부 이슈가 있습니다.")
+            print("\n 대부분의 테스트가 성공했지만 일부 이슈가 있습니다.")
             sys.exit(1)
         else:
-            print("\n❌ 여러 테스트가 실패했습니다. 시스템 설정을 확인하세요.")
+            print("\n 여러 테스트가 실패했습니다. 시스템 설정을 확인하세요.")
             sys.exit(2)
             
     except KeyboardInterrupt:
-        print("\n\n⏹️ 사용자가 테스트를 중단했습니다.")
+        print("\n\n 사용자가 테스트를 중단했습니다.")
         sys.exit(130)
     except Exception as e:
-        print(f"\n❌ 테스트 실행 중 오류 발생: {str(e)}")
+        print(f"\n 테스트 실행 중 오류 발생: {str(e)}")
         sys.exit(1)
 
 

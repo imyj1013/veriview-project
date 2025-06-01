@@ -7,7 +7,7 @@ LLM, OpenFace2.0, Whisper, TTS, Librosa 기능을 모두 활용하는 실제 서
 실행 방법: python main_server.py
 포트: 5000
 """
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, Response, stream_with_context
 from flask_cors import CORS
 import os
 import tempfile
@@ -22,9 +22,9 @@ try:
     from interview_features.debate.openface_integration import OpenFaceDebateIntegration
     LLM_MODULE_AVAILABLE = True
     OPENFACE_INTEGRATION_AVAILABLE = True
-    print("✅ 실제 AI 모듈 로드 성공: LLM 및 OpenFace 통합 기능 사용 가능")
+    print(" 실제 AI 모듈 로드 성공: LLM 및 OpenFace 통합 기능 사용 가능")
 except ImportError as e:
-    print(f"⚠️ 실제 AI 모듈 로드 실패: {e}")
+    print(f" 실제 AI 모듈 로드 실패: {e}")
     LLM_MODULE_AVAILABLE = False
     OPENFACE_INTEGRATION_AVAILABLE = False
 
@@ -33,9 +33,9 @@ try:
     from test_features.debate.main import DebateTestMain
     from test_features.personal_interview.main import PersonalInterviewTestMain
     BACKUP_MODULES_AVAILABLE = True
-    print("✅ 백업 모듈 로드 성공: 테스트 기능 사용 가능")
+    print(" 백업 모듈 로드 성공: 테스트 기능 사용 가능")
 except ImportError as e:
-    print(f"❌ 백업 모듈 로드 실패: {e}")
+    print(f" 백업 모듈 로드 실패: {e}")
     BACKUP_MODULES_AVAILABLE = False
 
 # 공통 모듈 임포트
@@ -43,9 +43,9 @@ try:
     from modules.job_recommendation_module import JobRecommendationModule
     job_recommendation_module = JobRecommendationModule()
     JOB_RECOMMENDATION_AVAILABLE = True
-    print("✅ 공고추천 모듈 로드 성공")
+    print(" 공고추천 모듈 로드 성공")
 except ImportError as e:
-    print(f"❌ 공고추천 모듈 로드 실패: {e}")
+    print(f" 공고추천 모듈 로드 실패: {e}")
     JOB_RECOMMENDATION_AVAILABLE = False
     job_recommendation_module = None
 
@@ -54,9 +54,9 @@ try:
     from modules.tfidf_job_recommendation_module import TFIDFJobRecommendationModule
     tfidf_recommendation_module = TFIDFJobRecommendationModule()
     TFIDF_RECOMMENDATION_AVAILABLE = True
-    print("✅ TF-IDF 공고추천 모듈 로드 성공")
+    print(" TF-IDF 공고추천 모듈 로드 성공")
 except ImportError as e:
-    print(f"❌ TF-IDF 공고추천 모듈 로드 실패: {e}")
+    print(f" TF-IDF 공고추천 모듈 로드 실패: {e}")
     TFIDF_RECOMMENDATION_AVAILABLE = False
     tfidf_recommendation_module = None
 
@@ -67,9 +67,9 @@ try:
     import soundfile as sf
     WHISPER_AVAILABLE = True
     LIBROSA_AVAILABLE = True
-    print("✅ Whisper 및 Librosa 모듈 로드 성공")
+    print(" Whisper 및 Librosa 모듈 로드 성공")
 except ImportError as e:
-    print(f"⚠️ 음성 분석 모듈 일부 제한: {e}")
+    print(f" 음성 분석 모듈 일부 제한: {e}")
     WHISPER_AVAILABLE = False
     LIBROSA_AVAILABLE = False
 
@@ -77,9 +77,9 @@ except ImportError as e:
 try:
     from TTS.api import TTS
     TTS_AVAILABLE = True
-    print("✅ TTS 모듈 로드 성공")
+    print(" TTS 모듈 로드 성공")
 except ImportError as e:
-    print(f"⚠️ TTS 모듈 로드 실패: {e}")
+    print(f" TTS 모듈 로드 실패: {e}")
     TTS_AVAILABLE = False
 
 # Flask 앱 초기화
@@ -358,7 +358,8 @@ def test_connection():
             "personal_interview": {
                 "start": "/ai/interview/start",  
                 "question": "/ai/interview/<interview_id>/question",
-                "answer_video": "/ai/interview/<interview_id>/answer-video"
+                "answer_video": "/ai/interview/<interview_id>/<question_type>/answer-video",
+                "followup_question": "/ai/interview/<interview_id>/genergate-followup-question"
             },
             "job_recommendation": {
                 "recommend": "/ai/jobs/recommend",
@@ -666,6 +667,101 @@ def trigger_job_crawling():
 
 # ==================== 개인면접 API 엔드포인트 ====================
 
+@app.route('/ai/interview/generate-question', methods=['POST'])
+def generate_interview_question():
+    """면접 질문 생성 엔드포인트 (백엔드 연동)"""
+    try:
+        data = request.json or {}
+        logger.info(f"면접 질문 생성 요청: {data}")
+        
+        # 필요한 데이터 추출
+        interview_id = data.get("interview_id", 0)
+        job_category = data.get("job_category", "")
+        workexperience = data.get("workexperience", "")
+        education = data.get("education", "")
+        experience_description = data.get("experience_description", "")
+        tech_stack = data.get("tech_stack", "")
+        personality = data.get("personality", "")
+        
+        # 질문 유형별 템플릿 (실제 LLM 구현 시 대체)
+        question_templates = {
+            "GENERAL": f"'{job_category}' 분야에서 {workexperience} 경력을 가진 지원자로서, 자신을 소개해주세요.",
+            "TECH": f"'{tech_stack}' 기술을 활용한 프로젝트 경험에 대해 구체적으로 설명해주세요.",
+            "FIT": f"지원자님의 '{personality}' 성격이 어떻게 업무에 도움이 될 수 있는지 설명해주세요.",
+            "SITUATION": f"팀 프로젝트에서 갈등이 발생했을 때 어떻게 해결했는지 경험을 말씀해주세요."
+        }
+        
+        # 질문 생성
+        questions = []
+        for question_type, template in question_templates.items():
+            questions.append({
+                "question_type": question_type,
+                "question_text": template
+            })
+        
+        response = {"interview_id": interview_id, "questions": questions}
+        logger.info(f"생성된 면접 질문: {len(questions)}개")
+        return jsonify(response)
+        
+    except Exception as e:
+        logger.error(f"면접 질문 생성 중 오류: {str(e)}")
+        return jsonify({"error": f"질문 생성 실패: {str(e)}"}), 500
+
+@app.route('/ai/interview/<int:interview_id>/genergate-followup-question', methods=['POST'])
+def generate_followup_question(interview_id):
+    """후속 질문 생성 엔드포인트 (백엔드 연동)"""
+    try:
+        if 'file' not in request.files and 'video' not in request.files:
+            return jsonify({"error": "영상 파일이 필요합니다."}), 400
+        
+        file = request.files.get('file') or request.files.get('video')
+        
+        # 임시 파일 저장
+        temp_path = f"temp_interview_{interview_id}_{int(time.time())}.mp4"
+        file.save(temp_path)
+        
+        try:
+            # 오디오 추출
+            audio_path = extract_audio_from_video(temp_path)
+            
+            # Whisper 음성 인식
+            transcription_result = {"text": "답변 내용이 인식되었습니다.", "confidence": 0.85}
+            if audio_path and WHISPER_AVAILABLE:
+                transcription_result = transcribe_with_whisper(audio_path)
+            
+            # 후속 질문 생성 (실제 LLM 구현 시 대체)
+            transcript = transcription_result.get("text", "")
+            
+            # 후속 질문 템플릿
+            followup_question = "방금 말씀하신 내용을 좀 더 구체적으로 설명해주실 수 있을까요?"
+            
+            # 내용 기반 후속 질문 생성 (간단한 키워드 기반)
+            if "프로젝트" in transcript:
+                followup_question = "그 프로젝트에서 어떤 역할을 맡으셨나요?"
+            elif "경험" in transcript:
+                followup_question = "그 경험을 통해 어떤 교훈을 얻으셨나요?"
+            elif "기술" in transcript or "스킬" in transcript:
+                followup_question = "그 기술을 어떻게 습득하셨고, 실무에 어떻게 적용하셨나요?"
+            
+            # 임시 파일 정리
+            cleanup_temp_files([temp_path, audio_path])
+            
+            response = {
+                "interview_id": interview_id,
+                "question_text": followup_question
+            }
+            
+            logger.info(f"생성된 후속 질문: {followup_question}")
+            return jsonify(response)
+            
+        except Exception as e:
+            cleanup_temp_files([temp_path])
+            raise e
+        
+    except Exception as e:
+        logger.error(f"후속 질문 생성 중 오류: {str(e)}")
+        return jsonify({"error": f"후속 질문 생성 실패: {str(e)}"}), 500
+
 @app.route('/ai/interview/start', methods=['POST'])
 def start_interview():
     """개인면접 시작 엔드포인트"""
@@ -714,9 +810,78 @@ def get_interview_question(interview_id):
     except Exception as e:
         return jsonify({"error": f"질문 생성 중 오류: {str(e)}"}), 500
 
+@app.route('/ai/interview/<int:interview_id>/<string:question_type>/answer-video', methods=['POST'])
+def process_interview_answer_with_type(interview_id, question_type):
+    """개인면접 답변 영상 처리 (question_type 포함)"""
+    try:
+        if 'file' not in request.files and 'video' not in request.files:
+            return jsonify({"error": "영상 파일이 필요합니다."}), 400
+        
+        file = request.files.get('file') or request.files.get('video')
+        
+        # 임시 파일 저장
+        temp_path = f"temp_interview_{interview_id}_{question_type}_{int(time.time())}.mp4"
+        file.save(temp_path)
+        
+        try:
+            # 오디오 추출
+            audio_path = extract_audio_from_video(temp_path)
+            
+            # Whisper 음성 인식
+            transcription_result = {"text": f"{question_type} 질문에 대한 답변 내용입니다.", "confidence": 0.85}
+            if audio_path and WHISPER_AVAILABLE:
+                transcription_result = transcribe_with_whisper(audio_path)
+            
+            # Librosa 오디오 분석
+            audio_analysis = {"voice_stability": 0.8, "fluency_score": 0.85}
+            if audio_path and LIBROSA_AVAILABLE:
+                audio_analysis = process_audio_with_librosa(audio_path)
+            
+            # OpenFace 얼굴 분석 (사용 가능한 경우)
+            facial_analysis = {"confidence": 0.8, "emotion": "중립"}
+            if OPENFACE_INTEGRATION_AVAILABLE and openface_integration:
+                try:
+                    facial_analysis = openface_integration.analyze_video(temp_path)
+                except Exception as e:
+                    logger.warning(f"OpenFace 분석 실패: {str(e)}")
+            
+            # 종합 분석 결과
+            content_score = calculate_content_score(transcription_result.get("text", ""))
+            voice_score = audio_analysis.get("voice_stability", 0.8) * 5
+            action_score = facial_analysis.get("confidence", 0.8) * 5
+            
+            feedback = generate_interview_feedback(transcription_result, audio_analysis, facial_analysis)
+            answer_text = transcription_result.get("text", "")
+            
+            # 명세서에 맞는 응답 형식
+            result = {
+                "interview_id": interview_id,
+                "question_type": question_type,
+                "answer_text": answer_text,
+                "content_score": content_score,
+                "voice_score": voice_score,
+                "action_score": action_score,
+                "content_feedback": "내용을 정리해서 말해야 합니다.",
+                "voice_feedback": "목소리가 안정적입니다.",
+                "action_feedback": "시선이 자연스럽습니다.",
+                "feedback": feedback
+            }
+            
+            # 임시 파일 정리
+            cleanup_temp_files([temp_path, audio_path])
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            cleanup_temp_files([temp_path])
+            raise e
+        
+    except Exception as e:
+        return jsonify({"error": f"답변 처리 중 오류: {str(e)}"}), 500
+
 @app.route('/ai/interview/<int:interview_id>/answer-video', methods=['POST'])
 def process_interview_answer(interview_id):
-    """개인면접 답변 영상 처리"""
+    """개인면접 답변 영상 처리 (이전 버전 호환용)"""
     try:
         if 'file' not in request.files and 'video' not in request.files:
             return jsonify({"error": "영상 파일이 필요합니다."}), 400
@@ -843,6 +1008,112 @@ def cleanup_temp_files(file_paths: list):
                 os.remove(file_path)
             except Exception as e:
                 logger.warning(f"임시 파일 삭제 실패: {file_path} - {str(e)}")
+
+# ==================== 스트리밍 응답 엔드포인트 ====================
+
+@app.route('/ai/debate/<int:debate_id>/ai-response-stream', methods=['POST'])
+def stream_ai_response(debate_id):
+    """AI 응답을 스트리밍으로 제공 (LLM 생성 + TTS 변환)"""
+    try:
+        data = request.json or {}
+        stage = data.get('stage', 'opening')
+        topic = data.get('topic', '인공지능')
+        position = data.get('position', 'CON')
+        user_text = data.get('user_text', '')
+        
+        def generate():
+            try:
+                # LLM 응답 생성 스트림
+                if LLM_MODULE_AVAILABLE and llm_module:
+                    # 실제 LLM 스트리밍
+                    prompt = f"토론 주제: {topic}, 단계: {stage}, 입장: {position}"
+                    if user_text:
+                        prompt += f", 상대방 의견: {user_text}"
+                    
+                    sentence_buffer = ""
+                    full_text = ""
+                    
+                    # LLM이 토큰을 생성한다고 가정 (실제 구현에 맞게 수정 필요)
+                    for token in generate_llm_tokens(prompt):
+                        sentence_buffer += token
+                        full_text += token
+                        
+                        # 문장이 완성되면 TTS 처리
+                        if token in '.!?':
+                            # TTS 변환
+                            if TTS_AVAILABLE and tts_model:
+                                temp_audio = f"temp_stream_{debate_id}_{int(time.time())}.wav"
+                                try:
+                                    tts_model.tts_to_file(text=sentence_buffer, file_path=temp_audio)
+                                    
+                                    # 오디오 파일을 base64로 인코딩
+                                    with open(temp_audio, 'rb') as audio_file:
+                                        import base64
+                                        audio_base64 = base64.b64encode(audio_file.read()).decode('utf-8')
+                                    
+                                    # 오디오 청크 전송
+                                    yield f"data: {json.dumps({'type': 'audio', 'data': audio_base64})}\n\n"
+                                    
+                                    # 임시 파일 삭제
+                                    os.remove(temp_audio)
+                                except Exception as e:
+                                    logger.error(f"TTS 변환 오류: {str(e)}")
+                            
+                            # 텍스트도 전송 (자막용)
+                            yield f"data: {json.dumps({'type': 'text', 'data': sentence_buffer})}\n\n"
+                            
+                            sentence_buffer = ""
+                    
+                    # 최종 완료 신호
+                    yield f"data: {json.dumps({'type': 'complete', 'full_text': full_text})}\n\n"
+                    
+                else:
+                    # 폴백 모드 (고정 응답 스트리밍)
+                    fallback_response = get_fallback_ai_response(stage, topic, user_text)
+                    words = fallback_response.split()
+                    
+                    sentence_buffer = ""
+                    for i, word in enumerate(words):
+                        if i > 0:
+                            word = " " + word
+                        sentence_buffer += word
+                        
+                        # 문장 종료 체크
+                        if any(punct in word for punct in '.!?'):
+                            yield f"data: {json.dumps({'type': 'text', 'data': sentence_buffer})}\n\n"
+                            sentence_buffer = ""
+                        
+                        time.sleep(0.05)  # 자연스러운 속도
+                    
+                    if sentence_buffer:  # 남은 텍스트 전송
+                        yield f"data: {json.dumps({'type': 'text', 'data': sentence_buffer})}\n\n"
+                    
+                    yield f"data: {json.dumps({'type': 'complete', 'full_text': fallback_response})}\n\n"
+                    
+            except Exception as e:
+                logger.error(f"스트리밍 생성 중 오류: {str(e)}")
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        
+        return Response(
+            stream_with_context(generate()),
+            mimetype="text/event-stream",
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+        
+    except Exception as e:
+        return jsonify({"error": f"스트리밍 응답 생성 중 오류: {str(e)}"}), 500
+
+def generate_llm_tokens(prompt: str):
+    """LLM 토큰 생성 (실제 구현 필요)"""
+    # 여기에 실제 LLM 토큰 스트리밍 로직 구현
+    # 예시로 단어 단위 생성
+    response = "인공지능의 발전은 우리 사회에 큰 영향을 미칠 것입니다. 신중한 접근이 필요합니다."
+    for word in response.split():
+        yield word + " "
+        time.sleep(0.1)
 
 # ==================== 토론면접 API 엔드포인트 ====================
 
@@ -1168,15 +1439,17 @@ if __name__ == "__main__":
     # 시작 시 AI 시스템 초기화
     initialize_ai_systems()
     
-    print("🚀 VeriView AI 메인 서버 시작...")
-    print("📍 서버 주소: http://localhost:5000")
-    print("🔍 테스트 엔드포인트: http://localhost:5000/ai/test")
-    print("📊 상태 확인 엔드포인트: http://localhost:5000/ai/debate/modules-status")
-    print("🎯 토론면접 API: http://localhost:5000/ai/debate/<debate_id>/ai-opening")
-    print("💼 개인면접 API: http://localhost:5000/ai/interview/start")
-    print("📋 공고추천 API: http://localhost:5000/ai/jobs/recommend")
-    print("🎯 TF-IDF 공고추천 API: http://localhost:5000/ai/jobs/recommend-tfidf")
-    print("🔍 희소기술 정보 API: http://localhost:5000/ai/jobs/rare-skills")
+    print(" VeriView AI 메인 서버 시작...")
+    print(" 서버 주소: http://localhost:5000")
+    print(" 테스트 엔드포인트: http://localhost:5000/ai/test")
+    print(" 상태 확인 엔드포인트: http://localhost:5000/ai/debate/modules-status")
+    print(" 토론면접 API: http://localhost:5000/ai/debate/<debate_id>/ai-opening")
+    print(" 개인면접 API: http://localhost:5000/ai/interview/start")
+    print(" 개인면접 답변 분석 API: http://localhost:5000/ai/interview/<interview_id>/<question_type>/answer-video")
+    print(" 개인면접 꼬리질문 API: http://localhost:5000/ai/interview/<interview_id>/genergate-followup-question")
+    print(" 공고추천 API: http://localhost:5000/ai/jobs/recommend")
+    print(" TF-IDF 공고추천 API: http://localhost:5000/ai/jobs/recommend-tfidf")
+    print(" 희소기술 정보 API: http://localhost:5000/ai/jobs/rare-skills")
     print("=" * 80)
     print("포함된 AI 모듈:")
     print(f"  - LLM: {'✅' if LLM_MODULE_AVAILABLE else '❌'}")

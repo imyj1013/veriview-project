@@ -1,13 +1,12 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-VeriView AI 서버 - 테스트 서버 (LLM 제외)
-OpenFace2.0, Whisper, TTS, Librosa 기능을 사용하되 LLM 대신 고정된 응답을 반환하는 테스트 서버
+VeriView AI 서버 - 테스트 서버 (Gemma LLM 사용)
+OpenFace2.0, Whisper, TTS, Librosa 기능과 함께 Gemma LLM 모델을 사용하는 테스트 서버
 
 실행 방법: python test_server.py
 포트: 5000
 """
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, Response, stream_with_context
 from flask_cors import CORS
 import os
 import tempfile
@@ -15,6 +14,16 @@ import logging
 import time
 import json
 from typing import Dict, Any, Optional
+import torch
+
+# Gemma 모델 관련 임포트
+try:
+    from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+    GEMMA_AVAILABLE = True
+    print(" Gemma LLM 모듈 로드 성공")
+except ImportError as e:
+    print(f" Gemma LLM 모듈 로드 실패: {e}")
+    GEMMA_AVAILABLE = False
 
 # 테스트 모듈 임포트
 try:
@@ -22,9 +31,9 @@ try:
     from test_features.personal_interview.main import PersonalInterviewTestMain
     DEBATE_MODULE_AVAILABLE = True
     PERSONAL_INTERVIEW_MODULE_AVAILABLE = True
-    print("✅ 테스트 모듈 로드 성공: 토론면접 및 개인면접 기능 사용 가능")
+    print(" 테스트 모듈 로드 성공: 토론면접 및 개인면접 기능 사용 가능")
 except ImportError as e:
-    print(f"❌ 테스트 모듈 로드 실패: {e}")
+    print(f" 테스트 모듈 로드 실패: {e}")
     DEBATE_MODULE_AVAILABLE = False
     PERSONAL_INTERVIEW_MODULE_AVAILABLE = False
 
@@ -33,9 +42,9 @@ try:
     from modules.job_recommendation_module import JobRecommendationModule
     job_recommendation_module = JobRecommendationModule()
     JOB_RECOMMENDATION_AVAILABLE = True
-    print("✅ 공고추천 모듈 로드 성공")
+    print(" 공고추천 모듈 로드 성공")
 except ImportError as e:
-    print(f"❌ 공고추천 모듈 로드 실패: {e}")
+    print(f" 공고추천 모듈 로드 실패: {e}")
     JOB_RECOMMENDATION_AVAILABLE = False
     job_recommendation_module = None
 
@@ -46,9 +55,9 @@ try:
     import soundfile as sf
     WHISPER_AVAILABLE = True
     LIBROSA_AVAILABLE = True
-    print("✅ Whisper 및 Librosa 모듈 로드 성공")
+    print(" Whisper 및 Librosa 모듈 로드 성공")
 except ImportError as e:
-    print(f"⚠️ 음성 분석 모듈 일부 제한: {e}")
+    print(f" 음성 분석 모듈 일부 제한: {e}")
     WHISPER_AVAILABLE = False
     LIBROSA_AVAILABLE = False
 
@@ -56,18 +65,18 @@ except ImportError as e:
 try:
     from TTS.api import TTS
     TTS_AVAILABLE = True
-    print("✅ TTS 모듈 로드 성공")
+    print(" TTS 모듈 로드 성공")
 except ImportError as e:
-    print(f"⚠️ TTS 모듈 로드 실패: {e}")
+    print(f" TTS 모듈 로드 실패: {e}")
     TTS_AVAILABLE = False
 
 # OpenFace 모듈 임포트 (실제 모듈 - LLM 제외)
 try:
     from test_features.debate.openface_module import OpenFaceTestModule
     OPENFACE_AVAILABLE = True
-    print("✅ OpenFace 테스트 모듈 로드 성공")
+    print(" OpenFace 테스트 모듈 로드 성공")
 except ImportError as e:
-    print(f"⚠️ OpenFace 모듈 로드 실패: {e}")
+    print(f" OpenFace 모듈 로드 실패: {e}")
     OPENFACE_AVAILABLE = False
 
 # Flask 앱 초기화
@@ -78,17 +87,20 @@ CORS(app)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# 전역 변수로 테스트 시스템 초기화 (LLM 제외)
+# 전역 변수로 테스트 시스템 초기화 (Gemma LLM 포함)
 debate_test_system = None
 personal_interview_test_system = None
 openface_test_module = None
 whisper_model = None
 tts_model = None
+gemma_model = None
+gemma_tokenizer = None
+gemma_generator = None
 
 def initialize_test_systems():
-    """테스트 시스템 초기화 (LLM 제외)"""
+    """테스트 시스템 초기화 (Gemma LLM 포함)"""
     global debate_test_system, personal_interview_test_system, openface_test_module
-    global whisper_model, tts_model
+    global whisper_model, tts_model, gemma_model, gemma_tokenizer, gemma_generator
     
     try:
         # 토론면접 테스트 시스템 초기화
@@ -115,6 +127,28 @@ def initialize_test_systems():
         if TTS_AVAILABLE:
             tts_model = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC")
             logger.info("TTS 모델 초기화 완료")
+        
+        # Gemma 모델 초기화
+        if GEMMA_AVAILABLE:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            logger.info(f"Gemma 모델을 {device} 장치에서 초기화합니다.")
+            model_name = "google/gemma-3-1b-it"
+            gemma_tokenizer = AutoTokenizer.from_pretrained(model_name)
+            gemma_model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                device_map=device,
+                torch_dtype=torch.float16 if device == "cuda" else torch.float32
+            )
+            gemma_generator = pipeline(
+                "text-generation",
+                model=gemma_model,
+                tokenizer=gemma_tokenizer,
+                max_new_tokens=512,
+                temperature=0.7,
+                top_p=0.95,
+                do_sample=True
+            )
+            logger.info("Gemma LLM 모델 초기화 완료")
                 
     except Exception as e:
         logger.error(f"테스트 시스템 초기화 실패: {str(e)}")
@@ -328,6 +362,133 @@ def cleanup_temp_files(file_paths: list):
             except Exception as e:
                 logger.warning(f"임시 파일 삭제 실패: {file_path} - {str(e)}")
 
+# ==================== 스트리밍 응답 엔드포인트 ====================
+
+@app.route('/ai/debate/<int:debate_id>/ai-response-stream', methods=['POST'])
+def stream_ai_response(debate_id):
+    """AI 응답을 스트리밍으로 제공 (Gemma LLM 생성 + TTS 변환)"""
+    try:
+        data = request.json or {}
+        stage = data.get('stage', 'opening')
+        topic = data.get('topic', '인공지능')
+        position = data.get('position', 'CON')
+        user_text = data.get('user_text', '')
+        
+        def generate():
+            try:
+                sentence_buffer = ""
+                full_text = ""
+                
+                # Gemma로 토큰 스트리밍
+                if GEMMA_AVAILABLE and gemma_generator:
+                    prompt = generate_debate_prompt(stage, topic, position, user_text)
+                    
+                    # Gemma 토큰 스트리밍
+                    for token in stream_gemma_tokens(prompt):
+                        sentence_buffer += token
+                        full_text += token
+                        
+                        # 문장이 완성되면 TTS 처리
+                        if token in '.!?':
+                            process_and_send_sentence(sentence_buffer, debate_id)
+                            yield f"data: {json.dumps({'type': 'text', 'data': sentence_buffer})}\n\n"
+                            sentence_buffer = ""
+                    
+                    if sentence_buffer:
+                        yield f"data: {json.dumps({'type': 'text', 'data': sentence_buffer})}\n\n"
+                    
+                else:
+                    # 고정 응답 스트리밍
+                    fixed_response = get_fixed_ai_response(stage, topic, user_text)
+                    words = fixed_response.split()
+                    
+                    for i, word in enumerate(words):
+                        if i > 0:
+                            word = " " + word
+                        sentence_buffer += word
+                        
+                        if any(punct in word for punct in '.!?'):
+                            yield f"data: {json.dumps({'type': 'text', 'data': sentence_buffer})}\n\n"
+                            sentence_buffer = ""
+                        
+                        time.sleep(0.05)
+                    
+                    if sentence_buffer:
+                        yield f"data: {json.dumps({'type': 'text', 'data': sentence_buffer})}\n\n"
+                
+                yield f"data: {json.dumps({'type': 'complete', 'full_text': full_text or fixed_response})}\n\n"
+                
+            except Exception as e:
+                logger.error(f"스트리밍 생성 중 오류: {str(e)}")
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        
+        return Response(
+            stream_with_context(generate()),
+            mimetype="text/event-stream",
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+        
+    except Exception as e:
+        return jsonify({"error": f"스트리밍 응답 생성 중 오류: {str(e)}"}), 500
+
+def generate_debate_prompt(stage: str, topic: str, position: str, user_text: str) -> str:
+    """Gemma용 토론 프롬프트 생성"""
+    prompts = {
+        "opening": f"토론 주제 '{topic}'에 대해 {position} 입장에서 입론을 작성하세요.",
+        "rebuttal": f"상대방의 의견 '{user_text}'에 대해 반박하세요.",
+        "counter_rebuttal": f"상대방의 반론 '{user_text}'에 대해 재반박하세요.",
+        "closing": f"토론 주제 '{topic}'에 대한 최종 변론을 작성하세요."
+    }
+    return prompts.get(stage, prompts["opening"])
+
+def stream_gemma_tokens(prompt: str):
+    """Gemma 토큰 스트리밍"""
+    if not GEMMA_AVAILABLE:
+        return
+    
+    try:
+        # Gemma로 토큰 스트리밍 생성
+        inputs = gemma_tokenizer(prompt, return_tensors="pt")
+        
+        # 스트리밍 설정
+        generation_kwargs = {
+            "input_ids": inputs.input_ids,
+            "max_new_tokens": 256,
+            "temperature": 0.7,
+            "do_sample": True,
+            "top_p": 0.95
+        }
+        
+        # 토큰 단위로 생성 (실제 Gemma 스트리밍 API에 맞게 수정 필요)
+        for output in gemma_model.generate(**generation_kwargs, return_dict_in_generate=True, output_scores=True):
+            token = gemma_tokenizer.decode(output, skip_special_tokens=True)
+            yield token
+            
+    except Exception as e:
+        logger.error(f"Gemma 스트리밍 오류: {str(e)}")
+
+def process_and_send_sentence(sentence: str, debate_id: int):
+    """TTS로 문장 처리"""
+    if TTS_AVAILABLE and tts_model:
+        try:
+            temp_audio = f"temp_stream_{debate_id}_{int(time.time())}.wav"
+            tts_model.tts_to_file(text=sentence, file_path=temp_audio)
+            
+            # 오디오를 base64로 인코딩하여 전송
+            with open(temp_audio, 'rb') as audio_file:
+                import base64
+                audio_base64 = base64.b64encode(audio_file.read()).decode('utf-8')
+            
+            os.remove(temp_audio)
+            return audio_base64
+            
+        except Exception as e:
+            logger.error(f"TTS 처리 오류: {str(e)}")
+    return None
+
 # 고정 응답 생성 함수들
 def get_fixed_ai_response(stage: str, topic: str = "인공지능", user_text: str = None) -> str:
     """토론 단계별 고정 AI 응답 생성"""
@@ -346,30 +507,11 @@ def get_fixed_interview_question(question_type: str) -> str:
         "technical": "본인이 가장 자신있어하는 기술 분야는 무엇이며, 그 이유는 무엇인가요?",
         "behavioral": "팀 프로젝트에서 갈등이 발생했을 때 어떻게 해결했는지 구체적인 사례로 말씀해주세요.",
         "fit": "우리 회사에 지원하게 된 동기와 본인이 기여할 수 있는 부분은 무엇인가요?",
-        "personality": "본인의 성격 중 가장 큰 장점과 단점은 무엇인가요?"
+        "personality": "본인의 성격 중 가장 큰` 장점과 단점은 무엇인가요?"
     }
     return questions.get(question_type, "본인에 대해 간단히 소개해주세요.")
 
 # ==================== API 엔드포인트 ====================
-
-@app.route('/ai/health', methods=['GET'])
-def health_check():
-    """헬스 체크 엔드포인트"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "server_type": "test_server",
-        "services": {
-            "debate": DEBATE_MODULE_AVAILABLE,
-            "personal_interview": PERSONAL_INTERVIEW_MODULE_AVAILABLE,
-            "openface": OPENFACE_AVAILABLE,
-            "whisper": WHISPER_AVAILABLE,
-            "tts": TTS_AVAILABLE,
-            "librosa": LIBROSA_AVAILABLE,
-            "job_recommendation": JOB_RECOMMENDATION_AVAILABLE
-        },
-        "note": "LLM 모듈은 제외됨 (고정 응답 사용)"
-    })
 
 @app.route('/ai/test', methods=['GET'])
 def test_connection():
@@ -1046,13 +1188,13 @@ if __name__ == "__main__":
     # 시작 시 테스트 시스템 초기화
     initialize_test_systems()
     
-    print("🚀 VeriView AI 테스트 서버 시작...")
-    print("📍 서버 주소: http://localhost:5000")
-    print("🔍 테스트 엔드포인트: http://localhost:5000/ai/test")
-    print("📊 상태 확인 엔드포인트: http://localhost:5000/ai/debate/modules-status")
-    print("🎯 토론면접 API: http://localhost:5000/ai/debate/<debate_id>/ai-opening")
-    print("💼 개인면접 API: http://localhost:5000/ai/interview/start")
-    print("📋 공고추천 API: http://localhost:5000/ai/jobs/recommend")
+    print(" VeriView AI 테스트 서버 시작...")
+    print(" 서버 주소: http://localhost:5000")
+    print(" 테스트 엔드포인트: http://localhost:5000/ai/test")
+    print(" 상태 확인 엔드포인트: http://localhost:5000/ai/debate/modules-status")
+    print(" 토론면접 API: http://localhost:5000/ai/debate/<debate_id>/ai-opening")
+    print(" 개인면접 API: http://localhost:5000/ai/interview/start")
+    print(" 공고추천 API: http://localhost:5000/ai/jobs/recommend")
     print("=" * 80)
     print("포함된 AI 모듈 (LLM 제외):")
     print(f"  - OpenFace: {'✅' if OPENFACE_AVAILABLE else '❌'}")
@@ -1062,8 +1204,8 @@ if __name__ == "__main__":
     print(f"  - 공고추천: {'✅' if JOB_RECOMMENDATION_AVAILABLE else '❌'}")
     print("  - LLM: ❌ (고정 응답 사용)")
     print("=" * 80)
-    print("⚠️  주의: 이 서버는 LLM을 사용하지 않고 고정된 응답을 반환합니다.")
-    print("💡 실제 LLM 기능을 원하시면 main_server.py를 실행하세요.")
+    print("  주의: 이 서버는 LLM을 사용하지 않고 고정된 응답을 반환합니다.")
+    print(" 실제 LLM 기능을 원하시면 main_server.py를 실행하세요.")
     print("=" * 80)
     
     app.run(host="0.0.0.0", port=5000, debug=True)
