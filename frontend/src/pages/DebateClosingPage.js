@@ -9,32 +9,23 @@ function DebateClosingPage() {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const streamRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  const streamRef = useRef(null);
-
   const stopCamera = () => {
     const stream = streamRef.current;
     if (stream) {
-      stream.getTracks().forEach((track) => track.stop()); 
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
       streamRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    if (mediaRecorderRef.current) {
-      if (mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop(); 
-      }
-      mediaRecorderRef.current = null;
-    }
-  };
-
-  const handleLeavePage = (path) => {
-    stopCamera();
-    navigate(path);
+    mediaRecorderRef.current = null;
   };
 
   useEffect(() => {
@@ -45,8 +36,7 @@ function DebateClosingPage() {
           audio: true,
         });
 
-        streamRef.current = stream; 
-
+        streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -80,52 +70,61 @@ function DebateClosingPage() {
   }, []);
 
   const handleEnd = async () => {
-    if (mediaRecorderRef.current && recording) {
-      const recorder = mediaRecorderRef.current;
+    if (!mediaRecorderRef.current || !recording) return;
 
-      recorder.onstop = async () => {
-        const originalBlob = new Blob(recordedChunksRef.current, {
-          type: "video/webm",
-        });
+    const recorder = mediaRecorderRef.current;
 
-        try {
-          const fixedBlob = await fixWebmDuration(originalBlob);
-          const formData = new FormData();
-          formData.append("file", fixedBlob, "closing-video.webm");
+    recorder.onstop = async () => {
+      const originalBlob = new Blob(recordedChunksRef.current, {
+        type: "video/webm",
+      });
 
-          await axios.post(
-            `/api/debate/${state.debateId}/closing-video`,
-            formData,
-            {
-              headers: { "Content-Type": "multipart/form-data" },
-            }
-          );
+      try {
+        const fixedBlob = await fixWebmDuration(originalBlob);
+        const formData = new FormData();
+        formData.append("file", fixedBlob, "closing-video.webm");
 
-          stopCamera(); 
-          navigate("/debate/ai-closing", { state });
-        } catch (err) {
-          alert("최종변론 영상 업로드 실패");
-          console.error(err);
-        }
-      };
+        await axios.post(
+          `/api/debate/${state.debateId}/closing-video`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
 
-      recorder.stop(); 
-      setRecording(false);
-    }
+        stopCamera();
+
+        // ✅ 약간의 지연으로 navigate 타이밍 안정화
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        navigate("/debate/ai-closing", { state });
+      } catch (err) {
+        alert("최종변론 영상 업로드 실패");
+        console.error(err);
+      }
+    };
+
+    recorder.stop();
+    setRecording(false);
+  };
+
+  const handleLeave = () => {
+    stopCamera();
+    navigate("/");
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
-      {/* 로고, 나가기 */}
+      {/* 상단 바 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => handleLeavePage("/")} 
+          onClick={handleLeave}
         />
         <button
-          onClick={() => handleLeavePage("/")}
+          onClick={handleLeave}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기
@@ -146,9 +145,11 @@ function DebateClosingPage() {
         className="w-full max-w-3xl h-[480px] bg-black rounded-lg mb-6"
       />
 
-      {/* 녹화 상태 표시, 종료 */}
+      {/* 버튼 */}
       <div className="flex gap-4">
-        <span className="text-green-700 font-semibold">녹화 중...</span>
+        {recording && (
+          <span className="text-green-700 font-semibold">녹화 중...</span>
+        )}
         <button
           onClick={handleEnd}
           disabled={!recording}

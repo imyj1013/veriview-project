@@ -1,3 +1,4 @@
+//AIClosingPage
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -6,6 +7,22 @@ function AIClosingPage() {
   const navigate = useNavigate();
   const { state } = useLocation(); // topic, position, debateId
   const [aiFinalText, setAiFinalText] = useState("");
+
+  useEffect(() => {
+    const cleanupTracks = () => {
+      const videos = document.querySelectorAll("video");
+      videos.forEach(video => {
+        const stream = video.srcObject;
+        if (stream instanceof MediaStream) {
+          stream.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+        }
+      });
+    };
+
+    cleanupTracks(); 
+    return cleanupTracks; 
+  }, []);
 
   useEffect(() => {
     const fetchAiFinal = async () => {

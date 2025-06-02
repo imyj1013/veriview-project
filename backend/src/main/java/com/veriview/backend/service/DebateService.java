@@ -279,6 +279,7 @@ public class DebateService {
 
         // 3. DebateAnswer 저장
         DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+
         answer.setVideoPath(filePath);
         answer.setTranscript((String) res.get("user_rebuttal_text"));
         debateAnswerRepository.save(answer);
@@ -321,6 +322,7 @@ public class DebateService {
             debate.getDebateId(),
             counterRebuttal.getAiAnswer()
         );
+
     }
 
     public String saveCounterRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -390,7 +392,8 @@ public class DebateService {
 
         // 3. DebateAnswer 저장
         DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter-rebuttal phase not found"));
-        answer.setVideoPath(filePath);
+
+        answer.setVideoPath(baseDirPath + "/" + mp4FileName);
         answer.setTranscript((String) res.get("user_counter_rebuttal_text"));
         debateAnswerRepository.save(answer);
 
@@ -502,6 +505,7 @@ public class DebateService {
         // 3. DebateAnswer 저장
         DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
         answer.setVideoPath(filePath);
+
         answer.setTranscript((String) res.get("user_closing_text"));
         debateAnswerRepository.save(answer);
 
@@ -544,7 +548,6 @@ public class DebateService {
                 feedback.getCommunicationScore(),
                 feedback.getLogicScore(),
                 feedback.getProblemSolvingScore(),
-    
                 feedback.getInitiativeFeedback(),
                 feedback.getCollaborativeFeedback(),
                 feedback.getCommunicationFeedback(),
@@ -554,6 +557,7 @@ public class DebateService {
                 feedback.getFeedback(),
                 feedback.getSampleAnswer()
             );
+
     
             debate_feedback.add(dto);
         }
@@ -562,5 +566,10 @@ public class DebateService {
             debate.getDebateId(),
             debate_feedback
         );
+
+        // return new DebateFeedbackResponse(
+        //     5,
+        //     debate_feedback
+        // );
     }
 }

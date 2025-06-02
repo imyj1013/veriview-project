@@ -9,10 +9,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -40,6 +42,16 @@ public class InterviewService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public int savePortfolioAndGenerateQuestions(InterviewPortfolioRequest dto) {
+        switch (dto.getJob_category()) {
+            case "경영/사무": dto.setJob_category("BM"); break;
+            case "영업/판매": dto.setJob_category("SM"); break;
+            case "공공/서비스": dto.setJob_category("PS"); break;
+            case "ICT": dto.setJob_category("ICT"); break;
+            case "R&D": dto.setJob_category("RND"); break;
+            case "생산/정비": dto.setJob_category("MM"); break;
+            case "예술/디자인": dto.setJob_category("ARD"); break;
+        }
+
         User user = userRepository.findByUserId(dto.getUser_id()).orElseThrow(() -> new RuntimeException("User not found"));
         // 1. Interview 저장
         Interview interview = new Interview();
@@ -99,6 +111,7 @@ public class InterviewService {
         }
 
         return savedInterview.getInterviewId();
+
     }
     
 
@@ -113,6 +126,17 @@ public class InterviewService {
             .collect(Collectors.toList());
 
         return new InterviewQuestionResponse(interviewId, questionDtoList);
+
+        // List<InterviewQuestion> questions = questionRepository.findByInterview_InterviewId(interviewId);
+
+        // List<InterviewQuestionDto> questionDtoList = questions.stream().filter(q -> !q.getQuestionType().name().equals("FOLLOWUP"))
+        //     .map(q -> new InterviewQuestionDto(
+        //         q.getInterviewQuestionId(),
+        //         q.getQuestionType().name(),
+        //         "면접질문입니다"))
+        //     .collect(Collectors.toList());
+
+        // return new InterviewQuestionResponse(interviewId, questionDtoList);
     }
 
     public String uploadAnswerVideo(int interviewId, String questionType, MultipartFile videoFile) throws IOException {
@@ -266,7 +290,6 @@ public class InterviewService {
             interview_feedback.add(feedbackDto);
 
         }
-
         return new InterviewFeedbackResponse(interviewId, interview_feedback);
 
     }

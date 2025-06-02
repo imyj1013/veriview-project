@@ -9,6 +9,33 @@ function InterviewFeedbackPage() {
   const [feedbackData, setFeedbackData] = useState([]);
 
   useEffect(() => {
+    // ✅ 모든 비디오 스트림 정리 함수
+    const cleanupTracks = () => {
+      try {
+        const videos = document.querySelectorAll("video");
+        videos.forEach((video) => {
+          const stream = video.srcObject;
+          if (stream instanceof MediaStream) {
+            stream.getTracks().forEach((track) => {
+              try {
+                track.stop();
+              } catch (err) {
+                console.warn("트랙 중지 실패", err);
+              }
+            });
+            video.srcObject = null;
+          }
+        });
+      } catch (err) {
+        console.warn("스트림 정리 중 에러 발생", err);
+      }
+    };
+
+    cleanupTracks();       // ✅ 진입 시 웹캠 정리
+    return cleanupTracks;  // ✅ 이탈 시도 정리 보장
+  }, []);
+
+  useEffect(() => {
     const fetchFeedback = async () => {
       const interviewId = localStorage.getItem("interview_id");
       try {
@@ -45,7 +72,7 @@ function InterviewFeedbackPage() {
 
   return (
     <div className="min-h-screen bg-white px-6 py-10 flex flex-col items-center">
-      {/* 로고 + 나가기 */}
+      {/* 상단 바 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-8">
         <img
           src="/images/Logo_image.png"
@@ -93,17 +120,23 @@ function InterviewFeedbackPage() {
             </thead>
             <tbody>
               <tr className="border-t">
-                <td className="text-center py-2">{renderStars(item.scores.content.value)} ({item.scores.content.value})</td>
+                <td className="text-center py-2">
+                  {renderStars(item.scores.content.value)} ({item.scores.content.value})
+                </td>
                 <td className="text-center">내용 점수</td>
                 <td className="px-3 py-2">{item.scores.content.feedback}</td>
               </tr>
               <tr className="border-t">
-                <td className="text-center py-2">{renderStars(item.scores.voice.value)} ({item.scores.voice.value})</td>
+                <td className="text-center py-2">
+                  {renderStars(item.scores.voice.value)} ({item.scores.voice.value})
+                </td>
                 <td className="text-center">목소리 점수</td>
                 <td className="px-3 py-2">{item.scores.voice.feedback}</td>
               </tr>
               <tr className="border-t">
-                <td className="text-center py-2">{renderStars(item.scores.behavior.value)} ({item.scores.behavior.value})</td>
+                <td className="text-center py-2">
+                  {renderStars(item.scores.behavior.value)} ({item.scores.behavior.value})
+                </td>
                 <td className="text-center">자세/행동 점수</td>
                 <td className="px-3 py-2">{item.scores.behavior.feedback}</td>
               </tr>

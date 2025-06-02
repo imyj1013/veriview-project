@@ -1,13 +1,11 @@
 package com.veriview.backend.controller;
 
 import com.veriview.backend.model.*;
-import com.veriview.backend.service.AuthService;
 import com.veriview.backend.service.RecruitmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/recruitment")
