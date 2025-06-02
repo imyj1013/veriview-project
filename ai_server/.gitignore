@@ -1,5 +1,6 @@
-./backup/
+# .gitignore
+data/
 __pycache__/
-**/__pycache__/
-./models/
-./facial_output/
+*.pyc
+ai_server.log
+backup/
