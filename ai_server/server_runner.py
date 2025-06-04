@@ -1,3 +1,43 @@
+from flask import Flask, jsonify, request, Response, stream_with_context
+from flask_cors import CORS
+import os
+import tempfile
+import logging
+import json
+import time
+import base64
+
+# AIStudios 모듈 임포트
+from modules.aistudios.client import AIStudiosClient
+from modules.aistudios.video_manager import VideoManager
+from modules.aistudios.routes import setup_aistudios_routes
+from modules.aistudios.interview_routes import setup_interview_routes
+
+# 모듈 임포트
+try:
+    from app.modules.realtime_facial_analysis import RealtimeFacialAnalysis
+    from app.modules.realtime_speech_to_text import RealtimeSpeechToText
+    print("모듈 로드 성공: OpenFace, Whisper, TTS, Librosa 기능 사용 가능")
+except ImportError as e:
+    print(f"모듈 로드 실패: {e}")
+    print("일부 기능이 제한될 수 있습니다.")
+
+app = Flask(__name__)
+CORS(app)
+
+# 로깅 설정
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+# 전역 변수로 분석기 초기화
+facial_analyzer = None
+speech_analyzer = None
+# speech_analyzer = None
+
+# AIStudios 관련 전역 변수
+aistudios_client = None
+video_manager = None
+
 # AI 면접관 관련 엔드포인트
 
 @app.route('/ai/interview/generate-question', methods=['POST'])
@@ -251,45 +291,9 @@ def generate_interview_feedback_video():
     except Exception as e:
         error_msg = f"면접 피드백 영상 생성 중 오류 발생: {str(e)}"
         logger.error(error_msg)
-        return jsonify({"error": error_msg}), 500from flask import Flask, jsonify, request, Response, stream_with_context
-from flask_cors import CORS
-import os
-import tempfile
-import logging
-import json
-import time
-import base64
+        return jsonify({"error": error_msg}), 500
+    
 
-# AIStudios 모듈 임포트
-from modules.aistudios.client import AIStudiosClient
-from modules.aistudios.video_manager import VideoManager
-from modules.aistudios.routes import setup_aistudios_routes
-from modules.aistudios.interview_routes import setup_interview_routes
-
-# 모듈 임포트
-try:
-    from app.modules.realtime_facial_analysis import RealtimeFacialAnalysis
-    from app.modules.realtime_speech_to_text import RealtimeSpeechToText
-    print("모듈 로드 성공: OpenFace, Whisper, TTS, Librosa 기능 사용 가능")
-except ImportError as e:
-    print(f"모듈 로드 실패: {e}")
-    print("일부 기능이 제한될 수 있습니다.")
-
-app = Flask(__name__)
-CORS(app)
-
-# 로깅 설정
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
-# 전역 변수로 분석기 초기화
-facial_analyzer = None
-speech_analyzer = None
-# speech_analyzer = None
-
-# AIStudios 관련 전역 변수
-aistudios_client = None
-video_manager = None
 
 def initialize_analyzers():
     """분석기 초기화 함수"""
@@ -342,6 +346,23 @@ def get_fixed_ai_response(phase, topic=None, user_text=None, debate_id=None):
     }
     
     return responses.get(phase, "AI 응답을 생성할 수 없습니다.")
+
+# LLM 통합 후
+def get_dynamic_ai_response(phase, topic=None, user_text=None, debate_id=None):
+    """LLM을 사용한 동적 AI 응답 생성"""
+    if not llm_client:
+        return get_fixed_ai_response(phase, topic, user_text, debate_id)
+    
+    prompt = generate_prompt(phase, topic, user_text)
+    ai_response = llm_client.generate_response(prompt)
+    
+    # AIStudios로 아바타 영상 생성
+    if aistudios_client:
+        video_path = aistudios_client.generate_avatar_video(ai_response)
+        # 영상 경로도 함께 반환
+        return ai_response, video_path
+    
+    return ai_response, None
 
 # ==================== 스트리밍 응답 엔드포인트 ====================
 
@@ -704,40 +725,7 @@ def process_opening_video(debate_id):
     except Exception as e:
         error_msg = f"영상 처리 중 오류 발생: {str(e)}"
         logger.error(error_msg)
-        return jsonify({"error": error_msg}), 500 os.path.exists(temp_path):
-            os.remove(temp_path)
-            logger.info(f"임시 파일 삭제됨: {temp_path}")
-        
-        response = {
-            "user_opening_text": user_text,
-            "ai_rebuttal_text": ai_response,
-            "emotion": emotion,
-            "initiative_score": scores["initiative_score"],
-            "collaborative_score": scores["collaborative_score"],
-            "communication_score": scores["communication_score"],
-            "logic_score": scores["logic_score"],
-            "problem_solving_score": scores["problem_solving_score"],
-            "voice_score": scores["voice_score"],
-            "action_score": scores["action_score"],
-            "initiative_feedback": scores["initiative_feedback"],
-            "collaborative_feedback": scores["collaborative_feedback"],
-            "communication_feedback": scores["communication_feedback"],
-            "logic_feedback": scores["logic_feedback"],
-            "problem_solving_feedback": scores["problem_solving_feedback"],
-            "voice_feedback": scores["voice_feedback"],
-            "action_feedback": scores["action_feedback"],
-            "feedback": scores["feedback"],
-            "sample_answer": scores["sample_answer"]
-        }
-        
-        if tts_path and os.path.exists(tts_path):
-            response["tts_path"] = tts_path
-        
-        return jsonify(response)
-    except Exception as e:
-        error_msg = f"영상 처리 중 오류 발생: {str(e)}"
-        logger.error(error_msg)
-        return jsonify({"error": error_msg}), 500
+        return jsonify({"error": error_msg}), 500 
 
 @app.route('/ai/debate/<int:debate_id>/rebuttal-video', methods=['POST'])
 def process_rebuttal_video(debate_id):
