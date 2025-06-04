@@ -1,7 +1,6 @@
 package com.veriview.backend.controller;
 
 import com.veriview.backend.service.DebateService;
-import com.veriview.backend.service.DebateTopicService;
 import com.veriview.backend.model.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,11 +18,9 @@ import lombok.RequiredArgsConstructor;
 public class DebateController {
 
     private final DebateService debateService;
-    private final DebateTopicService debateTopicService;
 
     @PostMapping("/start")
     public ResponseEntity<DebateStartResponse> startDebate(@RequestBody DebateStartRequest request) {
-        debateTopicService.importTopics("src/main/resources/debate_topic.txt");
         DebateStartResponse response = debateService.startDebate(request.getUser_id());
         return ResponseEntity.ok(response);
     }
