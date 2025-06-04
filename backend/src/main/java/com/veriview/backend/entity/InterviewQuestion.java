@@ -18,6 +18,8 @@ public class InterviewQuestion {
     private QuestionType questionType;
 
     public enum QuestionType { INTRO, FIT, PERSONALITY, TECH, FOLLOWUP }
+    
+    private String aiVideoPath;
 
     @Column(columnDefinition = "TEXT")
     private String questionText;
@@ -52,5 +54,13 @@ public class InterviewQuestion {
 
     public void setQuestionText(String questionText) {
         this.questionText = questionText;
+    }
+
+    public String getAiVideoPath() {
+        return aiVideoPath;
+    }
+
+    public void setAiVideoPath(String aiVideoPath) {
+        this.aiVideoPath = aiVideoPath;
     }
 }

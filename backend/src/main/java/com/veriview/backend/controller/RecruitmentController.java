@@ -16,7 +16,6 @@ public class RecruitmentController {
 
     @PostMapping("/start")
     public ResponseEntity<RecruitmentResponse> recruitment(@RequestBody RecruitmentRequest request) {
-
         RecruitmentResponse res = recruitmentService.recommendation(request);
         return ResponseEntity.ok(res);
     }

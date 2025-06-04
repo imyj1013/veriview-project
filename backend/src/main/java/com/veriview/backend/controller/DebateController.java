@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,11 @@ public class DebateController {
         DebateOpeningResponse response = debateService.getAIOpening(debateId);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/{debateId}/ai-opening-video")
+    public ResponseEntity<Resource> getAIOpeningVideo(@PathVariable int debateId) {
+        return debateService.getAIOpeningVideo(debateId);
+    }
 
     @PostMapping("/{debateId}/opening-video")
     public ResponseEntity<Map<String, String>> uploadOpeningVideo(@PathVariable int debateId, @RequestParam("file") MultipartFile videoFile) {
@@ -47,6 +53,11 @@ public class DebateController {
 
         DebateRebuttalResponse response = debateService.getAIRebuttal(debateId);
         return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/{debateId}/ai-rebuttal-video")
+    public ResponseEntity<Resource> getAIRebuttalVideo(@PathVariable int debateId) {
+        return debateService.getAIOpeningVideo(debateId);
     }
 
     @PostMapping("{debateId}/rebuttal-video")
@@ -65,6 +76,11 @@ public class DebateController {
         DebateCounterRebuttalResponse response = debateService.getAICounterRebuttal(debateId);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/{debateId}/ai-counter-rebuttal-video")
+    public ResponseEntity<Resource> getAICounterRebuttalVideo(@PathVariable int debateId) {
+        return debateService.getAICounterRebuttalVideo(debateId);
+    }
 
     @PostMapping("{debateId}/counter-rebuttal-video")
     public ResponseEntity<Map<String, String>> uploadCounterRebuttalVideo(@PathVariable int debateId, @RequestParam("file") MultipartFile videoFile) {
@@ -81,6 +97,11 @@ public class DebateController {
 
         DebateClosingResponse response = debateService.getAIClosing(debateId);
         return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/{debateId}/ai-closing-video")
+    public ResponseEntity<Resource> getAIClosingVideo(@PathVariable int debateId) {
+        return debateService.getAIClosingVideo(debateId);
     }
 
     @PostMapping("{debateId}/closing-video")

@@ -29,7 +29,7 @@ public class DebateTopicService {
                     continue;
                 }
                 line = line.trim();
-                if (!line.isEmpty()) {
+                if (!line.isEmpty() && topicRepository.findByTopic(line).isEmpty()) {
                     DebateTopic topic = new DebateTopic();
                     topic.setTopic(line);
                     topicRepository.save(topic);

@@ -153,19 +153,20 @@ public class JobPostingService {
 
                 if (tokens.length < 10) continue;
 
-                JobPosting posting = new JobPosting();
-                posting.setCategory(tokens[1]);
-                posting.setCorporation(tokens[2]);
-                posting.setDeadline(tokens[3]);
-                posting.setEducation(tokens[4]);
-                posting.setEmploymenttype(tokens[5]);
-                posting.setKeyword(tokens[6]);
-                posting.setLocation(tokens[7]);
-                posting.setTitle(tokens[8]);
-                posting.setWorkexperience(tokens[9]);
-
-                repository.save(posting);
-                count++;
+                if (!repository.existsByTitleAndCorporation(tokens[8], tokens[2])) {
+                    JobPosting posting = new JobPosting();
+                    posting.setCategory(tokens[1]);
+                    posting.setCorporation(tokens[2]);
+                    posting.setDeadline(tokens[3]);
+                    posting.setEducation(tokens[4]);
+                    posting.setEmploymenttype(tokens[5]);
+                    posting.setKeyword(tokens[6]);
+                    posting.setLocation(tokens[7]);
+                    posting.setTitle(tokens[8]);
+                    posting.setWorkexperience(tokens[9]);
+                    repository.save(posting);
+                    count++;
+                }
             }
 
         } catch (Exception e) {
