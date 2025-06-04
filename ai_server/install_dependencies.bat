@@ -1,49 +1,44 @@
 @echo off
-REM AI 서버 의존성 설치 스크립트 (Windows)
+echo ===== Veriview AI Server 종속성 설치 =====
 
-echo =========================================
-echo AI 서버 의존성 패키지 설치 시작
-echo =========================================
+:: Python 가상환경 생성 및 활성화
+echo 가상환경 생성 중...
+python -m venv venv
+call venv\Scripts\activate
 
-REM pip 업그레이드
-echo 1. pip 업그레이드...
+:: pip 업그레이드
+echo pip 업그레이드 중...
 python -m pip install --upgrade pip
 
-REM requirements.txt 기반 설치
-echo 2. requirements.txt 기반 패키지 설치...
-pip install -r requirements.txt
+:: 개별 패키지 설치 - 호환성 문제 있는 패키지들 단계적으로 설치
+echo 기본 패키지 설치 중...
+pip install Flask==2.3.2 requests==2.32.2 numpy==1.26.4 pandas==1.5.3 pyjwt==2.6.0 flask-cors==4.0.0 unidecode==1.3.8
 
-REM TTS 설치 확인 및 모델 초기화
-echo 3. TTS 설치 확인 및 기본 모델 다운로드...
-python -c "
-try:
-    from TTS.api import TTS
-    print('TTS 패키지 설치 확인 완료')
-    
-    # 기본 모델들 미리 로드 (첫 실행 시 자동 다운로드됨)
-    print('기본 TTS 모델 초기화 중...')
-    tts = TTS()
-    print('✓ 기본 TTS 모델 로드 완료')
-    
-    # 영어 모델 로드 테스트
-    try:
-        tts_en = TTS('tts_models/en/ljspeech/tacotron2-DDC')
-        print('✓ 영어 TTS 모델 로드 완료')
-    except Exception as model_error:
-        print(f'⚠ 영어 TTS 모델 로드 실패: {model_error}')
-        
-except Exception as e:
-    print(f'TTS 설치 확인 실패: {e}')
-    print('수동으로 다음 명령어를 실행해보세요:')
-    print('pip install TTS --upgrade')
-"
+echo 과학 계산 패키지 설치 중...
+pip install scipy==1.14.1 numba>=0.56.0
 
-echo =========================================
-echo 설치 완료!
-echo =========================================
-echo.
-echo 다음 단계:
-echo 1. TTS 테스트: python test_tts.py
-echo 2. 서버 실행: python server_runner.py
-echo.
+echo OpenCV 설치 중...
+pip install opencv-python==4.10.0.84
+
+echo 오디오 관련 패키지 설치 중...
+pip install librosa==0.10.2 soundfile==0.12.1 sounddevice==0.5.0 pydub>=0.25.1
+
+echo PyTorch 설치 중...
+pip install torch>=2.0.0 torchaudio>=2.0.0
+
+echo Whisper 모델 설치 중...
+pip install openai-whisper>=20230918
+
+echo TTS 설치 중...
+pip install TTS>=0.22.0
+
+echo AIStudios 관련 패키지 설치 중...
+pip install python-dotenv>=1.0.0 pillow>=10.0.0
+
+echo 시스템 모니터링 패키지 설치 중...
+pip install psutil>=5.9.0
+
+echo ===== 설치 완료 =====
+echo 이제 run_server.bat을 실행하여 AI 서버를 시작할 수 있습니다.
+
 pause

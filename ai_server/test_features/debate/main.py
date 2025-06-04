@@ -515,9 +515,9 @@ def run_full_test_suite(video_path: Optional[str] = None):
             else:
                 unavailable_modules.append(module)
         
-        print(f"✅ 사용 가능한 모듈 ({len(available_modules)}개): {', '.join(available_modules)}")
+        print(f" 사용 가능한 모듈 ({len(available_modules)}개): {', '.join(available_modules)}")
         if unavailable_modules:
-            print(f"❌ 사용 불가 모듈 ({len(unavailable_modules)}개): {', '.join(unavailable_modules)}")
+            print(f" 사용 불가 모듈 ({len(unavailable_modules)}개): {', '.join(unavailable_modules)}")
         
         # 정리
         test_system.cleanup_test_files()

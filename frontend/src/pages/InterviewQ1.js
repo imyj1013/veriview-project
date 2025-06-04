@@ -8,14 +8,33 @@ import fixWebmDuration from "webm-duration-fix";
 function InterviewQ1() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const intervalRef = useRef(null);
-  const streamRef = useRef(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [question, setQuestion] = useState("");
+
+  // ✅ 웹캠 종료 함수
+  const stopCamera = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    mediaRecorderRef.current = null;
+  };
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -45,10 +64,7 @@ function InterviewQ1() {
     startCamera();
 
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
+      stopCamera();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
@@ -65,14 +81,38 @@ function InterviewQ1() {
 
     const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
+    recordedChunksRef.current = [];
+
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         recordedChunksRef.current.push(event.data);
       }
     };
 
+    mediaRecorder.onstop = async () => {
+      stopCamera(); // ✅ 스트림 종료
+
+      const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+
+      try {
+        const fixedBlob = await fixWebmDuration(originalBlob);
+        const formData = new FormData();
+        const interviewId = localStorage.getItem("interview_id");
+        formData.append("file", fixedBlob, "intro.webm");
+
+        await axios.post(`/api/interview/${interviewId}/INTRO/answer-video`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        await new Promise(r => setTimeout(r, 100)); // ⏱️ 타이밍 보정
+        navigate("/interview/q2");
+      } catch (err) {
+        alert("영상 업로드 실패");
+        console.error(err);
+      }
+    };
+
     mediaRecorderRef.current = mediaRecorder;
-    recordedChunksRef.current = [];
     mediaRecorder.start();
     setIsRecording(true);
 
@@ -85,35 +125,12 @@ function InterviewQ1() {
     if (!mediaRecorderRef.current) return;
     mediaRecorderRef.current.stop();
     setIsRecording(false);
-    clearInterval(intervalRef.current);
-
-    mediaRecorderRef.current.onstop = async () => {
-      const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-      try {
-        const fixedBlob = await fixWebmDuration(originalBlob);
-        const formData = new FormData();
-        const interviewId = localStorage.getItem("interview_id");
-        formData.append("file", fixedBlob, "intro.webm");
-
-        await axios.post(`/api/interview/${interviewId}/INTRO/answer-video`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-
-        navigate("/interview/q2");
-      } catch (err) {
-        alert("영상 업로드 실패");
-        console.error(err);
-      }
-    };
+    if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
+
     if (isPaused) {
       mediaRecorderRef.current.resume();
       intervalRef.current = setInterval(() => {
@@ -122,9 +139,14 @@ function InterviewQ1() {
       setIsPaused(false);
     } else {
       mediaRecorderRef.current.pause();
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setIsPaused(true);
     }
+  };
+
+  const handleExit = () => {
+    stopCamera();
+    navigate("/");
   };
 
   return (
@@ -134,10 +156,10 @@ function InterviewQ1() {
           src="/images/Logo_image.png"
           alt="logo"
           className="w-[240px] cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={handleExit}
         />
         <button
-          onClick={() => navigate("/")}
+          onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
         >
           나가기

@@ -1,5 +1,3 @@
-// src/pages/InterviewQ5.js
-
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -11,16 +9,17 @@ function InterviewQ5() {
   const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const intervalRef = useRef(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const intervalRef = useRef(null);
   const [questionText, setQuestionText] = useState("");
 
   const stopCamera = () => {
     const stream = streamRef.current || videoRef.current?.srcObject;
     if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
+      stream.getTracks().forEach(track => track.stop());
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -31,30 +30,30 @@ function InterviewQ5() {
   useEffect(() => {
     const interviewId = localStorage.getItem("interview_id");
 
-    const fetchFollowupQuestion = async () => {
+    const fetchQuestion = async () => {
       try {
         const res = await axios.get(`/api/interview/${interviewId}/followup-question`);
         setQuestionText(res.data.question_text || "꼬리질문을 불러올 수 없습니다.");
       } catch (err) {
-        setQuestionText("꼬리질문을 불러올 수 없습니다.");
         console.error(err);
+        setQuestionText("꼬리질문을 불러올 수 없습니다.");
       }
     };
 
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-        streamRef.current = stream;
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
       }
     };
 
-    fetchFollowupQuestion();
+    fetchQuestion();
     startCamera();
 
     return () => {
@@ -98,7 +97,6 @@ function InterviewQ5() {
       stopCamera();
 
       const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-
       try {
         const fixedBlob = await fixWebmDuration(originalBlob);
         const formData = new FormData();
@@ -108,11 +106,10 @@ function InterviewQ5() {
         await axios.post(
           `/api/interview/${interviewId}/FOLLOWUP/answer-video`,
           formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
+          { headers: { "Content-Type": "multipart/form-data" } }
         );
 
+        await new Promise((r) => setTimeout(r, 100)); // 🔧 타이밍 안정화
         navigate("/interview/feedback");
       } catch (err) {
         alert("영상 업로드 실패");
@@ -122,7 +119,7 @@ function InterviewQ5() {
 
     mediaRecorderRef.current.stop();
     setIsRecording(false);
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    clearInterval(intervalRef.current);
   };
 
   const togglePause = () => {
@@ -135,7 +132,7 @@ function InterviewQ5() {
       setIsPaused(false);
     } else {
       mediaRecorderRef.current.pause();
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current);
       setIsPaused(true);
     }
   };
@@ -150,6 +147,7 @@ function InterviewQ5() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
+      {/* 상단 바 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <img
           src="/images/Logo_image.png"
@@ -165,6 +163,7 @@ function InterviewQ5() {
         </button>
       </div>
 
+      {/* 영상 및 질문 */}
       <div className="flex flex-col items-center border-4 px-6 py-8 rounded-xl">
         <div className="flex gap-6 mb-4">
           <div className="flex flex-col items-center">
@@ -189,6 +188,7 @@ function InterviewQ5() {
           {questionText}
         </div>
 
+        {/* 버튼 */}
         <div className="flex gap-4">
           {!isRecording ? (
             <button onClick={startRecording} className="bg-gray-200 px-5 py-2 rounded hover:bg-gray-300">

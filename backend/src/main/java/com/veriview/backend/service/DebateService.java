@@ -48,7 +48,7 @@ public class DebateService {
     public DebateStartResponse startDebate(String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-        int randomId = new Random().nextInt(424) + 1; // 1부터 424 사이의 정수
+        int randomId = new Random().nextInt(9) + 1; // 1부터 424 사이의 정수
         DebateTopic topic = topicRepository.findById(randomId).orElseThrow(() -> new RuntimeException("해당 ID의 주제가 존재하지 않습니다: " + randomId));
 
         Debate.Stance userStance = Math.random() < 0.5 ? Debate.Stance.PRO : Debate.Stance.CON;
@@ -130,9 +130,7 @@ public class DebateService {
         }
 
         return new DebateStartResponse(topic.getTopic(), userStance.name(), debate.getDebateId(), (String) res.get("ai_opening_text"));
-
-        //return new DebateStartResponse("토론주제입니다", "PRO", 5, "ai의 입론입니다");
-    }
+        }
 
     public DebateOpeningResponse getAIOpening(int debateId) {
         Debate debate = debateRepository.findById(debateId).orElseThrow(() -> new RuntimeException("Debate not found"));
@@ -145,8 +143,6 @@ public class DebateService {
             debate.getDebateId(),
             opening.getAiAnswer()
         );
-
-        //return new DebateOpeningResponse("토론주제입니다","PRO",5,"ai 입론입니다");
     }
 
     public ResponseEntity<Resource> getAIOpeningVideo(int debateId) {
@@ -238,7 +234,7 @@ public class DebateService {
 
         // 3. DebateAnswer 저장
         DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Opening phase not found"));
-        answer.setVideoPath(baseDirPath + "/" + mp4FileName);
+        answer.setVideoPath(filePath);
         answer.setTranscript((String) res.get("user_opening_text"));
         debateAnswerRepository.save(answer);
 
@@ -312,8 +308,6 @@ public class DebateService {
             debate.getDebateId(),
             rebuttal.getAiAnswer()
         );
-
-        //return new DebateRebuttalResponse("토론주제입니다","PRO",5,"ai 반론입니다");
     }
 
     
@@ -406,7 +400,8 @@ public class DebateService {
 
         // 3. DebateAnswer 저장
         DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
-        answer.setVideoPath(baseDirPath + "/" + mp4FileName);
+
+        answer.setVideoPath(filePath);
         answer.setTranscript((String) res.get("user_rebuttal_text"));
         debateAnswerRepository.save(answer);
 
@@ -483,7 +478,6 @@ public class DebateService {
             counterRebuttal.getAiAnswer()
         );
 
-        //return new DebateCounterRebuttalResponse("토론주제입니다","PRO",5,"ai 재반론입니다");
     }
     
     public ResponseEntity<Resource> getAICounterRebuttalVideo(int debateId) {
@@ -575,6 +569,7 @@ public class DebateService {
 
         // 3. DebateAnswer 저장
         DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter-rebuttal phase not found"));
+
         answer.setVideoPath(baseDirPath + "/" + mp4FileName);
         answer.setTranscript((String) res.get("user_counter_rebuttal_text"));
         debateAnswerRepository.save(answer);
@@ -650,8 +645,6 @@ public class DebateService {
             debate.getDebateId(),
             closing.getAiAnswer()
         );
-
-        //return new DebateClosingResponse("토론주제입니다","PRO",5,"ai 최종변론입니다");
     }
 
     public ResponseEntity<Resource> getAIClosingVideo(int debateId) {
@@ -743,7 +736,8 @@ public class DebateService {
 
         // 3. DebateAnswer 저장
         DebateAnswer answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
-        answer.setVideoPath(baseDirPath + "/" + mp4FileName);
+        answer.setVideoPath(filePath);
+
         answer.setTranscript((String) res.get("user_closing_text"));
         debateAnswerRepository.save(answer);
 
@@ -786,7 +780,6 @@ public class DebateService {
                 feedback.getCommunicationScore(),
                 feedback.getLogicScore(),
                 feedback.getProblemSolvingScore(),
-    
                 feedback.getInitiativeFeedback(),
                 feedback.getCollaborativeFeedback(),
                 feedback.getCommunicationFeedback(),
@@ -797,23 +790,6 @@ public class DebateService {
                 feedback.getSampleAnswer()
             );
 
-            // DebateFeedbackDto dto = new DebateFeedbackDto(
-            //     "사용자의 응답",
-            //     5,
-            //     3,
-            //     2,
-            //     4,
-            //     5,
-    
-            //     "적극성 피드백",
-            //     "협력적태도 피드백",
-            //     "의사소통능력 피드백",
-            //     "논리력 피드백",
-            //     "문제해결능력 피드백",
-    
-            //     "종합 피드백",
-            //     "예시답안"
-            // );
     
             debate_feedback.add(dto);
         }
