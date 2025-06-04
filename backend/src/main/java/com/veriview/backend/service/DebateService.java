@@ -9,10 +9,15 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -23,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Optional;
 import java.util.Random;
 
@@ -85,6 +91,44 @@ public class DebateService {
         openingAnswer.setAiAnswer((String) res.get("ai_opening_text"));
         debateAnswerRepository.save(openingAnswer);
 
+
+        String videoUrl = "http://localhost:5000/ai/debate/ai-opening-video";
+        HttpHeaders videoHeaders = new HttpHeaders();
+        videoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> videoRequest = new HashMap<>();
+        videoRequest.put("ai_opening_text", openingAnswer.getAiAnswer());
+
+        ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
+            videoUrl,
+            HttpMethod.POST,
+            new HttpEntity<>(videoRequest, videoHeaders),
+            byte[].class
+        );
+
+        byte[] videoBytes = videoResponse.getBody();
+        if (videoBytes != null) {
+            // 영상 파일 저장 경로 생성
+            String baseDirPath = new File(System.getProperty("user.dir")).getParentFile().getAbsolutePath() + "/videos";
+            File baseDir = new File(baseDirPath);
+            if (!baseDir.exists()) {
+                baseDir.mkdirs();
+            }
+            String mp4FileName = "opening_ai_" + debate.getDebateId() + "_" + System.currentTimeMillis() + ".mp4";
+            String filePath = baseDirPath + "/" + mp4FileName;
+
+            // 영상 파일을 저장
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                fos.write(videoBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save video file", e);
+            }
+
+            // debateAnswer의 ai_video_path에 경로 저장
+            openingAnswer.setAiVideoPath(filePath);
+            debateAnswerRepository.save(openingAnswer);
+        }
+
         return new DebateStartResponse(topic.getTopic(), userStance.name(), debate.getDebateId(), (String) res.get("ai_opening_text"));
 
         //return new DebateStartResponse("토론주제입니다", "PRO", 5, "ai의 입론입니다");
@@ -103,6 +147,28 @@ public class DebateService {
         );
 
         //return new DebateOpeningResponse("토론주제입니다","PRO",5,"ai 입론입니다");
+    }
+
+    public ResponseEntity<Resource> getAIOpeningVideo(int debateId) {
+        DebateAnswer opening = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+    
+        String videoPath = opening.getAiVideoPath();
+        if (videoPath == null || !new File(videoPath).exists()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "AI video file not found.");
+        }
+
+        try {
+            FileSystemResource resource = new FileSystemResource(videoPath);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("video/mp4"));
+            headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+
+            return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read video file.");
+        }
+
     }
 
     public String saveOpeningVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -179,7 +245,39 @@ public class DebateService {
         DebateAnswer ai_answer = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
         ai_answer.setAiAnswer((String) res.get("ai_rebuttal_text"));
         debateAnswerRepository.save(ai_answer);
+        
 
+        String videoUrl = "http://localhost:5000/ai/debate/ai-rebuttal-video";
+        HttpHeaders videoHeaders = new HttpHeaders();
+        videoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> videoRequest = new HashMap<>();
+        videoRequest.put("ai_rebuttal_text", ai_answer.getAiAnswer());
+
+        ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
+            videoUrl,
+            HttpMethod.POST,
+            new HttpEntity<>(videoRequest, videoHeaders),
+            byte[].class
+        );
+
+        byte[] videoBytes = videoResponse.getBody();
+        if (videoBytes != null) {
+            // 영상 파일 저장 경로 생성
+            String aimp4FileName = "rebuttal_ai_" + debateId + "_" + System.currentTimeMillis() + ".mp4";
+            String aifilePath = baseDirPath + "/" + aimp4FileName;
+
+            // 영상 파일을 저장
+            try (FileOutputStream fos = new FileOutputStream(aifilePath)) {
+                fos.write(videoBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save video file", e);
+            }
+
+            // debateAnswer의 ai_video_path에 경로 저장
+            ai_answer.setAiVideoPath(aifilePath);
+            debateAnswerRepository.save(ai_answer);
+        }
 
         // 4. Feedback 저장
         DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
@@ -216,6 +314,29 @@ public class DebateService {
         );
 
         //return new DebateRebuttalResponse("토론주제입니다","PRO",5,"ai 반론입니다");
+    }
+
+    
+    public ResponseEntity<Resource> getAIRebuttalVideo(int debateId) {
+        DebateAnswer rebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+    
+        String videoPath = rebuttal.getAiVideoPath();
+        if (videoPath == null || !new File(videoPath).exists()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "AI video file not found.");
+        }
+
+        try {
+            FileSystemResource resource = new FileSystemResource(videoPath);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("video/mp4"));
+            headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+
+            return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read video file.");
+        }
+
     }
 
     public String saveRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -293,6 +414,40 @@ public class DebateService {
         ai_answer.setAiAnswer((String) res.get("ai_counter_rebuttal_text"));
         debateAnswerRepository.save(ai_answer);
 
+        
+
+        String videoUrl = "http://localhost:5000/ai/debate/ai-counter-rebuttal-video";
+        HttpHeaders videoHeaders = new HttpHeaders();
+        videoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> videoRequest = new HashMap<>();
+        videoRequest.put("ai_counter_rebuttal_text", ai_answer.getAiAnswer());
+
+        ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
+            videoUrl,
+            HttpMethod.POST,
+            new HttpEntity<>(videoRequest, videoHeaders),
+            byte[].class
+        );
+
+        byte[] videoBytes = videoResponse.getBody();
+        if (videoBytes != null) {
+            // 영상 파일 저장 경로 생성
+            String aimp4FileName = "counter_rebuttal_ai_" + debateId + "_" + System.currentTimeMillis() + ".mp4";
+            String aifilePath = baseDirPath + "/" + aimp4FileName;
+
+            // 영상 파일을 저장
+            try (FileOutputStream fos = new FileOutputStream(aifilePath)) {
+                fos.write(videoBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save video file", e);
+            }
+
+            // debateAnswer의 ai_video_path에 경로 저장
+            ai_answer.setAiVideoPath(aifilePath);
+            debateAnswerRepository.save(ai_answer);
+        }
+
 
         // 4. Feedback 저장
         DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
@@ -329,6 +484,28 @@ public class DebateService {
         );
 
         //return new DebateCounterRebuttalResponse("토론주제입니다","PRO",5,"ai 재반론입니다");
+    }
+    
+    public ResponseEntity<Resource> getAICounterRebuttalVideo(int debateId) {
+        DebateAnswer counterrebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+    
+        String videoPath = counterrebuttal.getAiVideoPath();
+        if (videoPath == null || !new File(videoPath).exists()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "AI video file not found.");
+        }
+
+        try {
+            FileSystemResource resource = new FileSystemResource(videoPath);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("video/mp4"));
+            headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+
+            return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read video file.");
+        }
+
     }
 
     public String saveCounterRebuttalVideo(int debateId, MultipartFile videoFile) throws IOException {
@@ -406,6 +583,39 @@ public class DebateService {
         ai_answer.setAiAnswer((String) res.get("ai_closing_text"));
         debateAnswerRepository.save(ai_answer);
 
+        
+
+        String videoUrl = "http://localhost:5000/ai/debate/ai-closing-video";
+        HttpHeaders videoHeaders = new HttpHeaders();
+        videoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> videoRequest = new HashMap<>();
+        videoRequest.put("ai_closing_text", ai_answer.getAiAnswer());
+
+        ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
+            videoUrl,
+            HttpMethod.POST,
+            new HttpEntity<>(videoRequest, videoHeaders),
+            byte[].class
+        );
+
+        byte[] videoBytes = videoResponse.getBody();
+        if (videoBytes != null) {
+            // 영상 파일 저장 경로 생성
+            String aimp4FileName = "closing_ai_" + debateId + "_" + System.currentTimeMillis() + ".mp4";
+            String aifilePath = baseDirPath + "/" + aimp4FileName;
+
+            // 영상 파일을 저장
+            try (FileOutputStream fos = new FileOutputStream(aifilePath)) {
+                fos.write(videoBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save video file", e);
+            }
+
+            // debateAnswer의 ai_video_path에 경로 저장
+            ai_answer.setAiVideoPath(aifilePath);
+            debateAnswerRepository.save(ai_answer);
+        }
 
         // 4. Feedback 저장
         DebateFeedback feedback = debateFeedbackRepository.findByDebateAnswer_DebateAnswerId(answer.getDebateAnswerId()).orElseThrow(() -> new RuntimeException("feedback not found"));
@@ -442,6 +652,28 @@ public class DebateService {
         );
 
         //return new DebateClosingResponse("토론주제입니다","PRO",5,"ai 최종변론입니다");
+    }
+
+    public ResponseEntity<Resource> getAIClosingVideo(int debateId) {
+        DebateAnswer closing = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+    
+        String videoPath = closing.getAiVideoPath();
+        if (videoPath == null || !new File(videoPath).exists()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "AI video file not found.");
+        }
+
+        try {
+            FileSystemResource resource = new FileSystemResource(videoPath);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("video/mp4"));
+            headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+
+            return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read video file.");
+        }
+
     }
 
     public String saveClosingVideo(int debateId, MultipartFile videoFile) throws IOException {

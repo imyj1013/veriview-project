@@ -19,6 +19,8 @@ public class DebateAnswer {
     @Column(columnDefinition = "TEXT")
     private String aiAnswer;
 
+    private String aiVideoPath;
+
     private String videoPath;
 
     @Column(columnDefinition = "TEXT")
@@ -58,6 +60,14 @@ public class DebateAnswer {
 
     public void setAiAnswer(String aiAnswer) {
         this.aiAnswer = aiAnswer;
+    }
+
+    public String getAiVideoPath() {
+        return aiVideoPath;
+    }
+
+    public void setAiVideoPath(String aiVideoPath) {
+        this.aiVideoPath = aiVideoPath;
     }
 
     public String getVideoPath() {

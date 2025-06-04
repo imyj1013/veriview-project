@@ -4,6 +4,7 @@ import com.veriview.backend.service.InterviewService;
 import com.veriview.backend.model.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +35,11 @@ public class InterviewController {
     public ResponseEntity<InterviewQuestionResponse> getInterviewQuestions(@PathVariable int interviewId) {
         InterviewQuestionResponse response = interviewService.getInterviewQuestions(interviewId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{interviewId}/{questionType}/ai-video")
+    public ResponseEntity<Resource> getAIVideo(@PathVariable int interviewId, @PathVariable String questionType) {
+        return interviewService.getAIVideo(interviewId, questionType);
     }
 
     @PostMapping("{interviewId}/{questionType}/answer-video")

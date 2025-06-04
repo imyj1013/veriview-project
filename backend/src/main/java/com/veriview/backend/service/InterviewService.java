@@ -9,13 +9,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.core.io.Resource;
 
 import java.util.Map;
 import java.util.List;
@@ -25,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -143,6 +148,44 @@ public class InterviewService {
                     question.setInterview(savedInterview);
                     question.setQuestionText(q.get("question_text"));
                     questionRepository.save(question);
+
+                    String videoUrl = "http://localhost:5000/ai/interview/ai-video";
+                    HttpHeaders videoHeaders = new HttpHeaders();
+                    videoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+                    Map<String, String> videoRequest = new HashMap<>();
+                    videoRequest.put("question_text", q.get("question_text"));
+
+                    ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
+                        videoUrl,
+                        HttpMethod.POST,
+                        new HttpEntity<>(videoRequest, videoHeaders),
+                        byte[].class
+                    );
+
+                    byte[] videoBytes = videoResponse.getBody();
+                    if (videoBytes != null) {
+                        // 영상 파일 저장 경로 생성
+                        String baseDirPath = new File(System.getProperty("user.dir")).getParentFile().getAbsolutePath() + "/videos";
+                        File baseDir = new File(baseDirPath);
+                        if (!baseDir.exists()) {
+                            baseDir.mkdirs();
+                        }
+                        String mp4FileName = "interview_ai_" + savedInterview.getInterviewId() + "_" + q.get("question_type") + "_" + System.currentTimeMillis() + ".mp4";
+                        String filePath = baseDirPath + "/" + mp4FileName;
+
+                        // 영상 파일을 저장
+                        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                            fos.write(videoBytes);
+                        } catch (IOException e) {
+                            throw new RuntimeException("Failed to save video file", e);
+                        }
+
+                        // InterviewQuestion의 ai_video_path에 경로 저장
+                        question.setAiVideoPath(filePath);
+                        questionRepository.save(question);
+                    }
+
                 }
             }
         }
@@ -175,6 +218,36 @@ public class InterviewService {
         //     .collect(Collectors.toList());
 
         // return new InterviewQuestionResponse(interviewId, questionDtoList);
+    }
+
+    public ResponseEntity<Resource> getAIVideo(int interviewId, String questionTypeStr) {
+        InterviewQuestion.QuestionType questionType;
+        try {
+            questionType = InterviewQuestion.QuestionType.valueOf(questionTypeStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid question type.");
+        }
+
+        InterviewQuestion question = questionRepository.findByInterview_InterviewIdAndQuestionType(interviewId, questionType)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Interview question not found."));
+
+        String videoPath = question.getAiVideoPath();
+        if (videoPath == null || !new File(videoPath).exists()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "AI video file not found.");
+        }
+
+        try {
+            FileSystemResource resource = new FileSystemResource(videoPath);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("video/mp4"));
+            headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+
+            return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read video file.");
+        }
+
     }
 
     public String uploadAnswerVideo(int interviewId, String questionType, MultipartFile videoFile) throws IOException {

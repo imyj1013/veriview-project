@@ -1,12 +1,14 @@
 package com.veriview.backend.controller;
 
 import com.veriview.backend.service.DebateService;
+import com.veriview.backend.service.DebateTopicService;
 import com.veriview.backend.model.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +19,11 @@ import lombok.RequiredArgsConstructor;
 public class DebateController {
 
     private final DebateService debateService;
+    private final DebateTopicService debateTopicService;
 
     @PostMapping("/start")
     public ResponseEntity<DebateStartResponse> startDebate(@RequestBody DebateStartRequest request) {
+        debateTopicService.importTopics("src/main/resources/debate_topic.txt");
         DebateStartResponse response = debateService.startDebate(request.getUser_id());
         return ResponseEntity.ok(response);
     }
@@ -30,6 +34,11 @@ public class DebateController {
 
         DebateOpeningResponse response = debateService.getAIOpening(debateId);
         return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/{debateId}/ai-opening-video")
+    public ResponseEntity<Resource> getAIOpeningVideo(@PathVariable int debateId) {
+        return debateService.getAIOpeningVideo(debateId);
     }
 
     @PostMapping("/{debateId}/opening-video")
@@ -48,6 +57,11 @@ public class DebateController {
         DebateRebuttalResponse response = debateService.getAIRebuttal(debateId);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/{debateId}/ai-rebuttal-video")
+    public ResponseEntity<Resource> getAIRebuttalVideo(@PathVariable int debateId) {
+        return debateService.getAIOpeningVideo(debateId);
+    }
 
     @PostMapping("{debateId}/rebuttal-video")
     public ResponseEntity<Map<String, String>> uploadRebuttalVideo(@PathVariable int debateId, @RequestParam("file") MultipartFile videoFile) {
@@ -65,6 +79,11 @@ public class DebateController {
         DebateCounterRebuttalResponse response = debateService.getAICounterRebuttal(debateId);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/{debateId}/ai-counter-rebuttal-video")
+    public ResponseEntity<Resource> getAICounterRebuttalVideo(@PathVariable int debateId) {
+        return debateService.getAICounterRebuttalVideo(debateId);
+    }
 
     @PostMapping("{debateId}/counter-rebuttal-video")
     public ResponseEntity<Map<String, String>> uploadCounterRebuttalVideo(@PathVariable int debateId, @RequestParam("file") MultipartFile videoFile) {
@@ -81,6 +100,11 @@ public class DebateController {
 
         DebateClosingResponse response = debateService.getAIClosing(debateId);
         return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/{debateId}/ai-closing-video")
+    public ResponseEntity<Resource> getAIClosingVideo(@PathVariable int debateId) {
+        return debateService.getAIClosingVideo(debateId);
     }
 
     @PostMapping("{debateId}/closing-video")
