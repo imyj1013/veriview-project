@@ -40,53 +40,107 @@ video_manager = None
 
 # AI 면접관 관련 엔드포인트
 
+@app.route('/ai/interview/ai-video', methods=['POST'])
+def generate_ai_video():
+    """AI 영상 생성 엔드포인트"""
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"AI 면접관 영상 생성 요청 받음: /ai/interview/ai-video")
+    
+    try:
+        data = request.json or {}
+        question_text = data.get('question_text', '안녕하세요, 면접에 참여해 주셔서 감사합니다.')
+        
+        # 샘플 비디오 경로 (실제로는 AIStudios로 생성해야 함)
+        sample_video_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos', 'sample_ai_video.mp4')
+        
+        # 샘플 비디오 파일이 없으면 임시 비디오 생성
+        if not os.path.exists(sample_video_path):
+            # videos 디렉토리 생성 확인
+            videos_dir = os.path.dirname(sample_video_path)
+            if not os.path.exists(videos_dir):
+                os.makedirs(videos_dir)
+            
+            # 템플릿 문자열을 파일로 저장하여 비디오 대체
+            with open(sample_video_path, 'wb') as f:
+                # 임의의 데이터를 생성하여 파일로 저장
+                f.write(b'Sample AI Video')
+            
+            logger.info(f"샘플 AI 영상 파일 생성됨: {sample_video_path}")
+        
+        # 실제로는 AIStudios로 영상 생성해야 함
+        if aistudios_client and video_manager:
+            try:
+                generated_video = aistudios_client.generate_avatar_video(question_text)
+                sample_video_path = generated_video
+                logger.info(f"AIStudios로 AI 영상 생성 완료: {sample_video_path}")
+            except Exception as e:
+                logger.error(f"AIStudios 영상 생성 실패: {str(e)}")
+        
+        # 영상 파일 읽기
+        with open(sample_video_path, 'rb') as f:
+            video_bytes = f.read()
+        
+        # 영상 바이트 반환
+        return Response(video_bytes, mimetype='video/mp4')
+        
+    except Exception as e:
+        error_msg = f"AI 면접관 영상 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
 @app.route('/ai/interview/generate-question', methods=['POST'])
 def generate_interview_question():
     """면접 질문 생성 엔드포인트"""
     try:
         data = request.json or {}
-        job_position = data.get('job_position', '개발자')
-        question_type = data.get('question_type', 'general')
-        previous_questions = data.get('previous_questions', [])
+        interview_id = data.get('interview_id', 0)
+        job_category = data.get('job_category', 'ICT')
+        workexperience = data.get('workexperience', '경력없음')
+        education = data.get('education', '학사')
+        experience_description = data.get('experience_description', '')
+        tech_stack = data.get('tech_stack', '')
+        personality = data.get('personality', '')
         
-        # 고정된 면접 질문 예시
-        questions = {
-            'general': [
-                f"{job_position} 직문에 지원하게 된 동기는 무엇인가요?",
-                f"본인의 강점과 약점에 대해 설명해 주세요.",
-                f"팀 프로젝트에서 가장 중요하게 생각하는 가치는 무엇인가요?"
-            ],
-            'technical': [
-                f"{job_position} 경력이 있으시다면, 가장 도전적이었던 프로젝트와 해결 과정을 설명해주세요.",
-                f"본인이 가진 기술적 역량 중 가장 자신 있는 부분을 설명해주세요.",
-                f"최근 관심있는 기술이나 프레임워크는 무엇인가요?"
-            ],
-            'scenario': [
-                f"팀원과 의견 충돌이 있을 때 어떻게 해결했는지 사례를 들어 설명해주세요.",
-                f"많은 업무량을 어떻게 관리하시나요?",
-                f"실패한 경험과 그로부터 배운 것이 있다면 말씀해주세요."
-            ]
-        }
+        logger.info(f"면접 질문 생성 요청: interview_id={interview_id}, job_category={job_category}")
         
-        # 질문 타입에 따른 질문 선택
-        available_questions = questions.get(question_type, questions['general'])
+        # 질문 타입별 고정 질문 (실제 시스템에서는 LLM이 생성)
+        question_types = ["INTRODUCTION", "PERSONALITY", "SITUATION", "TECH", "CAREER"]
+        questions = []
         
-        # 이전 질문에 없는 질문 선택
-        filtered_questions = [q for q in available_questions if q not in previous_questions]
-        if not filtered_questions:
-            filtered_questions = available_questions  # 모든 질문을 사용했다면 다시 사용
-        
-        # 질문 선택 (매번 처음 질문 선택)
-        import random
-        selected_question = filtered_questions[0] if filtered_questions else available_questions[0]
+        for qtype in question_types:
+            question_text = ""
+            if qtype == "INTRODUCTION":
+                question_text = f"{job_category} 직무에 지원하게 된 동기를 말씀해주세요."
+            elif qtype == "PERSONALITY":
+                question_text = f"본인의 장점과 단점에 대해 말씀해주세요."
+            elif qtype == "SITUATION":
+                question_text = f"팀 프로젝트에서 갈등이 발생했을 때 어떻게 해결하셨나요?"
+            elif qtype == "TECH":
+                if tech_stack:
+                    techs = tech_stack.split(",")[:3]
+                    tech_str = ", ".join(techs)
+                    question_text = f"{tech_str}에 대한 경험과 지식을 말씀해주세요."
+                else:
+                    question_text = f"{job_category} 직무에 필요한 핵심 기술은 무엇이라고 생각하시나요?"
+            elif qtype == "CAREER":
+                if workexperience == "경력없음":
+                    question_text = "학교에서 배운 것 중 직무와 관련해 가장 도움이 될 것 같은 것은 무엇인가요?"
+                else:
+                    question_text = "지금까지 경력 중 가장 도전적이었던 업무는 무엇이었나요?"
+            
+            questions.append({
+                "question_type": qtype,
+                "question_text": question_text
+            })
         
         # 응답 구성
         response_data = {
-            "question": selected_question,
-            "question_type": question_type,
+            "interview_id": interview_id,
+            "questions": questions,
             "timestamp": int(time.time())
         }
         
+        logger.info(f"면접 질문 생성 완료: {len(questions)}개 질문")
         return jsonify(response_data)
     except Exception as e:
         error_msg = f"면접 질문 생성 중 오류 발생: {str(e)}"
@@ -167,13 +221,15 @@ def process_interview_answer(interview_id, question_type):
         
         # 응답 구성
         response = {
-            "user_answer": user_text,
+            "answer_text": user_text,
             "content_score": content_score,
             "voice_score": voice_score,
             "action_score": action_score,
             "emotion": emotion,
             "feedback": feedback,
-            "next_question": next_question
+            "content_feedback": "내용이 구체적이고 적절합니다.",
+            "voice_feedback": "목소리가 안정적입니다.",
+            "action_feedback": "시선과 표정이 자연스럽습니다."
         }
         
         # 비디오 경로 추가 (있는 경우)
@@ -338,12 +394,36 @@ AIStudios 관련 모듈 초기화 함수
 # 고정된 AI 응답을 제공하는 함수 (LLM 대신 사용)
 def get_fixed_ai_response(phase, topic=None, user_text=None, debate_id=None):
     """토론 단계별 고정된 AI 응답 반환"""
-    responses = {
+    # 기본 응답 (AI 일자리 대체 관련)
+    default_responses = {
         "opening": "인공지능은 인간의 일자리를 대체하는 위험을 내포하고 있습니다. 기술의 발전으로 반복적이고 예측 가능한 일자리부터 자동화되어 사라질 것입니다.",
         "rebuttal": "인공지능이 일부 일자리를 대체할 수 있다는 점은 인정합니다만, 동시에 새로운 일자리도 창출합니다. 기술 발전으로 인한 일자리 변화는 역사적으로 항상 있어왔습니다.",
         "counter_rebuttal": "새로운 일자리 창출 가능성은 인정하지만, 그 속도와 규모가 일자리 손실을 따라가지 못합니다. 인공지능이 점점 더 복잡한 업무를 수행할 수 있게 되어 직업 전반에 영향을 미칠 것입니다.",
         "closing": "결론적으로, 인공지능은 일자리를 대체할 위험이 크며 이에 대한 사회적 대비가 필요합니다. 재교육과 새로운 경제 체제에 대한 논의가 시급합니다."
     }
+    
+    # 토론 주제에 따른 응답 (예시로 몇 가지 추가)
+    topic_responses = {
+        "기후변화 대응에 관한 국제 협력의 방향은?": {
+            "opening": "기후변화는 전 지구적 위기로 국제적 협력이 필수적입니다. 선진국과 개발도상국 모두 탄소 배출 감축에 책임을 져야 하며, 기술 공유와 재정 지원을 통해 지속가능한 발전을 이룰 수 있습니다.",
+            "rebuttal": "국제 협력은 중요하지만, 국가별 상황과 발전 단계에 따른 차별화된 책임이 필요합니다. 일률적인 규제는 개발도상국의 경제 성장을 저해할 수 있습니다.",
+            "counter_rebuttal": "차별화된 책임은 인정하지만, 모든 국가가 명확한 감축 목표를 설정해야 합니다. 기후변화는 지금 당장 대응하지 않으면 모든 국가에 더 큰 비용을 초래할 것입니다.",
+            "closing": "결론적으로, 기후변화 대응을 위한 국제 협력은 공동의 목표와 차별화된 책임을 균형 있게 고려해야 합니다. 지금 투자하는 것이 미래의 더 큰 비용을 절감하는 길입니다."
+        },
+        "디지털 프라이버시와 국가 보안 간의 균형은?": {
+            "opening": "디지털 프라이버시는 기본권으로서 존중받아야 합니다. 정부의 과도한 감시는 시민의 자유를 침해하며, 민주주의의 근간을 약화시킬 수 있습니다.",
+            "rebuttal": "프라이버시는 중요하지만, 국가 보안과 테러 위협 대응을 위한 적절한 감시 조치는 필요합니다. 적법한 절차를 통한 정보 수집은 시민의 안전을 보장합니다.",
+            "counter_rebuttal": "안전을 위한 감시가 필요하다는 점은 인정하지만, 이는 반드시 명확한 법적 근거와 사법적 감독 하에 이루어져야 합니다. 무분별한 대량 감시는 효과적이지 않으며 오히려 신뢰를 해칩니다.",
+            "closing": "디지털 프라이버시와 국가 보안 사이의 균형은 투명성, 비례성, 필요성의 원칙을 준수하며 이루어져야 합니다. 시민의 권리를 존중하는 범위 내에서 국가 보안이 강화되어야 합니다."
+        }
+    }
+    
+    # 주제가 있고, 주제별 응답이 있는 경우 해당 응답 반환
+    if topic and topic in topic_responses and phase in topic_responses[topic]:
+        return topic_responses[topic][phase]
+    
+    # 기본 응답 반환
+    responses = default_responses
     
     return responses.get(phase, "AI 응답을 생성할 수 없습니다.")
 
@@ -363,6 +443,204 @@ def get_dynamic_ai_response(phase, topic=None, user_text=None, debate_id=None):
         return ai_response, video_path
     
     return ai_response, None
+
+# ==================== 토론 비디오 생성 엔드포인트 ====================
+
+@app.route('/ai/debate/ai-opening-video', methods=['POST'])
+def generate_ai_opening_video():
+    """AI 입론 영상 생성 엔드포인트"""
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"요청 받음: /ai/debate/ai-opening-video")
+    
+    try:
+        data = request.json or {}
+        ai_opening_text = data.get('ai_opening_text', '안녕하세요, 토론에 참여해 주셔서 감사합니다.')
+        logger.info(f"요청 데이터: {data}")
+        
+        # 샘플 비디오 경로 (실제로는 AIStudios로 생성해야 함)
+        sample_video_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos', 'sample_ai_video.mp4')
+        
+        # 샘플 비디오 파일이 없으면 임시 비디오 생성
+        if not os.path.exists(sample_video_path):
+            # videos 디렉토리 생성 확인
+            videos_dir = os.path.dirname(sample_video_path)
+            if not os.path.exists(videos_dir):
+                os.makedirs(videos_dir)
+            
+            # 템플릿 문자열을 파일로 저장하여 비디오 대체
+            with open(sample_video_path, 'wb') as f:
+                # 임의의 데이터를 생성하여 파일로 저장
+                f.write(b'Sample AI Video')
+            
+            logger.info(f"샘플 AI 영상 파일 생성됨: {sample_video_path}")
+        
+        # 실제로는 AIStudios로 영상 생성해야 함
+        if aistudios_client and video_manager:
+            try:
+                generated_video = aistudios_client.generate_avatar_video(ai_opening_text)
+                sample_video_path = generated_video
+                logger.info(f"AIStudios로 AI 영상 생성 완료: {sample_video_path}")
+            except Exception as e:
+                logger.error(f"AIStudios 영상 생성 실패: {str(e)}")
+        
+        # 영상 파일 읽기
+        with open(sample_video_path, 'rb') as f:
+            video_bytes = f.read()
+        
+        # 영상 바이트 반환
+        return Response(video_bytes, mimetype='video/mp4')
+        
+    except Exception as e:
+        error_msg = f"AI 입론 영상 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/debate/ai-rebuttal-video', methods=['POST'])
+def generate_ai_rebuttal_video():
+    """AI 반론 영상 생성 엔드포인트"""
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"요청 받음: /ai/debate/ai-rebuttal-video")
+    
+    try:
+        data = request.json or {}
+        ai_rebuttal_text = data.get('ai_rebuttal_text', '안녕하세요, 토론에 참여해 주셔서 감사합니다.')
+        logger.info(f"요청 데이터: {data}")
+        
+        # 샘플 비디오 경로 (실제로는 AIStudios로 생성해야 함)
+        sample_video_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos', 'sample_ai_video.mp4')
+        
+        # 샘플 비디오 파일이 없으면 임시 비디오 생성
+        if not os.path.exists(sample_video_path):
+            # videos 디렉토리 생성 확인
+            videos_dir = os.path.dirname(sample_video_path)
+            if not os.path.exists(videos_dir):
+                os.makedirs(videos_dir)
+            
+            # 템플릿 문자열을 파일로 저장하여 비디오 대체
+            with open(sample_video_path, 'wb') as f:
+                # 임의의 데이터를 생성하여 파일로 저장
+                f.write(b'Sample AI Video')
+            
+            logger.info(f"샘플 AI 영상 파일 생성됨: {sample_video_path}")
+        
+        # 실제로는 AIStudios로 영상 생성해야 함
+        if aistudios_client and video_manager:
+            try:
+                generated_video = aistudios_client.generate_avatar_video(ai_rebuttal_text)
+                sample_video_path = generated_video
+                logger.info(f"AIStudios로 AI 영상 생성 완료: {sample_video_path}")
+            except Exception as e:
+                logger.error(f"AIStudios 영상 생성 실패: {str(e)}")
+        
+        # 영상 파일 읽기
+        with open(sample_video_path, 'rb') as f:
+            video_bytes = f.read()
+        
+        # 영상 바이트 반환
+        return Response(video_bytes, mimetype='video/mp4')
+        
+    except Exception as e:
+        error_msg = f"AI 반론 영상 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/debate/ai-counter-rebuttal-video', methods=['POST'])
+def generate_ai_counter_rebuttal_video():
+    """AI 재반론 영상 생성 엔드포인트"""
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"요청 받음: /ai/debate/ai-counter-rebuttal-video")
+    
+    try:
+        data = request.json or {}
+        ai_counter_rebuttal_text = data.get('ai_counter_rebuttal_text', '안녕하세요, 토론에 참여해 주셔서 감사합니다.')
+        logger.info(f"요청 데이터: {data}")
+        
+        # 샘플 비디오 경로 (실제로는 AIStudios로 생성해야 함)
+        sample_video_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos', 'sample_ai_video.mp4')
+        
+        # 샘플 비디오 파일이 없으면 임시 비디오 생성
+        if not os.path.exists(sample_video_path):
+            # videos 디렉토리 생성 확인
+            videos_dir = os.path.dirname(sample_video_path)
+            if not os.path.exists(videos_dir):
+                os.makedirs(videos_dir)
+            
+            # 템플릿 문자열을 파일로 저장하여 비디오 대체
+            with open(sample_video_path, 'wb') as f:
+                # 임의의 데이터를 생성하여 파일로 저장
+                f.write(b'Sample AI Video')
+            
+            logger.info(f"샘플 AI 영상 파일 생성됨: {sample_video_path}")
+        
+        # 실제로는 AIStudios로 영상 생성해야 함
+        if aistudios_client and video_manager:
+            try:
+                generated_video = aistudios_client.generate_avatar_video(ai_counter_rebuttal_text)
+                sample_video_path = generated_video
+                logger.info(f"AIStudios로 AI 영상 생성 완료: {sample_video_path}")
+            except Exception as e:
+                logger.error(f"AIStudios 영상 생성 실패: {str(e)}")
+        
+        # 영상 파일 읽기
+        with open(sample_video_path, 'rb') as f:
+            video_bytes = f.read()
+        
+        # 영상 바이트 반환
+        return Response(video_bytes, mimetype='video/mp4')
+        
+    except Exception as e:
+        error_msg = f"AI 재반론 영상 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/debate/ai-closing-video', methods=['POST'])
+def generate_ai_closing_video():
+    """AI 최종변론 영상 생성 엔드포인트"""
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"요청 받음: /ai/debate/ai-closing-video")
+    
+    try:
+        data = request.json or {}
+        ai_closing_text = data.get('ai_closing_text', '안녕하세요, 토론에 참여해 주셔서 감사합니다.')
+        logger.info(f"요청 데이터: {data}")
+        
+        # 샘플 비디오 경로 (실제로는 AIStudios로 생성해야 함)
+        sample_video_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos', 'sample_ai_video.mp4')
+        
+        # 샘플 비디오 파일이 없으면 임시 비디오 생성
+        if not os.path.exists(sample_video_path):
+            # videos 디렉토리 생성 확인
+            videos_dir = os.path.dirname(sample_video_path)
+            if not os.path.exists(videos_dir):
+                os.makedirs(videos_dir)
+            
+            # 템플릿 문자열을 파일로 저장하여 비디오 대체
+            with open(sample_video_path, 'wb') as f:
+                # 임의의 데이터를 생성하여 파일로 저장
+                f.write(b'Sample AI Video')
+            
+            logger.info(f"샘플 AI 영상 파일 생성됨: {sample_video_path}")
+        
+        # 실제로는 AIStudios로 영상 생성해야 함
+        if aistudios_client and video_manager:
+            try:
+                generated_video = aistudios_client.generate_avatar_video(ai_closing_text)
+                sample_video_path = generated_video
+                logger.info(f"AIStudios로 AI 영상 생성 완료: {sample_video_path}")
+            except Exception as e:
+                logger.error(f"AIStudios 영상 생성 실패: {str(e)}")
+        
+        # 영상 파일 읽기
+        with open(sample_video_path, 'rb') as f:
+            video_bytes = f.read()
+        
+        # 영상 바이트 반환
+        return Response(video_bytes, mimetype='video/mp4')
+        
+    except Exception as e:
+        error_msg = f"AI 최종변론 영상 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
 
 # ==================== 스트리밍 응답 엔드포인트 ====================
 
@@ -1128,47 +1406,86 @@ def process_closing_video(debate_id):
         logger.error(error_msg)
         return jsonify({"error": error_msg}), 500
 
-@app.route('/ai/debate/<int:debate_id>/ai-rebuttal', methods=['GET'])
+@app.route('/ai/debate/<int:debate_id>/ai-rebuttal', methods=['GET', 'POST'])
 def ai_rebuttal(debate_id):
     """AI 반론 생성 엔드포인트"""
     try:
-        topic = request.args.get("topic", "인공지능")
+        # GET 요청일 경우 쿼리 파라미터에서 데이터 추출
+        if request.method == 'GET':
+            topic = request.args.get("topic", "인공지능")
+        # POST 요청일 경우 JSON 바디에서 데이터 추출
+        else:
+            data = request.json or {}
+            topic = data.get("topic", "인공지능")
+            
+        logger.info(f"요청 받음: /ai/debate/{debate_id}/ai-rebuttal - 주제: {topic}")
         ai_response = get_fixed_ai_response("rebuttal", topic, None, debate_id)
         
-        return jsonify({
+        response_data = {
             "debate_id": debate_id,
             "ai_rebuttal_text": ai_response
-        })
+        }
+        logger.info(f"응답 데이터: {response_data}")
+        
+        return jsonify(response_data)
     except Exception as e:
-        return jsonify({"error": f"AI 반론 생성 중 오류 발생: {str(e)}"}), 500
+        error_msg = f"AI 반론 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
 
-@app.route('/ai/debate/<int:debate_id>/ai-counter-rebuttal', methods=['GET'])
+@app.route('/ai/debate/<int:debate_id>/ai-counter-rebuttal', methods=['GET', 'POST'])
 def ai_counter_rebuttal(debate_id):
     """AI 재반론 생성 엔드포인트"""
     try:
-        topic = request.args.get("topic", "인공지능")
+        # GET 요청일 경우 쿼리 파라미터에서 데이터 추출
+        if request.method == 'GET':
+            topic = request.args.get("topic", "인공지능")
+        # POST 요청일 경우 JSON 바디에서 데이터 추출
+        else:
+            data = request.json or {}
+            topic = data.get("topic", "인공지능")
+            
+        logger.info(f"요청 받음: /ai/debate/{debate_id}/ai-counter-rebuttal - 주제: {topic}")
         ai_response = get_fixed_ai_response("counter_rebuttal", topic, None, debate_id)
         
-        return jsonify({
+        response_data = {
             "debate_id": debate_id,
             "ai_counter_rebuttal_text": ai_response
-        })
+        }
+        logger.info(f"응답 데이터: {response_data}")
+        
+        return jsonify(response_data)
     except Exception as e:
-        return jsonify({"error": f"AI 재반론 생성 중 오류 발생: {str(e)}"}), 500
+        error_msg = f"AI 재반론 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
 
-@app.route('/ai/debate/<int:debate_id>/ai-closing', methods=['GET'])
+@app.route('/ai/debate/<int:debate_id>/ai-closing', methods=['GET', 'POST'])
 def ai_closing(debate_id):
     """AI 최종 변론 생성 엔드포인트"""
     try:
-        topic = request.args.get("topic", "인공지능")
+        # GET 요청일 경우 쿼리 파라미터에서 데이터 추출
+        if request.method == 'GET':
+            topic = request.args.get("topic", "인공지능")
+        # POST 요청일 경우 JSON 바디에서 데이터 추출
+        else:
+            data = request.json or {}
+            topic = data.get("topic", "인공지능")
+            
+        logger.info(f"요청 받음: /ai/debate/{debate_id}/ai-closing - 주제: {topic}")
         ai_response = get_fixed_ai_response("closing", topic, None, debate_id)
         
-        return jsonify({
+        response_data = {
             "debate_id": debate_id,
             "ai_closing_text": ai_response
-        })
+        }
+        logger.info(f"응답 데이터: {response_data}")
+        
+        return jsonify(response_data)
     except Exception as e:
-        return jsonify({"error": f"AI 최종 변론 생성 중 오류 발생: {str(e)}"}), 500
+        error_msg = f"AI 최종 변론 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
 
 @app.route('/ai/debate/modules-status', methods=['GET'])
 def modules_status():

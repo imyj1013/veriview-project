@@ -1,5 +1,7 @@
 package com.veriview.backend.service;
 
+import lombok.RequiredArgsConstructor;
+
 import com.veriview.backend.repository.*;
 import com.veriview.backend.entity.*;
 import com.veriview.backend.model.*;
@@ -33,11 +35,14 @@ import java.io.FileOutputStream;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
 public class InterviewService {
+
+    private static final Logger logger = LoggerFactory.getLogger(InterviewService.class);
 
     private final UserRepository userRepository;
     private final InterviewRepository interviewRepository;
@@ -125,67 +130,89 @@ public class InterviewService {
         Map<String, Object> body = response.getBody();
         if (body != null) {
             Object questionsObj = body.get("questions");
-            if (questionsObj instanceof List<?> list) {
-                List<Map<String, String>> questions = new ArrayList<>();
-                for (Object item : list) {
-                    if (item instanceof Map<?, ?> map) {
-                        Map<String, String> questionMap = new HashMap<>();
-                        for (Map.Entry<?, ?> entry : map.entrySet()) {
-                            if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
-                                questionMap.put((String) entry.getKey(), (String) entry.getValue());
+            if (questionsObj instanceof List<?>) {
+                List<?> questionsList = (List<?>) questionsObj;
+                if (!questionsList.isEmpty()) {
+                    List<Map<String, String>> questions = new ArrayList<>();
+                    for (Object item : questionsList) {
+                        if (item instanceof Map<?, ?>) {
+                            Map<?, ?> map = (Map<?, ?>) item;
+                            Map<String, String> questionMap = new HashMap<>();
+                            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                                if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
+                                    questionMap.put((String) entry.getKey(), (String) entry.getValue());
+                                }
+                            }
+                            questions.add(questionMap);
+                        }
+                    }
+                    
+                    if (!questions.isEmpty()) {
+                        for (Map<String, String> q : questions) {
+                            try {
+                                String questionType = q.get("question_type");
+                                if (questionType != null) {
+                                    InterviewQuestion question = questionRepository
+                                        .findByInterview_InterviewIdAndQuestionType(
+                                            savedInterview.getInterviewId(),
+                                            InterviewQuestion.QuestionType.valueOf(questionType)
+                                        ).orElseThrow(() -> new RuntimeException("Question not found"));
+                                    question.setInterview(savedInterview);
+                                    
+                                    String questionText = q.get("question_text");
+                                    if (questionText != null) {
+                                        question.setQuestionText(questionText);
+                                        questionRepository.save(question);
+
+                                        // AI 비디오 생성 및 저장 로직
+
+                                        String videoUrl = "http://localhost:5000/ai/interview/ai-video";
+                                        HttpHeaders videoHeaders = new HttpHeaders();
+                                        videoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+                                        Map<String, String> videoRequest = new HashMap<>();
+                                        videoRequest.put("question_text", questionText);
+
+                                        try {
+                                            ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
+                                                videoUrl,
+                                                HttpMethod.POST,
+                                                new HttpEntity<>(videoRequest, videoHeaders),
+                                                byte[].class
+                                            );
+
+                                            byte[] videoBytes = videoResponse.getBody();
+                                            if (videoBytes != null) {
+                                                // 영상 파일 저장 경로 생성
+                                                String baseDirPath = new File(System.getProperty("user.dir")).getParentFile().getAbsolutePath() + "/videos";
+                                                File baseDir = new File(baseDirPath);
+                                                if (!baseDir.exists()) {
+                                                    baseDir.mkdirs();
+                                                }
+                                                String mp4FileName = "interview_ai_" + savedInterview.getInterviewId() + "_" + questionType + "_" + System.currentTimeMillis() + ".mp4";
+                                                String filePath = baseDirPath + "/" + mp4FileName;
+
+                                                // 영상 파일을 저장
+                                                try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                                                    fos.write(videoBytes);
+                                                } catch (IOException e) {
+                                                    logger.error("Failed to save video file: " + e.getMessage());
+                                                }
+
+                                                // InterviewQuestion의 ai_video_path에 경로 저장
+                                                question.setAiVideoPath(filePath);
+                                                questionRepository.save(question);
+                                            }
+                                        } catch (Exception e) {
+                                            logger.error("Error generating AI video: " + e.getMessage());
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error processing question: " + e.getMessage());
                             }
                         }
-                        questions.add(questionMap);
                     }
-                }
-
-                for (Map<String, String> q : questions) {
-                    InterviewQuestion question = questionRepository
-                        .findByInterview_InterviewIdAndQuestionType(
-                            savedInterview.getInterviewId(),
-                            InterviewQuestion.QuestionType.valueOf(q.get("question_type"))
-                        ).orElseThrow(() -> new RuntimeException("Question not found"));
-                    question.setInterview(savedInterview);
-                    question.setQuestionText(q.get("question_text"));
-                    questionRepository.save(question);
-
-                    String videoUrl = "http://localhost:5000/ai/interview/ai-video";
-                    HttpHeaders videoHeaders = new HttpHeaders();
-                    videoHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-                    Map<String, String> videoRequest = new HashMap<>();
-                    videoRequest.put("question_text", q.get("question_text"));
-
-                    ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
-                        videoUrl,
-                        HttpMethod.POST,
-                        new HttpEntity<>(videoRequest, videoHeaders),
-                        byte[].class
-                    );
-
-                    byte[] videoBytes = videoResponse.getBody();
-                    if (videoBytes != null) {
-                        // 영상 파일 저장 경로 생성
-                        String baseDirPath = new File(System.getProperty("user.dir")).getParentFile().getAbsolutePath() + "/videos";
-                        File baseDir = new File(baseDirPath);
-                        if (!baseDir.exists()) {
-                            baseDir.mkdirs();
-                        }
-                        String mp4FileName = "interview_ai_" + savedInterview.getInterviewId() + "_" + q.get("question_type") + "_" + System.currentTimeMillis() + ".mp4";
-                        String filePath = baseDirPath + "/" + mp4FileName;
-
-                        // 영상 파일을 저장
-                        try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                            fos.write(videoBytes);
-                        } catch (IOException e) {
-                            throw new RuntimeException("Failed to save video file", e);
-                        }
-
-                        // InterviewQuestion의 ai_video_path에 경로 저장
-                        question.setAiVideoPath(filePath);
-                        questionRepository.save(question);
-                    }
-
                 }
             }
         }
