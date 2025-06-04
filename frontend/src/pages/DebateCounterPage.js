@@ -1,5 +1,3 @@
-// src/pages/DebateCounterPage.js
-
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -10,17 +8,31 @@ function DebateCounterPage() {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const streamRef = useRef(null);
+  const timerRef = useRef(null);
+
   const [recording, setRecording] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+
   const navigate = useNavigate();
-  const { state } = useLocation();
+  const { state } = useLocation(); // topic, position, debateId
+
+  const formatTime = (sec) => {
+    const h = String(Math.floor(sec / 3600)).padStart(2, "0");
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  };
 
   const stopCamera = () => {
+    clearInterval(timerRef.current);
+    setElapsedTime(0);
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
 
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
 
@@ -57,7 +69,7 @@ function DebateCounterPage() {
         };
 
         recorder.onstop = async () => {
-          stopCamera(); // ✅ 확실하게 정리
+          stopCamera();
 
           const originalBlob = new Blob(recordedChunksRef.current, {
             type: "video/webm",
@@ -65,7 +77,6 @@ function DebateCounterPage() {
 
           try {
             const fixedBlob = await fixWebmDuration(originalBlob);
-
             const formData = new FormData();
             formData.append("file", fixedBlob, "counter-rebuttal-video.webm");
 
@@ -77,9 +88,7 @@ function DebateCounterPage() {
               }
             );
 
-            // ✅ navigate 전에 짧은 지연 (onstop 처리 타이밍 안정화)
             await new Promise((r) => setTimeout(r, 100));
-
             navigate("/debate/ai-counter", { state });
           } catch (err) {
             alert("재반론 영상 업로드 실패");
@@ -90,6 +99,10 @@ function DebateCounterPage() {
         mediaRecorderRef.current = recorder;
         recorder.start();
         setRecording(true);
+
+        timerRef.current = setInterval(() => {
+          setElapsedTime((prev) => prev + 1);
+        }, 1000);
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
@@ -99,7 +112,7 @@ function DebateCounterPage() {
     startCamera();
 
     return () => {
-      stopCamera(); // ✅ 언마운트 시 정리
+      stopCamera();
     };
   }, [state, navigate]);
 
@@ -116,15 +129,10 @@ function DebateCounterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
+    <div className="min-h-screen bg-white px-6 py-10 flex flex-col items-center">
       {/* 상단 바 */}
-      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
-        <img
-          src="/images/Logo_image.png"
-          alt="logo"
-          className="w-[240px] cursor-pointer"
-          onClick={handleExit}
-        />
+      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
+        <img src="/images/Logo_image.png" alt="logo" className="w-[200px]" />
         <button
           onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
@@ -134,22 +142,42 @@ function DebateCounterPage() {
       </div>
 
       {/* 질문 */}
-      <div className="bg-gray-100 text-lg font-semibold px-6 py-4 rounded-lg shadow mb-6 w-full max-w-3xl text-center">
+      <div className="w-full max-w-5xl bg-gray-100 py-4 px-6 text-center text-xl rounded mb-8 font-semibold">
         Q. {state?.topic || "질문을 불러올 수 없습니다."}
       </div>
 
-      {/* 비디오 */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        className="w-full max-w-3xl h-[480px] bg-black rounded-lg mb-6"
-      />
+      {/* 영상 */}
+      <div className="flex gap-8 mb-6 w-full max-w-6xl justify-center">
+        {/* AI 토론자 이미지 */}
+        <div className="flex flex-col items-center">
+          <img
+            src="/images/ai_avatar.png"
+            alt="AI Avatar"
+            className="w-[480px] h-[360px] object-cover rounded-lg bg-gray-200"
+          />
+          <p className="mt-2 text-base font-medium">AI 토론자</p>
+        </div>
+
+        {/* 사용자 캠 */}
+        <div className="flex flex-col items-center">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-[480px] h-[360px] bg-black object-cover rounded-lg"
+          />
+          <p className="mt-2 text-base font-medium">{formatTime(elapsedTime)}</p>
+        </div>
+      </div>
+
+      {/* 안내 */}
+      <div className="w-full max-w-5xl bg-gray-100 py-4 px-6 rounded mb-8 text-base text-center whitespace-pre-wrap break-words leading-relaxed">
+        재반론을 녹화 중입니다.
+      </div>
 
       {/* 버튼 */}
       <div className="flex gap-4">
-        {recording && <span className="text-green-700 font-semibold">녹화 중...</span>}
         <button
           onClick={handleEnd}
           disabled={!recording}
