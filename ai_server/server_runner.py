@@ -1,4 +1,257 @@
-from flask import Flask, jsonify, request, Response, stream_with_context
+# AI 면접관 관련 엔드포인트
+
+@app.route('/ai/interview/generate-question', methods=['POST'])
+def generate_interview_question():
+    """면접 질문 생성 엔드포인트"""
+    try:
+        data = request.json or {}
+        job_position = data.get('job_position', '개발자')
+        question_type = data.get('question_type', 'general')
+        previous_questions = data.get('previous_questions', [])
+        
+        # 고정된 면접 질문 예시
+        questions = {
+            'general': [
+                f"{job_position} 직문에 지원하게 된 동기는 무엇인가요?",
+                f"본인의 강점과 약점에 대해 설명해 주세요.",
+                f"팀 프로젝트에서 가장 중요하게 생각하는 가치는 무엇인가요?"
+            ],
+            'technical': [
+                f"{job_position} 경력이 있으시다면, 가장 도전적이었던 프로젝트와 해결 과정을 설명해주세요.",
+                f"본인이 가진 기술적 역량 중 가장 자신 있는 부분을 설명해주세요.",
+                f"최근 관심있는 기술이나 프레임워크는 무엇인가요?"
+            ],
+            'scenario': [
+                f"팀원과 의견 충돌이 있을 때 어떻게 해결했는지 사례를 들어 설명해주세요.",
+                f"많은 업무량을 어떻게 관리하시나요?",
+                f"실패한 경험과 그로부터 배운 것이 있다면 말씀해주세요."
+            ]
+        }
+        
+        # 질문 타입에 따른 질문 선택
+        available_questions = questions.get(question_type, questions['general'])
+        
+        # 이전 질문에 없는 질문 선택
+        filtered_questions = [q for q in available_questions if q not in previous_questions]
+        if not filtered_questions:
+            filtered_questions = available_questions  # 모든 질문을 사용했다면 다시 사용
+        
+        # 질문 선택 (매번 처음 질문 선택)
+        import random
+        selected_question = filtered_questions[0] if filtered_questions else available_questions[0]
+        
+        # 응답 구성
+        response_data = {
+            "question": selected_question,
+            "question_type": question_type,
+            "timestamp": int(time.time())
+        }
+        
+        return jsonify(response_data)
+    except Exception as e:
+        error_msg = f"면접 질문 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/interview/<int:interview_id>/<question_type>/answer-video', methods=['POST'])
+def process_interview_answer(interview_id, question_type):
+    """면접 답변 영상 처리 엔드포인트"""
+    initialize_analyzers()
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"면접 답변 영상 처리 요청 받음: /ai/interview/{interview_id}/{question_type}/answer-video")
+    
+    if 'file' not in request.files and 'video' not in request.files:
+        return jsonify({"error": "영상 파일이 필요합니다."}), 400
+    
+    file = request.files.get('file') or request.files.get('video')
+    try:
+        temp_path = f"temp_interview_{interview_id}_{question_type}.mp4"
+        file.save(temp_path)
+        
+        user_text = "저는 지속적인 학습과 새로운 기술 활용을 좋아합니다. 팀 환경에서 소통하며 협업하는 것을 중요하게 생각합니다."
+        
+        # 음성 인식
+        if speech_analyzer:
+            user_text = speech_analyzer.transcribe_video(temp_path)
+        
+        # 얼굴 분석
+        facial_result = {"confidence": 0.9, "gaze_angle_x": 0.1, "gaze_angle_y": 0.1, "AU01_r": 1.2, "AU02_r": 0.8}
+        if facial_analyzer:
+            facial_result = facial_analyzer.analyze_video(temp_path)
+        
+        # 음성 분석
+        audio_result = {"pitch_std": 30.0, "rms_mean": 0.2, "tempo": 120.0}
+        if facial_analyzer:
+            try:
+                audio_result = facial_analyzer.analyze_audio(temp_path)
+            except:
+                pass
+        
+        # 감정 평가
+        emotion = "중립 (안정적)"
+        if facial_analyzer:
+            emotion = facial_analyzer.evaluate_emotion(facial_result)
+        
+        # 사용자 영상 저장 (AIStudios 영상 관리자 사용)
+        user_video_path = None
+        if video_manager:
+            try:
+                user_video_path = video_manager.save_video(
+                    source_path=temp_path,
+                    interview_id=interview_id,
+                    question_type=question_type,
+                    is_ai=False
+                )
+                logger.info(f"면접 답변 영상 저장 완료: {user_video_path}")
+            except Exception as e:
+                logger.error(f"사용자 영상 저장 실패: {str(e)}")
+        
+        # 임시 파일 삭제
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        # 점수 계산
+        content_score = min(5.0, 3.0 + len(user_text.split()) / 50)
+        voice_score = 3.7
+        action_score = 3.9
+        
+        # 피드백 생성
+        feedback = "전반적으로 양호한 답변이었습니다."
+        if content_score >= 4.0:
+            feedback = "충분한 내용으로 답변하셨습니다. "
+        if voice_score >= 4.0:
+            feedback += "안정적인 음성으로 전달하셨습니다."
+        
+        # 다음 질문 생성
+        next_question = "다음 질문은 가장 자신 있는 기술에 대해 설명해 주세요."
+        
+        # 응답 구성
+        response = {
+            "user_answer": user_text,
+            "content_score": content_score,
+            "voice_score": voice_score,
+            "action_score": action_score,
+            "emotion": emotion,
+            "feedback": feedback,
+            "next_question": next_question
+        }
+        
+        # 비디오 경로 추가 (있는 경우)
+        if user_video_path:
+            response["user_video_path"] = user_video_path
+        
+        return jsonify(response)
+    except Exception as e:
+        error_msg = f"면접 답변 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/interview/next-question-video', methods=['POST'])
+def generate_interview_question_video():
+    """면접관 다음 질문 영상 생성 엔드포인트"""
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"면접관 다음 질문 영상 생성 요청 받음")
+    
+    try:
+        data = request.json or {}
+        question_text = data.get('question', '다음 질문은 어떤 것이 있을까요?')
+        interview_id = data.get('interview_id', int(time.time()))
+        question_type = data.get('question_type', 'general')
+        
+        # 캐시 확인
+        ai_video_path = None
+        if video_manager:
+            cached_video = video_manager.get_video_if_exists(
+                interview_id=interview_id, 
+                question_type=question_type, 
+                is_ai=True
+            )
+            if cached_video:
+                ai_video_path = cached_video
+                logger.info(f"캐시된 면접관 질문 영상 사용: {ai_video_path}")
+        
+        # 새 영상 생성
+        if not ai_video_path and aistudios_client and video_manager:
+            try:
+                generated_video = aistudios_client.generate_avatar_video(question_text)
+                ai_video_path = video_manager.save_video(
+                    source_path=generated_video,
+                    interview_id=interview_id,
+                    question_type=question_type,
+                    is_ai=True
+                )
+                logger.info(f"AIStudios로 면접관 질문 영상 생성 완료: {ai_video_path}")
+            except Exception as e:
+                logger.error(f"면접관 질문 영상 생성 실패: {str(e)}")
+        
+        # 응답 구성
+        response = {
+            "question": question_text,
+            "question_type": question_type,
+            "interview_id": interview_id
+        }
+        
+        if ai_video_path:
+            response["video_path"] = ai_video_path
+        
+        return jsonify(response)
+    except Exception as e:
+        error_msg = f"면접관 질문 영상 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+
+@app.route('/ai/interview/feedback-video', methods=['POST'])
+def generate_interview_feedback_video():
+    """면접 피드백 영상 생성 엔드포인트"""
+    initialize_aistudios()  # AIStudios 초기화
+    logger.info(f"면접 피드백 영상 생성 요청 받음")
+    
+    try:
+        data = request.json or {}
+        feedback_text = data.get('feedback', '답변을 잘 해주셨습니다. 전반적으로 우수한 수행입니다.')
+        interview_id = data.get('interview_id', int(time.time()))
+        question_type = data.get('question_type', 'feedback')
+        
+        # 캐시 확인
+        ai_video_path = None
+        if video_manager:
+            cached_video = video_manager.get_video_if_exists(
+                interview_id=interview_id, 
+                question_type='feedback', 
+                is_ai=True
+            )
+            if cached_video:
+                ai_video_path = cached_video
+                logger.info(f"캐시된 면접 피드백 영상 사용: {ai_video_path}")
+        
+        # 새 영상 생성
+        if not ai_video_path and aistudios_client and video_manager:
+            try:
+                generated_video = aistudios_client.generate_avatar_video(feedback_text)
+                ai_video_path = video_manager.save_video(
+                    source_path=generated_video,
+                    interview_id=interview_id,
+                    question_type='feedback',
+                    is_ai=True
+                )
+                logger.info(f"AIStudios로 면접 피드백 영상 생성 완료: {ai_video_path}")
+            except Exception as e:
+                logger.error(f"면접 피드백 영상 생성 실패: {str(e)}")
+        
+        # 응답 구성
+        response = {
+            "feedback": feedback_text,
+            "interview_id": interview_id
+        }
+        
+        if ai_video_path:
+            response["video_path"] = ai_video_path
+        
+        return jsonify(response)
+    except Exception as e:
+        error_msg = f"면접 피드백 영상 생성 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500from flask import Flask, jsonify, request, Response, stream_with_context
 from flask_cors import CORS
 import os
 import tempfile
@@ -6,6 +259,12 @@ import logging
 import json
 import time
 import base64
+
+# AIStudios 모듈 임포트
+from modules.aistudios.client import AIStudiosClient
+from modules.aistudios.video_manager import VideoManager
+from modules.aistudios.routes import setup_aistudios_routes
+from modules.aistudios.interview_routes import setup_interview_routes
 
 # 모듈 임포트
 try:
@@ -28,6 +287,10 @@ facial_analyzer = None
 speech_analyzer = None
 # speech_analyzer = None
 
+# AIStudios 관련 전역 변수
+aistudios_client = None
+video_manager = None
+
 def initialize_analyzers():
     """분석기 초기화 함수"""
     global facial_analyzer, speech_analyzer
@@ -40,6 +303,33 @@ def initialize_analyzers():
             logger.info("음성 분석기 초기화 완료 (Whisper, TTS)")
     except Exception as e:
         logger.error(f"분석기 초기화 실패: {str(e)}")
+
+def initialize_aistudios():
+    """
+AIStudios 관련 모듈 초기화 함수
+
+생성형 AI 아바타 영상 생성을 위한 클라이언트와 비디오 관리자를 초기화합니다.
+    """
+    global aistudios_client, video_manager
+    try:
+        # 환경 변수에서 API 키 가져오기
+        api_key = os.environ.get('AISTUDIOS_API_KEY', 'YOUR_API_KEY')
+        
+        # AIStudios 클라이언트 초기화
+        if aistudios_client is None:
+            aistudios_client = AIStudiosClient(api_key=api_key)
+            logger.info("AIStudios 클라이언트 초기화 완료")
+        
+        # 영상 관리자 초기화
+        if video_manager is None:
+            videos_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos')
+            video_manager = VideoManager(base_dir=videos_dir)
+            logger.info(f"AIStudios 영상 관리자 초기화 완료: {videos_dir}")
+        
+        return True
+    except Exception as e:
+        logger.error(f"AIStudios 모듈 초기화 실패: {str(e)}")
+        return False
 
 # 고정된 AI 응답을 제공하는 함수 (LLM 대신 사용)
 def get_fixed_ai_response(phase, topic=None, user_text=None, debate_id=None):
@@ -380,6 +670,44 @@ def process_opening_video(debate_id):
             os.remove(temp_path)
             logger.info(f"임시 파일 삭제됨: {temp_path}")
         
+        # 응답 데이터 구성
+        response_data = {
+            "user_counter_rebuttal_text": user_text,
+            "ai_closing_text": ai_response,
+            "emotion": emotion,
+            "initiative_score": scores["initiative_score"],
+            "collaborative_score": scores["collaborative_score"],
+            "communication_score": scores["communication_score"],
+            "logic_score": scores["logic_score"],
+            "problem_solving_score": scores["problem_solving_score"],
+            "voice_score": scores["voice_score"],
+            "action_score": scores["action_score"],
+            "initiative_feedback": scores["initiative_feedback"],
+            "collaborative_feedback": scores["collaborative_feedback"],
+            "communication_feedback": scores["communication_feedback"],
+            "logic_feedback": scores["logic_feedback"],
+            "problem_solving_feedback": scores["problem_solving_feedback"],
+            "voice_feedback": scores["voice_feedback"],
+            "action_feedback": scores["action_feedback"],
+            "feedback": scores["feedback"],
+            "sample_answer": scores["sample_answer"]
+        }
+        
+        # 비디오 경로 추가 (있는 경우)
+        if user_video_path:
+            response_data["user_video_path"] = user_video_path
+        if ai_video_path:
+            response_data["ai_video_path"] = ai_video_path
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        error_msg = f"영상 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500 os.path.exists(temp_path):
+            os.remove(temp_path)
+            logger.info(f"임시 파일 삭제됨: {temp_path}")
+        
         response = {
             "user_opening_text": user_text,
             "ai_rebuttal_text": ai_response,
@@ -416,6 +744,7 @@ def process_rebuttal_video(debate_id):
     """사용자 반론 영상 처리 엔드포인트"""
     # opening-video와 유사한 로직, 다른 단계만 사용
     initialize_analyzers()
+    initialize_aistudios()  # AIStudios 초기화
     logger.info(f"반론 영상 처리 요청 받음: /ai/debate/{debate_id}/rebuttal-video")
     
     if 'file' not in request.files and 'video' not in request.files:
@@ -433,17 +762,21 @@ def process_rebuttal_video(debate_id):
         
         if speech_analyzer:
             user_text = speech_analyzer.transcribe_video(temp_path)
+            logger.info(f"Whisper 음성 인식 결과: {user_text}")
         
         if facial_analyzer:
             facial_result = facial_analyzer.analyze_video(temp_path)
+            logger.info(f"OpenFace 얼굴 분석 결과: {facial_result}")
             try:
                 audio_result = facial_analyzer.analyze_audio(temp_path)
-            except:
-                pass
+                logger.info(f"Librosa 음성 분석 결과: {audio_result}")
+            except Exception as e:
+                logger.error(f"Librosa 분석 오류: {str(e)}")
         
         emotion = "중립 (안정적)"
         if facial_analyzer:
             emotion = facial_analyzer.evaluate_emotion(facial_result)
+            logger.info(f"감정 분석 결과: {emotion}")
         
         default_scores = {
             "initiative_score": 3.5,
@@ -467,14 +800,54 @@ def process_rebuttal_video(debate_id):
         scores = default_scores
         if facial_analyzer:
             scores = facial_analyzer.calculate_scores(facial_result, user_text, audio_result)
+            logger.info("점수 계산 완료")
         
         topic = request.form.get("topic", "인공지능")
         ai_response = get_fixed_ai_response("counter_rebuttal", topic, user_text, debate_id)
         
+        # 사용자 영상 저장 (AIStudios 영상 관리자 사용)
+        user_video_path = None
+        if video_manager:
+            try:
+                user_video_path = video_manager.save_video(
+                    source_path=temp_path,
+                    debate_id=debate_id,
+                    phase='rebuttal',
+                    is_ai=False
+                )
+                logger.info(f"사용자 반론 영상 저장 완료: {user_video_path}")
+            except Exception as e:
+                logger.error(f"사용자 영상 저장 실패: {str(e)}")
+        
+        # AI 영상 생성 (AIStudios 사용)
+        ai_video_path = None
+        if aistudios_client and video_manager:
+            try:
+                # 캐시 확인
+                cached_video = video_manager.get_video_if_exists(debate_id=debate_id, phase='counter_rebuttal', is_ai=True)
+                if cached_video:
+                    ai_video_path = cached_video
+                    logger.info(f"캐시된 AI 재반론 영상 사용: {ai_video_path}")
+                else:
+                    # 새 영상 생성
+                    generated_video = aistudios_client.generate_avatar_video(ai_response)
+                    ai_video_path = video_manager.save_video(
+                        source_path=generated_video,
+                        debate_id=debate_id,
+                        phase='counter_rebuttal',
+                        is_ai=True
+                    )
+                    logger.info(f"AIStudios로 AI 재반론 영상 생성 완료: {ai_video_path}")
+            except Exception as e:
+                logger.error(f"AI 재반론 영상 생성 실패: {str(e)}")
+        
+        # 임시 파일 삭제
         if os.path.exists(temp_path):
             os.remove(temp_path)
+            logger.info(f"임시 파일 삭제됨: {temp_path}")
         
-        return jsonify({
+        # 응답 구성
+        response_data = {
             "user_rebuttal_text": user_text,
             "ai_counter_rebuttal_text": ai_response,
             "emotion": emotion,
@@ -494,15 +867,26 @@ def process_rebuttal_video(debate_id):
             "action_feedback": scores["action_feedback"],
             "feedback": scores["feedback"],
             "sample_answer": scores["sample_answer"]
-        })
+        }
+        
+        # 비디오 경로 추가 (있는 경우)
+        if user_video_path:
+            response_data["user_video_path"] = user_video_path
+        if ai_video_path:
+            response_data["ai_video_path"] = ai_video_path
+        
+        return jsonify(response_data)
         
     except Exception as e:
-        return jsonify({"error": f"영상 처리 중 오류 발생: {str(e)}"}), 500
+        error_msg = f"영상 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
 
 @app.route('/ai/debate/<int:debate_id>/counter-rebuttal-video', methods=['POST'])
 def process_counter_rebuttal_video(debate_id):
     """사용자 재반론 영상 처리 엔드포인트"""
     initialize_analyzers()
+    initialize_aistudios()  # AIStudios 초기화
     logger.info(f"재반론 영상 처리 요청 받음: /ai/debate/{debate_id}/counter-rebuttal-video")
     
     if 'file' not in request.files and 'video' not in request.files:
@@ -557,10 +941,47 @@ def process_counter_rebuttal_video(debate_id):
         topic = request.form.get("topic", "인공지능")
         ai_response = get_fixed_ai_response("closing", topic, user_text)
         
+        # 사용자 영상 저장 (AIStudios 영상 관리자 사용)
+        user_video_path = None
+        if video_manager:
+            try:
+                user_video_path = video_manager.save_video(
+                    source_path=temp_path,
+                    debate_id=debate_id,
+                    phase='counter_rebuttal',
+                    is_ai=False
+                )
+                logger.info(f"사용자 재반론 영상 저장 완료: {user_video_path}")
+            except Exception as e:
+                logger.error(f"사용자 영상 저장 실패: {str(e)}")
+        
+        # AI 영상 생성 (AIStudios 사용)
+        ai_video_path = None
+        if aistudios_client and video_manager:
+            try:
+                # 캐시 확인
+                cached_video = video_manager.get_video_if_exists(debate_id=debate_id, phase='closing', is_ai=True)
+                if cached_video:
+                    ai_video_path = cached_video
+                    logger.info(f"캐시된 AI 최종변론 영상 사용: {ai_video_path}")
+                else:
+                    # 새 영상 생성
+                    generated_video = aistudios_client.generate_avatar_video(ai_response)
+                    ai_video_path = video_manager.save_video(
+                        source_path=generated_video,
+                        debate_id=debate_id,
+                        phase='closing',
+                        is_ai=True
+                    )
+                    logger.info(f"AIStudios로 AI 최종변론 영상 생성 완료: {ai_video_path}")
+            except Exception as e:
+                logger.error(f"AI 최종변론 영상 생성 실패: {str(e)}")
+        
+        # 임시 파일 삭제
         if os.path.exists(temp_path):
             os.remove(temp_path)
         
-        return jsonify({
+        response_data = {
             "user_counter_rebuttal_text": user_text,
             "ai_closing_text": ai_response,
             "emotion": emotion,
@@ -580,15 +1001,26 @@ def process_counter_rebuttal_video(debate_id):
             "action_feedback": scores["action_feedback"],
             "feedback": scores["feedback"],
             "sample_answer": scores["sample_answer"]
-        })
+        }
+        
+        # 비디오 경로 추가 (있는 경우)
+        if user_video_path:
+            response_data["user_video_path"] = user_video_path
+        if ai_video_path:
+            response_data["ai_video_path"] = ai_video_path
+        
+        return jsonify(response_data)
         
     except Exception as e:
-        return jsonify({"error": f"영상 처리 중 오류 발생: {str(e)}"}), 500
+        error_msg = f"영상 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
 
 @app.route('/ai/debate/<int:debate_id>/closing-video', methods=['POST'])
 def process_closing_video(debate_id):
     """사용자 최종 변론 영상 처리 엔드포인트"""
     initialize_analyzers()
+    initialize_aistudios()  # AIStudios 초기화
     logger.info(f"최종 변론 영상 처리 요청 받음: /ai/debate/{debate_id}/closing-video")
     
     if 'file' not in request.files and 'video' not in request.files:
@@ -640,10 +1072,27 @@ def process_closing_video(debate_id):
         if facial_analyzer:
             scores = facial_analyzer.calculate_scores(facial_result, user_text, audio_result)
         
+        # 사용자 영상 저장 (AIStudios 영상 관리자 사용)
+        user_video_path = None
+        if video_manager:
+            try:
+                user_video_path = video_manager.save_video(
+                    source_path=temp_path,
+                    debate_id=debate_id,
+                    phase='closing',
+                    is_ai=False
+                )
+                logger.info(f"사용자 최종변론 영상 저장 완료: {user_video_path}")
+            except Exception as e:
+                logger.error(f"사용자 영상 저장 실패: {str(e)}")
+        
+        # 임시 파일 삭제
         if os.path.exists(temp_path):
             os.remove(temp_path)
+            logger.info(f"임시 파일 삭제됨: {temp_path}")
         
-        return jsonify({
+        # 응답 데이터 구성
+        response_data = {
             "user_closing_text": user_text,
             "emotion": emotion,
             "initiative_score": scores["initiative_score"],
@@ -662,10 +1111,18 @@ def process_closing_video(debate_id):
             "action_feedback": scores["action_feedback"],
             "feedback": scores["feedback"],
             "sample_answer": scores["sample_answer"]
-        })
+        }
+        
+        # 비디오 경로 추가 (있는 경우)
+        if user_video_path:
+            response_data["user_video_path"] = user_video_path
+        
+        return jsonify(response_data)
         
     except Exception as e:
-        return jsonify({"error": f"영상 처리 중 오류 발생: {str(e)}"}), 500
+        error_msg = f"영상 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
 
 @app.route('/ai/debate/<int:debate_id>/ai-rebuttal', methods=['GET'])
 def ai_rebuttal(debate_id):
@@ -745,6 +1202,13 @@ def modules_status():
 if __name__ == "__main__":
     # 시작 시 분석기 초기화 시도
     initialize_analyzers()
+    initialize_aistudios()
+    
+    # AIStudios 라우트 설정
+    setup_aistudios_routes(app)
+    
+    # 면접관 라우트 추가 설정
+    setup_interview_routes(app, facial_analyzer, speech_analyzer, aistudios_client, video_manager)
     
     print("AI 서버 Flask 애플리케이션 시작...")
     print("서버 주소: http://localhost:5000")
