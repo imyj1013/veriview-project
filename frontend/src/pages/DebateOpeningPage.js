@@ -1,5 +1,3 @@
-// src/pages/DebateOpeningPage.js
-
 import React, { useRef, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -10,27 +8,24 @@ function DebateOpeningPage() {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const streamRef = useRef(null);
-  const [recording, setRecording] = useState(false);
   const hasStartedRef = useRef(false);
 
+  const [recording, setRecording] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef(null);
+
   const navigate = useNavigate();
-  const { state } = useLocation();
+  const { state } = useLocation(); // topic, position, debateId
 
-  const stopCamera = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
+  // ⏱️ format time from seconds
+  const formatTime = (sec) => {
+    const h = String(Math.floor(sec / 3600)).padStart(2, "0");
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${h}:${m}:${s}`;
   };
 
+  // ✅ 웹캠 & 녹화 시작
   useEffect(() => {
     const init = async () => {
       if (hasStartedRef.current) return;
@@ -81,13 +76,18 @@ function DebateOpeningPage() {
             console.error(err);
           }
 
-          stopCamera(); // ✅ 업로드 후 정리
+          stopCamera();
           navigate("/debate/ai-opening", { state });
         };
 
         mediaRecorderRef.current = mediaRecorder;
         mediaRecorder.start();
         setRecording(true);
+
+        // ⏱️ 타이머 시작
+        timerRef.current = setInterval(() => {
+          setElapsedTime((prev) => prev + 1);
+        }, 1000);
       } catch (err) {
         alert("웹캠 접근 권한이 필요합니다.");
         console.error(err);
@@ -97,9 +97,28 @@ function DebateOpeningPage() {
     init();
 
     return () => {
-      stopCamera(); // ✅ 언마운트 시 정리
+      stopCamera();
     };
   }, [navigate, state]);
+
+  // ✅ 정리 함수
+  const stopCamera = () => {
+    clearInterval(timerRef.current);
+    setElapsedTime(0);
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
   const handleExit = () => {
     stopCamera();
@@ -114,40 +133,55 @@ function DebateOpeningPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center px-4 py-10">
-      {/* 상단바 */}
-      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
-        <img
-          src="/images/Logo_image.png"
-          alt="logo"
-          className="w-[240px] cursor-pointer"
-          onClick={handleExit}
-        />
-        <button
+    <div className="min-h-screen bg-white px-6 py-10 flex flex-col items-center">
+      {/* 상단 바 */}
+      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
+        <img src="/images/Logo_image.png" alt="logo" className="w-[200px]" />
+        <button 
           onClick={handleExit}
           className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
-        >
+          >
           나가기
         </button>
       </div>
 
       {/* 질문 */}
-      <div className="bg-gray-100 text-lg font-semibold px-6 py-4 rounded-lg shadow mb-6 w-full max-w-3xl text-center">
+      <div className="w-full max-w-5xl bg-gray-100 py-4 px-6 text-center text-xl rounded mb-8 font-semibold">
         Q. {state?.topic || "질문을 불러올 수 없습니다."}
       </div>
 
-      {/* 비디오 */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        className="w-full max-w-3xl h-[480px] bg-black rounded-lg mb-6"
-      />
+      {/* 영상 */}
+      <div className="flex gap-8 mb-6 w-full max-w-6xl justify-center">
+        {/* AI 토론자 (이미지) */}
+        <div className="flex flex-col items-center">
+          <img
+            src="/images/ai_avatar.png"
+            alt="AI Avatar"
+            className="w-[480px] h-[360px] object-cover rounded-lg bg-gray-200"
+          />
+          <p className="mt-2 text-base font-medium">AI 토론자</p>
+        </div>
+
+        {/* 사용자 */}
+        <div className="flex flex-col items-center">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-[480px] h-[360px] bg-black object-cover rounded-lg"
+          />
+          <p className="mt-2 text-base font-medium">{formatTime(elapsedTime)}</p>
+        </div>
+      </div>
+
+      {/* 안내 텍스트 */}
+      <div className="w-full max-w-5xl bg-gray-100 py-4 px-6 rounded mb-8 text-base text-center whitespace-pre-wrap break-words leading-relaxed">
+        입론을 녹화 중입니다.
+      </div>
 
       {/* 버튼 */}
       <div className="flex gap-4">
-        {recording && <span className="text-green-700 font-semibold">녹화 중...</span>}
         <button
           onClick={handleEnd}
           disabled={!recording}

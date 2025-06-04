@@ -36,6 +36,8 @@ import InterviewQ5 from "./pages/InterviewQ5";
 import JobRecommendationForm from "./pages/JobRecommendationForm";
 import JobRecommendationPage from "./pages/JobRecommendationPage";
 
+import Design from "./pages/DebatePage";
+
 function App() {
   return (
       <Routes>
@@ -43,6 +45,8 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         {/* 토론면접 */}
+        <Route path="/debate-design" element={<Design />} />
+        <Route path="/debate-start" element={<DebateStartPage />} />
         <Route path="/debate-intro" element={<DebateIntroPage />} />
         <Route path="/debate-start" element={<DebateStartPage />} />
         <Route path="/debate/opening" element={<DebateOpeningPage />} />

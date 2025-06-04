@@ -1,172 +1,216 @@
-// src/pages/DebateStartPage.js
-/*import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import fixWebmDuration from "webm-duration-fix";
 
-function DebateStartPage() {
+function InterviewQ5() {
   const navigate = useNavigate();
-  const [topic, setTopic] = useState("");
-  const [position, setPosition] = useState("");
-  const [debateId, setDebateId] = useState(null);
-  const [countdown, setCountdown] = useState(10);
+  const webcamRef = useRef(null);
+  const aiVideoRef = useRef(null);
+  const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const timerRef = useRef(null);
 
-  const userId = localStorage.getItem("user_id"); 
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [question, setQuestion] = useState("");
+  const [aiVideoUrl, setAiVideoUrl] = useState("");
+
+  const formatTime = (sec) => {
+    const m = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `00:${m}:${s}`;
+  };
+
+  const stopCamera = () => {
+    clearInterval(timerRef.current);
+    setElapsedTime(0);
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (webcamRef.current) {
+      webcamRef.current.srcObject = null;
+    }
+
+    mediaRecorderRef.current = null;
+  };
 
   useEffect(() => {
-    const fetchDebate = async () => {
+    const interviewId = localStorage.getItem("interview_id");
+
+    const fetchQuestionAndVideo = async () => {
       try {
-        const res = await axios.post("/api/debate/start", {
-          user_id: userId || "kimoo", // 임시 fallback
-        });
+        const res = await axios.get(`/api/interview/${interviewId}/followup-question`);
+        setQuestion(res.data.question_text || "질문을 불러올 수 없습니다.");
 
-        setTopic(res.data.topic);
-        setPosition(res.data.position === "PRO" ? "찬성" : "반대");
-        setDebateId(res.data.debate_id);
+        const aiVideoRes = await axios.get(
+          `/api/interview/${interviewId}/FOLLOWUP/ai-video`,
+          { responseType: "blob" }
+        );
+        const videoBlob = new Blob([aiVideoRes.data], { type: "video/mp4" });
+        const videoUrl = URL.createObjectURL(videoBlob);
+        setAiVideoUrl(videoUrl);
       } catch (err) {
-        console.error("토론 시작 실패:", err);
-
+        console.error("질문 또는 면접관 영상 로딩 실패", err);
       }
     };
 
-    fetchDebate();
-  }, [userId]);
-
-  useEffect(() => {
-    if (debateId && countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-
-    if (countdown === 0 && debateId) {
-      navigate("/debate/opening", {
-        state: {
-          topic,
-          position,
-          debateId,
-        },
-      });
-    }
-  }, [countdown, debateId, navigate, topic, position]);
-
-  return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
-      <img src="/images/Logo_image.png" alt="logo" className="w-[250px] mb-8" />
-
-      {topic && (
-        <>
-          <div className="bg-gray-100 text-lg px-6 py-3 rounded-lg shadow mb-6 text-center w-full max-w-2xl">
-            <span className="font-semibold">Q. {topic}</span>
-          </div>
-
-          <div className="bg-gray-800 text-white text-2xl text-center px-8 py-12 rounded-lg shadow-lg w-full max-w-xl">
-            <p className="mb-2">귀하는 “<span className="font-bold">{position}</span>”의 입장입니다.</p>
-            <p className="text-base mt-4">{countdown}초 후에 녹화가 시작됩니다.</p>
-            <p className="text-base">입론을 준비하세요.</p>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-export default DebateStartPage;
-*/
-// src/pages/DebateStartPage.js
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-// import axios from "axios"; // 나중에 연동할 때 사용
-
-function DebateStartPage() {
-  const navigate = useNavigate();
-  const [topic, setTopic] = useState("");
-  const [position, setPosition] = useState("");
-  const [debateId, setDebateId] = useState(null);
-  const [countdown, setCountdown] = useState(10);
-
-  // ⚙️ 추후 연동할 user_id (현재는 사용 안함)
-  // const userId = localStorage.getItem("user_id");
-
-  useEffect(() => {
-    // ✅ 백엔드 없이 더미 데이터로 초기화
-    const dummyResponse = {
-      topic: "AI는 인간의 일자리를 대체할 것인가?",
-      position: Math.random() > 0.5 ? "PRO" : "CON", // 랜덤 찬성/반대
-      debate_id: 1,
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        streamRef.current = stream;
+        if (webcamRef.current) webcamRef.current.srcObject = stream;
+      } catch (err) {
+        alert("웹캠 접근 권한이 필요합니다.");
+        console.error(err);
+      }
     };
 
-    // 나중에 여기에 백엔드 호출 코드 붙이기
-    // const fetchDebate = async () => {
-    //   try {
-    //     const res = await axios.post("/api/debate/start", {
-    //       user_id: userId || "kimoo", // 임시 ID
-    //     });
-    //     setTopic(res.data.topic);
-    //     setPosition(res.data.position === "PRO" ? "찬성" : "반대");
-    //     setDebateId(res.data.debate_id);
-    //   } catch (err) {
-    //     console.error("토론 시작 실패:", err);
-    //   }
-    // };
-    // fetchDebate();
+    fetchQuestionAndVideo();
+    startCamera();
 
-    // 지금은 더미 데이터 사용
-    setTopic(dummyResponse.topic);
-    setPosition(dummyResponse.position === "PRO" ? "찬성" : "반대");
-    setDebateId(dummyResponse.debate_id);
+    return () => {
+      stopCamera();
+    };
   }, []);
 
-  useEffect(() => {
-    if (debateId && countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
+  const startRecording = () => {
+    const stream = webcamRef.current?.srcObject;
+    if (!stream) return;
 
-    if (countdown === 0 && debateId) {
-      navigate("/debate/opening", {
-        state: {
-          topic,
-          position,
-          debateId,
-        },
-      });
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    recordedChunksRef.current = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunksRef.current.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = async () => {
+      stopCamera();
+
+      const originalBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+
+      try {
+        const fixedBlob = await fixWebmDuration(originalBlob);
+        const formData = new FormData();
+        const interviewId = localStorage.getItem("interview_id");
+        formData.append("file", fixedBlob, "followup.webm");
+
+        await axios.post(`/api/interview/${interviewId}/FOLLOWUP/answer-video`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        await new Promise((r) => setTimeout(r, 100));
+        navigate("/interview/feedback");
+      } catch (err) {
+        alert("영상 업로드 실패");
+        console.error(err);
+      }
+    };
+
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start();
+    setIsRecording(true);
+
+    timerRef.current = setInterval(() => {
+      setElapsedTime((prev) => prev + 1);
+    }, 1000);
+  };
+
+  const stopRecording = () => {
+    if (!mediaRecorderRef.current) return;
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    clearInterval(timerRef.current);
+  };
+
+  const togglePause = () => {
+    if (!mediaRecorderRef.current) return;
+
+    if (isPaused) {
+      mediaRecorderRef.current.resume();
+      timerRef.current = setInterval(() => setElapsedTime((prev) => prev + 1), 1000);
+      setIsPaused(false);
+    } else {
+      mediaRecorderRef.current.pause();
+      clearInterval(timerRef.current);
+      setIsPaused(true);
     }
-  }, [countdown, debateId, navigate, topic, position]);
+  };
+
+  const handleExit = () => {
+    stopCamera();
+    navigate("/");
+  };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
-      <img
-        src="/images/Logo_image.png"
-        alt="logo"
-        className="w-[240px] cursor-pointer"
-        onClick={() => navigate("/")}
-      />
-      <button
-        onClick={() => navigate("/")}
-        className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200"
-      >
-        나가기
-      </button>
-    </div>
-      {topic && (
-        <>
-          <div className="bg-gray-100 text-lg px-6 py-3 rounded-lg shadow mb-6 text-center w-full max-w-2xl">
-            <span className="font-semibold">Q. {topic}</span>
-          </div>
+    <div className="min-h-screen bg-white px-6 py-10 flex flex-col items-center">
+      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
+        <img src="/images/Logo_image.png" alt="logo" className="w-[200px]" />
+        <button onClick={handleExit} className="bg-gray-100 px-4 py-1 rounded hover:bg-gray-200">
+          나가기
+        </button>
+      </div>
 
-          <div className="bg-gray-800 text-white text-2xl text-center px-8 py-12 rounded-lg shadow-lg w-full max-w-xl">
-            <p className="mb-2">귀하는 “<span className="font-bold">{position}</span>”의 입장입니다.</p>
-            <p className="text-base mt-4">{countdown}초 후에 녹화가 시작됩니다.</p>
-            <p className="text-base">입론을 준비하세요.</p>
-          </div>
-        </>
-      )}
+      <div className="w-full max-w-5xl bg-gray-100 py-4 px-6 text-center text-xl rounded mb-8 font-semibold">
+        Q. {question}
+      </div>
+
+      <div className="flex gap-8 mb-6 w-full max-w-6xl justify-center">
+        <div className="flex flex-col items-center">
+          <video
+            src={aiVideoUrl}
+            ref={aiVideoRef}
+            controls
+            className="w-[500px] h-[400px] object-cover rounded-lg bg-black"
+          />
+          <p className="mt-2 text-base font-medium">AI 면접관</p>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <video
+            ref={webcamRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-[500px] h-[400px] bg-black object-cover rounded-lg"
+          />
+          <p className="mt-2 text-base font-medium">{isRecording ? formatTime(elapsedTime) : ""}</p>
+        </div>
+      </div>
+
+      <div className="flex gap-4">
+        {!isRecording ? (
+          <button
+            onClick={startRecording}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          >
+            녹화 시작
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={stopRecording}
+              className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
+            >
+              녹화 종료
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-export default DebateStartPage;
+export default InterviewQ5;
