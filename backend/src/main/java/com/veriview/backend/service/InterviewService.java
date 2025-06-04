@@ -105,8 +105,8 @@ public class InterviewService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
 
-        // ResponseEntity<Map> response = restTemplate.postForEntity(flaskUrl, entity, Map.class);
-      
+        // ResponseEntity<Map> response = restTemplate.exchange(flaskUrl, HttpMethod.POST, entity, Map.class);
+
         // List<Map<String, String>> questions = (List<Map<String, String>>) response.getBody().get("questions");
         // for (Map<String, String> q : questions) {
         //     InterviewQuestion question = questionRepository.findByInterview_InterviewIdAndQuestionType(savedInterview.getInterviewId(), InterviewQuestion.QuestionType.valueOf(q.get("question_type"))).orElseThrow(() -> new RuntimeException("Question not found"));
@@ -192,6 +192,7 @@ public class InterviewService {
 
         return savedInterview.getInterviewId();
 
+        //return 1;
     }
     
 
@@ -337,6 +338,8 @@ public class InterviewService {
 
 
         return new InterviewFollowupResponse(interviewId, followupquestion.getInterviewQuestionId(), "FOLLOWUP", followupquestion.getQuestionText());
+
+        //return new InterviewFollowupResponse(interviewId, 5, "FOLLOWUP", "꼬리질문입니다.");
     }
 
     public InterviewFeedbackResponse getFeedback(int interviewId) {
@@ -400,6 +403,65 @@ public class InterviewService {
             interview_feedback.add(feedbackDto);
 
         }
+
+        // for (InterviewQuestion.QuestionType questionType : InterviewQuestion.QuestionType.values()) {
+        //     InterviewQuestion question = questionRepository.findByInterview_InterviewIdAndQuestionType(interviewId, questionType).orElseThrow(() -> new RuntimeException("Question not found"));
+        //     InterviewAnswer answer = answerRepository.findByInterviewQuestion_InterviewQuestionId(question.getInterviewQuestionId()).orElseThrow(() -> new RuntimeException("Answer not found"));
+
+        //     File videoFile = new File(answer.getVideoPath());
+
+        //     if (!videoFile.exists()) {
+        //         throw new RuntimeException("Video file not found: " + answer.getVideoPath());
+        //     }
+
+        //     // Flask 서버로 전송
+        //     String flaskUrl = "http://localhost:5000/ai/interview/" + interviewId + "/" + questionType.name() + "/answer-video";
+
+        //     HttpHeaders headers = new HttpHeaders();
+        //     headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        //     MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        //     body.add("file", new FileSystemResource(videoFile));
+
+        //     HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        //     ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+        //         flaskUrl,
+        //         org.springframework.http.HttpMethod.POST,
+        //         requestEntity,
+        //         new org.springframework.core.ParameterizedTypeReference<>() {}
+        //     );
+        
+        //     Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
+
+        //     answer.setTranscript((String) "answer_text");
+        //     answerRepository.save(answer);
+
+        //     InterviewFeedback feedback = feedbackRepository.findByInterviewAnswer_InterviewAnswerId(answer.getInterviewAnswerId()).orElseThrow(() -> new RuntimeException("Question not found"));
+        //     feedback.setContentScore((float) 5);
+        //     feedback.setVoiceScore((float) 4);
+        //     feedback.setActionScore((float) 3);
+        //     feedback.setContentFeedback("content_feedback");
+        //     feedback.setVoiceFeedback("voice_feedback");
+        //     feedback.setActionFeedback("action_feedback");
+        //     feedback.setFeedback("feedback");
+        //     feedbackRepository.save(feedback);
+
+        //     InterviewFeedbackDto feedbackDto = new InterviewFeedbackDto();
+        //     feedbackDto.setQuestion_type((String) questionType.name());
+        //     feedbackDto.setQuestion_text("question");
+        //     feedbackDto.setAnswer_text("answer_text");
+        //     feedbackDto.setContent_score((float) 5);
+        //     feedbackDto.setVoice_score((float) 4);
+        //     feedbackDto.setAction_score((float) 3);
+        //     feedbackDto.setContent_feedback("content_feedback");
+        //     feedbackDto.setVoice_feedback("voice_feedback");
+        //     feedbackDto.setAction_feedback("action_feedback");
+        //     feedbackDto.setFeedback("feedback");
+
+        //     interview_feedback.add(feedbackDto);
+
+        // }
+
         return new InterviewFeedbackResponse(interviewId, interview_feedback);
 
     }
