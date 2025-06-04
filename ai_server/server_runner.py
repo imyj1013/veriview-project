@@ -605,6 +605,10 @@ def process_opening_video(debate_id):
     initialize_analyzers()
     logger.info(f"입론 영상 처리 요청 받음: /ai/debate/{debate_id}/opening-video")
     
+    # 사용자 비디오 경로 초기화 - AIStudios 모듈 없어도 오류 방지
+    user_video_path = None
+    ai_video_path = None
+    
     if 'file' not in request.files and 'video' not in request.files:
         return jsonify({"error": "영상 파일이 필요합니다."}), 400
     
@@ -734,6 +738,10 @@ def process_rebuttal_video(debate_id):
     initialize_analyzers()
     initialize_aistudios()  # AIStudios 초기화
     logger.info(f"반론 영상 처리 요청 받음: /ai/debate/{debate_id}/rebuttal-video")
+    
+    # 비디오 경로 초기화
+    user_video_path = None
+    ai_video_path = None
     
     if 'file' not in request.files and 'video' not in request.files:
         return jsonify({"error": "영상 파일이 필요합니다."}), 400
@@ -877,6 +885,10 @@ def process_counter_rebuttal_video(debate_id):
     initialize_aistudios()  # AIStudios 초기화
     logger.info(f"재반론 영상 처리 요청 받음: /ai/debate/{debate_id}/counter-rebuttal-video")
     
+    # 비디오 경로 초기화
+    user_video_path = None
+    ai_video_path = None
+    
     if 'file' not in request.files and 'video' not in request.files:
         return jsonify({"error": "영상 파일이 필요합니다."}), 400
     
@@ -1010,6 +1022,10 @@ def process_closing_video(debate_id):
     initialize_analyzers()
     initialize_aistudios()  # AIStudios 초기화
     logger.info(f"최종 변론 영상 처리 요청 받음: /ai/debate/{debate_id}/closing-video")
+    
+    # 비디오 경로 초기화
+    user_video_path = None
+    ai_video_path = None
     
     if 'file' not in request.files and 'video' not in request.files:
         return jsonify({"error": "영상 파일이 필요합니다."}), 400

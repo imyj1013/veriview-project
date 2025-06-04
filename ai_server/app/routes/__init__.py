@@ -66,8 +66,12 @@ def process_opening_video(debate_id):
         # AI 응답 생성 (고정값)
         ai_response = "인공지능은 인간의 일자리를 대체하는 위험을 내포하고 있습니다."
         
-        # 임시 파일 삭제
-        os.remove(temp_path)
+        # 임시 파일 삭제 시도
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except Exception as e:
+            logger.warning(f"임시 파일 삭제 실패: {str(e)}")
         
         return jsonify({
             "user_opening_text": user_text,
@@ -117,7 +121,12 @@ def process_rebuttal_video(debate_id):
         
         ai_response = "AI는 발전하면서도 위험을 내포하고 있으며, 통제 방안을 논의해야 합니다."
         
-        os.remove(temp_path)
+        # 임시 파일 삭제 시도
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except Exception as e:
+            logger.warning(f"임시 파일 삭제 실패: {str(e)}")
         
         return jsonify({
             "user_rebuttal_text": user_text,
@@ -166,7 +175,12 @@ def process_counter_rebuttal_video(debate_id):
         
         ai_response = "AI는 자율성을 지나치게 부여받는 것이 위험하며, 인간의 제어를 유지해야 합니다."
         
-        os.remove(temp_path)
+        # 임시 파일 삭제 시도
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except Exception as e:
+            logger.warning(f"임시 파일 삭제 실패: {str(e)}")
         
         return jsonify({
             "user_counter_rebuttal_text": user_text,
@@ -213,7 +227,12 @@ def process_closing_video(debate_id):
         emotion = facial_analyzer.evaluate_emotion(facial_result)
         scores = facial_analyzer.calculate_scores(facial_result, user_text, audio_result)
         
-        os.remove(temp_path)
+        # 임시 파일 삭제 시도
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except Exception as e:
+            logger.warning(f"임시 파일 삭제 실패: {str(e)}")
         
         return jsonify({
             "user_closing_text": user_text,

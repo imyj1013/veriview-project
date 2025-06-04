@@ -100,27 +100,52 @@ class RealtimeSpeechToText:
 
     def transcribe_video(self, video_path):
         """비디오 파일에서 오디오를 추출하여 텍스트로 변환"""
+        temp_audio = None
+        audio_path = None
+        
         try:
             if self.model is None or not os.path.exists(video_path):
                 # 테스트 모드: 고정 텍스트 반환
                 return "테스트 비디오 텍스트입니다. 인공지능은 인간의 삶에 많은 도움을 줄 수 있습니다."
             
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_audio:
-                audio_path = temp_audio.name
+            # 임시 파일 경로 생성 - 고유한 이름 사용
+            timestamp = str(int(os.path.getmtime(video_path)))
+            audio_path = os.path.join(tempfile.gettempdir(), f"audio_{os.path.basename(video_path)}_{timestamp}.wav")
+            
+            try:
+                # librosa로 오디오 추출
                 audio, sr = librosa.load(video_path, sr=self.sample_rate)
                 sf.write(audio_path, audio, sr)
+            except Exception as e:
+                logger.error(f"오디오 추출 오류: {str(e)}")
+                return "테스트 비디오 텍스트입니다. 인공지능은 인간의 삶에 많은 도움을 줄 수 있습니다."
+            
+            # Whisper로 텍스트 변환
+            try:
                 result = self.model.transcribe(audio_path, language="ko")
-                os.remove(audio_path)
                 text = result["text"].strip()
                 if text:
                     logger.info(f"영상에서 인식된 텍스트: {text}")
                     return text
                 return "인식된 텍스트가 없습니다."
+            except Exception as e:
+                logger.error(f"텍스트 변환 오류: {str(e)}")
+                return "테스트 비디오 텍스트입니다. 인공지능은 인간의 삶에 많은 도움을 줄 수 있습니다."
+                
         except Exception as e:
             logger.error(f"영상 오디오 처리 오류: {str(e)}")
             # 테스트 모드: 고정 텍스트 반환
             return "테스트 비디오 텍스트입니다. 인공지능은 인간의 삶에 많은 도움을 줄 수 있습니다."
         finally:
+            # 임시 파일 정리
+            try:
+                if audio_path and os.path.exists(audio_path):
+                    os.remove(audio_path)
+                    logger.info(f"임시 오디오 파일 삭제됨: {audio_path}")
+            except Exception as e:
+                logger.warning(f"임시 파일 삭제 실패: {str(e)}")
+            
+            # 메모리 정리
             gc.collect()
 
     def text_to_speech(self, text, output_path, language="ko"):
