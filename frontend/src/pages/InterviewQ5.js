@@ -18,6 +18,8 @@ function InterviewQ5() {
   const [question, setQuestion] = useState("");
   const [aiVideoUrl, setAiVideoUrl] = useState("");
 
+  const [showAiImage, setShowAiImage] = useState(false); 
+
   const formatTime = (sec) => {
     const m = String(Math.floor(sec / 60)).padStart(2, "0");
     const s = String(sec % 60).padStart(2, "0");
@@ -176,14 +178,23 @@ function InterviewQ5() {
 
       <div className="flex gap-8 mb-6 w-full max-w-6xl justify-center">
         <div className="flex flex-col items-center">
+          {showAiImage ? ( 
+           <img
+              src="/images/interviewer_static.png" 
+              alt="AI 면접관"
+              className="w-[500px] h-[400px] object-cover rounded-lg bg-black"
+            />
+          ) : (
           <video
             src={aiVideoUrl}
             ref={aiVideoRef}
             controls
             playsInline
             autoPlay
+            onEnded={() => setShowAiImage(true)} 
             className="w-[500px] h-[400px] object-cover rounded-lg bg-black"
           />
+          )}
           <p className="mt-2 text-base font-medium">AI 면접관</p>
         </div>
 
