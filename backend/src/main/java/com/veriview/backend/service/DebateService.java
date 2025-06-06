@@ -233,6 +233,7 @@ public class DebateService {
             new org.springframework.core.ParameterizedTypeReference<>() {}
         );
     
+        // res 변수는 위에서 정상적으로 선언되었음
         Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
 
