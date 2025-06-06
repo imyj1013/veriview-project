@@ -48,7 +48,7 @@ public class DebateService {
     public DebateStartResponse startDebate(String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-        int randomId = new Random().nextInt(424) + 1; // 1부터 424 사이의 정수
+        int randomId = new Random().nextInt(9) + 1; // 1부터 424 사이의 정수
         DebateTopic topic = topicRepository.findById(randomId).orElseThrow(() -> new RuntimeException("해당 ID의 주제가 존재하지 않습니다: " + randomId));
 
         Debate.Stance userStance = Math.random() < 0.5 ? Debate.Stance.PRO : Debate.Stance.CON;
@@ -233,6 +233,7 @@ public class DebateService {
             new org.springframework.core.ParameterizedTypeReference<>() {}
         );
     
+        // res 변수는 위에서 정상적으로 선언되었음
         Map<String, Object> res = Optional.ofNullable(response.getBody()).orElseThrow(() -> new RuntimeException("Flask response is null"));
 
 
