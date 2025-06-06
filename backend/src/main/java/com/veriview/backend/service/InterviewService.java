@@ -397,6 +397,45 @@ public class InterviewService {
         questionRepository.save(followupquestion);
 
 
+        // 2. AI 영상 생성 (기존 기능 유지)
+        String videoUrl = "http://localhost:5000/ai/interview/ai-video";
+        HttpHeaders videoHeaders = new HttpHeaders();
+        videoHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> videoRequest = new HashMap<>();
+        videoRequest.put("question_text", (String) res.get("question_text"));
+
+        ResponseEntity<byte[]> videoResponse = restTemplate.exchange(
+            videoUrl,
+            HttpMethod.POST,
+            new HttpEntity<>(videoRequest, videoHeaders),
+            byte[].class
+        );
+
+        byte[] videoBytes = videoResponse.getBody();
+        if (videoBytes != null) {
+            // 영상 파일 저장 경로 생성
+            String baseDirPath = new File(System.getProperty("user.dir")).getParentFile().getAbsolutePath() + "/videos";
+            File baseDir = new File(baseDirPath);
+            if (!baseDir.exists()) {
+                baseDir.mkdirs();
+            }
+            String mp4FileName = "interview_ai_" + interviewId + "_" + res.get("question_type") + "_" + System.currentTimeMillis() + ".mp4";
+            String filePath = baseDirPath + "/" + mp4FileName;
+
+            // 영상 파일을 저장
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                fos.write(videoBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save video file", e);
+            }
+
+            // InterviewQuestion의 ai_video_path에 경로 저장
+            followupquestion.setAiVideoPath(filePath);
+            questionRepository.save(followupquestion);
+        }
+
+
         return new InterviewFollowupResponse(interviewId, followupquestion.getInterviewQuestionId(), "FOLLOWUP", followupquestion.getQuestionText());
 
         //return new InterviewFollowupResponse(interviewId, 5, "FOLLOWUP", "꼬리질문입니다.");
