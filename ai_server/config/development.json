@@ -1,0 +1,22 @@
+{
+  "environment": "development",
+  "api_keys": {
+    "AISTUDIOS_API_KEY": "your_development_api_key_here"
+  },
+  "aistudios": {
+    "base_url": "https://app.aistudios.com/api",
+    "default_avatar_id": "dev_avatar_id",
+    "timeout": 120,
+    "max_retries": 5,
+    "debug": true
+  },
+  "cache": {
+    "enabled": true,
+    "directory": "./dev_cache",
+    "expiry_seconds": 3600
+  },
+  "logging": {
+    "level": "DEBUG",
+    "file": "ai_server_dev.log"
+  }
+}

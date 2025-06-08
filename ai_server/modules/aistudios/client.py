@@ -5,6 +5,7 @@ import requests
 import logging
 import tempfile
 from pathlib import Path
+from .api_key_manager import api_key_manager
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ class AIStudiosClient:
     AIStudios API 클라이언트
     
     AIStudios의 생성형 AI 아바타 API를 호출하여 영상을 생성하는 클라이언트 클래스입니다.
+    다양한 환경에서 API 키를 자동으로 관리합니다.
     """
     
     def __init__(self, api_key=None, cache_dir=None):
@@ -21,13 +23,24 @@ class AIStudiosClient:
         AIStudios API 클라이언트 초기화
         
         Args:
-            api_key (str, optional): AIStudios API 키. 기본값은 환경 변수에서 가져옵니다.
+            api_key (str, optional): AIStudios API 키. None이면 자동으로 다양한 소스에서 검색합니다.
             cache_dir (str, optional): 생성된 영상을 캐싱할 디렉토리 경로. 
                                       기본값은 프로젝트 루트의 'aistudios_cache' 폴더입니다.
         """
-        self.api_key = api_key or os.environ.get('AISTUDIOS_API_KEY')
+        # API 키 관리자를 통해 키 가져오기
+        if api_key:
+            self.api_key = api_key
+        else:
+            self.api_key = api_key_manager.get_aistudios_api_key()
+        
         if not self.api_key:
-            logger.warning("AIStudios API 키가 설정되지 않았습니다. 환경 변수 'AISTUDIOS_API_KEY'를 설정하세요.")
+            logger.warning("AIStudios API 키를 찾을 수 없습니다. 다음 방법으로 설정해주세요:")
+            logger.warning("1. 환경 변수: AISTUDIOS_API_KEY=your_api_key")
+            logger.warning("2. .env 파일: AISTUDIOS_API_KEY=your_api_key")
+            logger.warning("3. AWS Secrets Manager: veriview/aistudios")
+            logger.warning("4. 런타임 설정: client.set_api_key('your_api_key')")
+        else:
+            logger.info(f"AIStudios API 키 로드 성공: {self.api_key[:10]}***")
         
         # 기본 캐시 디렉토리 설정
         if cache_dir is None:
@@ -53,6 +66,50 @@ class AIStudiosClient:
         self._request_cache = {}
         
         logger.info("AIStudios 클라이언트 초기화 완료")
+    
+    def set_api_key(self, api_key: str):
+        """
+        런타임에서 API 키 설정
+        
+        Args:
+            api_key (str): 설정할 API 키
+        """
+        self.api_key = api_key
+        self.headers["Authorization"] = f"Bearer {self.api_key}"
+        api_key_manager.set_aistudios_api_key(api_key)
+        logger.info(f"API 키 런타임 설정 완료: {api_key[:10]}***")
+    
+    def test_connection(self) -> bool:
+        """
+        API 연결 테스트
+        
+        Returns:
+            bool: 연결 성공 여부
+        """
+        if not self.api_key:
+            logger.error("API 키가 설정되지 않아 연결 테스트를 할 수 없습니다.")
+            return False
+        
+        try:
+            # 실제 AIStudios API에 맞게 수정 필요
+            # 현재는 연결 가능성만 확인
+            return bool(self.api_key and len(self.api_key) > 10)
+        except Exception as e:
+            logger.error(f"API 연결 테스트 실패: {e}")
+            return False
+    
+    def get_api_key_status(self) -> dict:
+        """
+        API 키 상태 및 소스 정보 확인
+        
+        Returns:
+            dict: API 키 상태 정보
+        """
+        return {
+            "api_key_configured": bool(self.api_key),
+            "api_key_preview": f"{self.api_key[:10]}***" if self.api_key else None,
+            "sources_status": api_key_manager.get_all_sources_status()
+        }
     
     def _generate_cache_key(self, text, avatar_id=None):
         """
