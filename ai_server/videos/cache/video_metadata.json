@@ -1,0 +1,57 @@
+{
+  "7ea08ed42394214f494fbf02b60a014e": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104119.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '지속 가능한 발전을 위한 기업의 역할은?'에 대해 반대하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:41:19.770337",
+    "file_size": 42608
+  },
+  "4ba516d49091b7bc1b610e055d9a7b60": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104119.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '유전자 조작 기술의 윤리적 한계는 어디까지인가?'에 대해 찬성하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:41:19.892452",
+    "file_size": 42608
+  },
+  "cf3b95bf1c7c5c3b82b1a8b117a37073": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104503.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '사회적 미디어가 민주주의에 미치는 영향은?'에 대해 찬성하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:45:03.532972",
+    "file_size": 42608
+  },
+  "f5e4fef3116d515a253f732e4b38eeb2": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104503.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '디지털 프라이버시와 국가 보안 간의 균형은?'에 대해 반대하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:45:03.553248",
+    "file_size": 42608
+  },
+  "10b421ef71a65a1718c15d5826ec823d": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104530.mp4",
+    "content": "상대측 주장에 대해 반박하겠습니다. 입론에 대한 AI의 반론입니다. 제시된 근거에 대한 반박을 하겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "rebuttal"
+    },
+    "created_at": "2025-06-09T10:45:30.303288",
+    "file_size": 101664
+  }
+}

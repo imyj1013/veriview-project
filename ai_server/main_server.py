@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-VeriView AI 서버 - 메인 서버 (모든 AI 모듈 포함)
-LLM, OpenFace2.0, Whisper, TTS, Librosa 기능을 모두 활용하는 실제 서버
+VeriView AI 서버 - 메인 서버 (모든 AI 모듈 포함 + AIStudios 통합)
+LLM, OpenFace2.0, Whisper, TTS, Librosa, AIStudios 기능을 모두 활용하는 실제 서버
 
-실행 방법: python main_server.py
+실행 방법: python main_server.py 또는 python run.py --mode main
 포트: 5000
 """
 from flask import Flask, jsonify, request, send_file, Response, stream_with_context
@@ -22,20 +22,32 @@ try:
     from interview_features.debate.openface_integration import OpenFaceDebateIntegration
     LLM_MODULE_AVAILABLE = True
     OPENFACE_INTEGRATION_AVAILABLE = True
-    print(" 실제 AI 모듈 로드 성공: LLM 및 OpenFace 통합 기능 사용 가능")
+    print("✅ 실제 AI 모듈 로드 성공: LLM 및 OpenFace 통합 기능 사용 가능")
 except ImportError as e:
-    print(f" 실제 AI 모듈 로드 실패: {e}")
+    print(f"⚠️ 실제 AI 모듈 로드 실패: {e}")
     LLM_MODULE_AVAILABLE = False
     OPENFACE_INTEGRATION_AVAILABLE = False
+
+# AIStudios 모듈 임포트 (새로 추가)
+try:
+    from modules.aistudios.client import AIStudiosClient
+    from modules.aistudios.video_manager import VideoManager
+    from modules.aistudios.routes import setup_aistudios_routes
+    from modules.aistudios.interview_routes import setup_interview_routes
+    AISTUDIOS_AVAILABLE = True
+    print("✅ AIStudios 모듈 로드 성공: 영상 생성 기능 사용 가능")
+except ImportError as e:
+    print(f"❌ AIStudios 모듈 로드 실패: {e}")
+    AISTUDIOS_AVAILABLE = False
 
 # 백업 모듈 임포트 (실제 모듈이 없을 경우)
 try:
     from test_features.debate.main import DebateTestMain
     from test_features.personal_interview.main import PersonalInterviewTestMain
     BACKUP_MODULES_AVAILABLE = True
-    print(" 백업 모듈 로드 성공: 테스트 기능 사용 가능")
+    print("✅ 백업 모듈 로드 성공: 테스트 기능 사용 가능")
 except ImportError as e:
-    print(f" 백업 모듈 로드 실패: {e}")
+    print(f"⚠️ 백업 모듈 로드 실패: {e}")
     BACKUP_MODULES_AVAILABLE = False
 
 # 공통 모듈 임포트
@@ -43,9 +55,9 @@ try:
     from modules.job_recommendation_module import JobRecommendationModule
     job_recommendation_module = JobRecommendationModule()
     JOB_RECOMMENDATION_AVAILABLE = True
-    print(" 공고추천 모듈 로드 성공")
+    print("✅ 공고추천 모듈 로드 성공")
 except ImportError as e:
-    print(f" 공고추천 모듈 로드 실패: {e}")
+    print(f"⚠️ 공고추천 모듈 로드 실패: {e}")
     JOB_RECOMMENDATION_AVAILABLE = False
     job_recommendation_module = None
 
@@ -54,9 +66,9 @@ try:
     from modules.tfidf_job_recommendation_module import TFIDFJobRecommendationModule
     tfidf_recommendation_module = TFIDFJobRecommendationModule()
     TFIDF_RECOMMENDATION_AVAILABLE = True
-    print(" TF-IDF 공고추천 모듈 로드 성공")
+    print("✅ TF-IDF 공고추천 모듈 로드 성공")
 except ImportError as e:
-    print(f" TF-IDF 공고추천 모듈 로드 실패: {e}")
+    print(f"⚠️ TF-IDF 공고추천 모듈 로드 실패: {e}")
     TFIDF_RECOMMENDATION_AVAILABLE = False
     tfidf_recommendation_module = None
 
@@ -67,9 +79,9 @@ try:
     import soundfile as sf
     WHISPER_AVAILABLE = True
     LIBROSA_AVAILABLE = True
-    print(" Whisper 및 Librosa 모듈 로드 성공")
+    print("✅ Whisper 및 Librosa 모듈 로드 성공")
 except ImportError as e:
-    print(f" 음성 분석 모듈 일부 제한: {e}")
+    print(f"⚠️ 음성 분석 모듈 일부 제한: {e}")
     WHISPER_AVAILABLE = False
     LIBROSA_AVAILABLE = False
 
@@ -77,9 +89,9 @@ except ImportError as e:
 try:
     from TTS.api import TTS
     TTS_AVAILABLE = True
-    print(" TTS 모듈 로드 성공")
+    print("✅ TTS 모듈 로드 성공")
 except ImportError as e:
-    print(f" TTS 모듈 로드 실패: {e}")
+    print(f"⚠️ TTS 모듈 로드 실패: {e}")
     TTS_AVAILABLE = False
 
 # Flask 앱 초기화
@@ -98,10 +110,38 @@ personal_interview_test_system = None
 whisper_model = None
 tts_model = None
 
+# AIStudios 전역 변수 (새로 추가)
+aistudios_client = None
+video_manager = None
+
+def setup_aistudios_integration():
+    """AIStudios 라우트를 Flask 앱에 통합"""
+    global aistudios_client, video_manager
+    
+    if AISTUDIOS_AVAILABLE and aistudios_client and video_manager:
+        try:
+            # AIStudios 일반 라우트 설정
+            setup_aistudios_routes(app)
+            
+            # AIStudios 면접 라우트 설정 
+            setup_interview_routes(
+                app, 
+                openface_integration,
+                whisper_model,
+                aistudios_client, 
+                video_manager
+            )
+            
+            logger.info("✅ AIStudios 라우트 통합 완료")
+        except Exception as e:
+            logger.error(f"❌ AIStudios 라우트 설정 실패: {str(e)}")
+    else:
+        logger.warning("⚠️ AIStudios 모듈이 사용 불가능하여 라우트 설정을 건너뜁니다.")
+
 def initialize_ai_systems():
-    """AI 시스템 초기화"""
+    """AI 시스템 초기화 (AIStudios 포함)"""
     global llm_module, openface_integration, debate_test_system, personal_interview_test_system
-    global whisper_model, tts_model
+    global whisper_model, tts_model, aistudios_client, video_manager
     
     try:
         # LLM 모듈 초기화
@@ -132,6 +172,31 @@ def initialize_ai_systems():
         if TTS_AVAILABLE:
             tts_model = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC")
             logger.info("TTS 모델 초기화 완료")
+
+        # AIStudios 모듈 초기화 (새로 추가)
+        if AISTUDIOS_AVAILABLE:
+            try:
+                # 환경 변수에서 API 키 가져오기
+                api_key = os.environ.get('AISTUDIOS_API_KEY')
+                if not api_key:
+                    logger.warning("⚠️ AISTUDIOS_API_KEY 환경 변수가 설정되지 않았습니다.")
+                    logger.warning("   .env 파일이나 시스템 환경 변수에 API 키를 설정해주세요.")
+                
+                # AIStudios 클라이언트 초기화
+                aistudios_client = AIStudiosClient(api_key=api_key)
+                logger.info("✅ AIStudios 클라이언트 초기화 완료")
+                
+                # 영상 관리자 초기화
+                from pathlib import Path
+                videos_dir = Path(__file__).parent / 'videos'
+                video_manager = VideoManager(base_dir=videos_dir)
+                logger.info("✅ AIStudios 영상 관리자 초기화 완료")
+                
+                logger.info(f"📁 영상 저장 디렉토리: {video_manager.base_dir}")
+                logger.info(f"💾 캐시 디렉토리: {aistudios_client.cache_dir}")
+                
+            except Exception as e:
+                logger.error(f"❌ AIStudios 초기화 실패: {str(e)}")
                 
     except Exception as e:
         logger.error(f"AI 시스템 초기화 실패: {str(e)}")
@@ -321,7 +386,7 @@ def extract_audio_from_video(video_path: str) -> Optional[str]:
 
 @app.route('/ai/test', methods=['GET'])
 def test_connection():
-    """연결 테스트 및 상태 확인 엔드포인트"""
+    """연결 테스트 및 상태 확인 엔드포인트 (AIStudios 상태 추가)"""
     logger.info("연결 테스트 요청 받음: /ai/test")
     
     # 백엔드 연결 테스트
@@ -338,7 +403,7 @@ def test_connection():
     
     test_response = {
         "status": "AI 메인 서버가 정상 작동 중입니다.",
-        "server_type": "main_server (모든 AI 모듈 포함)",
+        "server_type": "main_server_with_aistudios (모든 AI 모듈 + AIStudios 통합)",
         "backend_connection": backend_status,
         "modules": {
             "llm": "사용 가능" if LLM_MODULE_AVAILABLE else "사용 불가",
@@ -347,19 +412,35 @@ def test_connection():
             "tts": "사용 가능" if TTS_AVAILABLE else "사용 불가",
             "librosa": "사용 가능" if LIBROSA_AVAILABLE else "사용 불가",
             "job_recommendation": "사용 가능" if JOB_RECOMMENDATION_AVAILABLE else "사용 불가",
-            "tfidf_recommendation": "사용 가능" if TFIDF_RECOMMENDATION_AVAILABLE else "사용 불가"
+            "tfidf_recommendation": "사용 가능" if TFIDF_RECOMMENDATION_AVAILABLE else "사용 불가",
+            "aistudios": "사용 가능" if AISTUDIOS_AVAILABLE else "사용 불가"
+        },
+        "aistudios_info": {
+            "client_initialized": aistudios_client is not None,
+            "video_manager_initialized": video_manager is not None,
+            "api_key_configured": bool(os.environ.get('AISTUDIOS_API_KEY')),
+            "cache_dir": str(aistudios_client.cache_dir) if aistudios_client else None,
+            "videos_dir": str(video_manager.base_dir) if video_manager else None
         },
         "endpoints": {
             "debate": {
                 "start": "/ai/debate/start",
                 "ai_opening": "/ai/debate/<debate_id>/ai-opening",
-                "opening_video": "/ai/debate/<debate_id>/opening-video"
+                "opening_video": "/ai/debate/<debate_id>/opening-video",
+                # AIStudios 영상 생성 엔드포인트 추가
+                "ai_opening_video": "/ai/debate/ai-opening-video",
+                "ai_rebuttal_video": "/ai/debate/ai-rebuttal-video",
+                "ai_counter_rebuttal_video": "/ai/debate/ai-counter-rebuttal-video",
+                "ai_closing_video": "/ai/debate/ai-closing-video"
             },
             "personal_interview": {
                 "start": "/ai/interview/start",  
                 "question": "/ai/interview/<interview_id>/question",
                 "answer_video": "/ai/interview/<interview_id>/<question_type>/answer-video",
-                "followup_question": "/ai/interview/<interview_id>/genergate-followup-question"
+                "followup_question": "/ai/interview/<interview_id>/genergate-followup-question",
+                # AIStudios 면접 영상 생성 엔드포인트 추가
+                "ai_question_video": "/ai/interview/next-question-video",
+                "ai_feedback_video": "/ai/interview/feedback-video"
             },
             "job_recommendation": {
                 "recommend": "/ai/jobs/recommend",
@@ -370,7 +451,7 @@ def test_connection():
                 "tfidf_posting": "/ai/recruitment/posting-tfidf"
             }
         },
-        "mode": "실제 AI 모듈 사용 (LLM + OpenFace + Whisper + TTS + Librosa)"
+        "mode": "실제 AI 모듈 + AIStudios 영상 생성 통합"
     }
     
     logger.info(f"테스트 응답: {test_response}")
@@ -774,7 +855,7 @@ def start_interview():
             "interview_id": int(time.time()),
             "message": "개인면접이 시작되었습니다.",
             "first_question": "자기소개를 해주세요.",
-            "server_type": "main_server"
+            "server_type": "main_server_with_aistudios"
         })
     except Exception as e:
         return jsonify({"error": f"개인면접 시작 중 오류: {str(e)}"}), 500
@@ -1402,7 +1483,7 @@ def modules_status():
     """모듈 상태 확인"""
     return jsonify({
         "status": "active",
-        "server_type": "main_server",
+        "server_type": "main_server_with_aistudios",
         "modules": {
             "llm": {
                 "available": LLM_MODULE_AVAILABLE,
@@ -1431,6 +1512,10 @@ def modules_status():
             "tfidf_recommendation": {
                 "available": TFIDF_RECOMMENDATION_AVAILABLE,
                 "functions": ["recommend_by_skills", "recommend_by_profile", "get_rare_skills", "trigger_crawling"] if TFIDF_RECOMMENDATION_AVAILABLE else []
+            },
+            "aistudios": {
+                "available": AISTUDIOS_AVAILABLE,
+                "functions": ["generate_avatar_video", "video_management", "caching"] if AISTUDIOS_AVAILABLE else []
             }
         }
     })
@@ -1438,20 +1523,23 @@ def modules_status():
 if __name__ == "__main__":
     # 시작 시 AI 시스템 초기화
     initialize_ai_systems()
+
+    # AIStudios 라우트 통합 (새로 추가)
+    setup_aistudios_integration()
     
-    print(" VeriView AI 메인 서버 시작...")
-    print(" 서버 주소: http://localhost:5000")
-    print(" 테스트 엔드포인트: http://localhost:5000/ai/test")
-    print(" 상태 확인 엔드포인트: http://localhost:5000/ai/debate/modules-status")
-    print(" 토론면접 API: http://localhost:5000/ai/debate/<debate_id>/ai-opening")
-    print(" 개인면접 API: http://localhost:5000/ai/interview/start")
-    print(" 개인면접 답변 분석 API: http://localhost:5000/ai/interview/<interview_id>/<question_type>/answer-video")
-    print(" 개인면접 꼬리질문 API: http://localhost:5000/ai/interview/<interview_id>/genergate-followup-question")
-    print(" 공고추천 API: http://localhost:5000/ai/jobs/recommend")
-    print(" TF-IDF 공고추천 API: http://localhost:5000/ai/jobs/recommend-tfidf")
-    print(" 희소기술 정보 API: http://localhost:5000/ai/jobs/rare-skills")
+    print("🚀 VeriView AI 메인 서버 (AIStudios 통합) 시작...")
+    print("📍 서버 주소: http://localhost:5000")
+    print("🔍 테스트 엔드포인트: http://localhost:5000/ai/test")
+    print("🔧 상태 확인 엔드포인트: http://localhost:5000/ai/debate/modules-status")
+    print("📋 토론면접 API: http://localhost:5000/ai/debate/<debate_id>/ai-opening")
+    print("🎤 개인면접 API: http://localhost:5000/ai/interview/start")
+    print("🎥 개인면접 답변 분석 API: http://localhost:5000/ai/interview/<interview_id>/<question_type>/answer-video")
+    print("❓ 개인면접 꼬리질문 API: http://localhost:5000/ai/interview/<interview_id>/genergate-followup-question")
+    print("💼 공고추천 API: http://localhost:5000/ai/jobs/recommend")
+    print("🔍 TF-IDF 공고추천 API: http://localhost:5000/ai/jobs/recommend-tfidf")
+    print("💎 희소기술 정보 API: http://localhost:5000/ai/jobs/rare-skills")
     print("=" * 80)
-    print("포함된 AI 모듈:")
+    print("🔧 포함된 AI 모듈:")
     print(f"  - LLM: {'✅' if LLM_MODULE_AVAILABLE else '❌'}")
     print(f"  - OpenFace: {'✅' if OPENFACE_INTEGRATION_AVAILABLE else '❌'}")
     print(f"  - Whisper: {'✅' if WHISPER_AVAILABLE else '❌'}")
@@ -1459,6 +1547,7 @@ if __name__ == "__main__":
     print(f"  - Librosa: {'✅' if LIBROSA_AVAILABLE else '❌'}")
     print(f"  - 공고추천: {'✅' if JOB_RECOMMENDATION_AVAILABLE else '❌'}")
     print(f"  - TF-IDF 공고추천: {'✅' if TFIDF_RECOMMENDATION_AVAILABLE else '❌'}")
+    print(f"  - AIStudios: {'✅' if AISTUDIOS_AVAILABLE else '❌'}")
     print("=" * 80)
     if TFIDF_RECOMMENDATION_AVAILABLE:
         print("특별 기능:")
@@ -1466,5 +1555,21 @@ if __name__ == "__main__":
         print("  - TF-IDF 벡터 유사도 기반 정밀 매칭")
         print("  - 백엔드 완전 호환 (JobPosting 엔티티)")
         print("="*80)
+    
+    if AISTUDIOS_AVAILABLE:
+        print("🎬 AIStudios 기능:")
+        print("  - AI 아바타 영상 생성")
+        print("  - 영상 캐싱 및 관리")
+        print("  - 면접관 질문 영상")
+        print("  - 토론자 발언 영상")
+        print("  - 비동기 영상 처리")
+        
+        api_key_status = "✅ 설정됨" if os.environ.get('AISTUDIOS_API_KEY') else "❌ 미설정"
+        print(f"  - API 키 상태: {api_key_status}")
+        
+        if not os.environ.get('AISTUDIOS_API_KEY'):
+            print("⚠️  환경 변수 'AISTUDIOS_API_KEY'를 설정해주세요!")
+        
+        print("=" * 80)
     
     app.run(host="0.0.0.0", port=5000, debug=True)

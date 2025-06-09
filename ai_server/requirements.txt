@@ -12,13 +12,13 @@ soundfile==0.12.1
 sounddevice==0.5.0
 scipy==1.14.1
 # TTS>=0.22.0
-# TTS 기능 AIStudios에서 가져올 것이므로 주석처리
+# TTS 기능 D-ID API에서 제공하므로 주석처리
 flask-cors==4.0.0
 unidecode==1.3.8
 pydub>=0.25.1
 numba>=0.56.0
 psutil>=5.9.0
 
-# AIStudios 관련 패키지
+# AI 아바타 API 관련 패키지
 python-dotenv>=1.0.0
 pillow>=10.0.0

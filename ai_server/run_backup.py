@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+VeriView AI 서버 실행 파일
+사용법: python run.py [--mode test|main]
+"""
+import sys
+import os
+import argparse
+
+# 현재 디렉터리를 Python 경로에 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+sys.path.append(os.path.join(current_dir, 'src'))
+
+def parse_arguments():
+    """명령줄 인자 파싱"""
+    parser = argparse.ArgumentParser(description='VeriView AI 서버 실행')
+    parser.add_argument('--mode', type=str, choices=['test', 'main'], 
+                       default='main', help='실행 모드 선택 (test: 테스트 서버, main: 메인 서버)')
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    
+    if args.mode == "test":
+        # 테스트 모드: server_runner.py 사용 (간단한 테스트용)
+        try:
+            from server_runner import app, initialize_analyzers
+            
+            print("=" * 80)
+            print(f" VeriView AI 서버 시작 (모드: {args.mode})")
+            print("=" * 80)
+            print(" 서버 주소: http://localhost:5000")
+            print(" 주요 엔드포인트:")
+            print("   - 연결 테스트: http://localhost:5000/ai/test")
+            print("   - 개인면접 질문 생성: http://localhost:5000/ai/interview/generate-question")
+            print("   - 개인면접 답변 분석: http://localhost:5000/ai/interview/{interview_id}/{question_type}/answer-video")
+            print("   - 꼬리질문 생성: http://localhost:5000/ai/interview/{interview_id}/genergate-followup-question")
+            print("=" * 80)
+            
+            # 분석기 초기화
+            initialize_analyzers()
+            
+            # Flask 서버 실행
+            app.run(host="0.0.0.0", port=5000, debug=True)
+            
+        except ImportError as e:
+            print(f"테스트 서버 모듈 로드 실패: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"테스트 서버 실행 중 오류 발생: {e}")
+            sys.exit(1)
+    
+    else:
+        # 메인 모드: main_server.py 사용 (전체 AI 모듈 포함)
+        try:
+            from main_server import app, initialize_ai_systems
+            
+            print("=" * 80)
+            print(f" VeriView AI 메인 서버 시작 (모드: {args.mode})")
+            print("=" * 80)
+            print(" 서버 주소: http://localhost:5000")
+            print(" 주요 엔드포인트:")
+            print("   - 연결 테스트: http://localhost:5000/ai/test")
+            print("   - 모듈 상태: http://localhost:5000/ai/debate/modules-status")
+            print("   - 개인면접 질문 생성: http://localhost:5000/ai/interview/generate-question")
+            print("   - 개인면접 답변 분석: http://localhost:5000/ai/interview/{interview_id}/{question_type}/answer-video")
+            print("   - 꼬리질문 생성: http://localhost:5000/ai/interview/{interview_id}/genergate-followup-question")
+            print("   - 토론면접: http://localhost:5000/ai/debate/{debate_id}/ai-opening")
+            print("   - 공고추천: http://localhost:5000/ai/recruitment/posting")
+            print("=" * 80)
+            
+            # AI 시스템 초기화
+            initialize_ai_systems()
+            
+            # Flask 서버 실행
+            app.run(host="0.0.0.0", port=5000, debug=True)
+            
+        except ImportError as e:
+            print(f"메인 서버 모듈 로드 실패: {e}")
+            print("main_server.py 파일이 존재하는지 확인하세요.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"메인 서버 실행 중 오류 발생: {e}")
+            sys.exit(1)
