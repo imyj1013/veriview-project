@@ -41,10 +41,25 @@ function AIClosingPage() {
 
     const fetchFinalVideo = async () => {
       try {
+        // 캐시 방지를 위한 타임스탬프 추가
+        const timestamp = new Date().getTime();
         const res = await axios.get(
-          `/api/debate/${state.debateId}/ai-closing-video`,
-          { responseType: "blob" }
+          `/api/debate/${state.debateId}/ai-closing-video?t=${timestamp}`,
+          { 
+            responseType: "blob",
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }
         );
+        
+        // 이전 비디오 URL 정리
+        if (videoUrl) {
+          URL.revokeObjectURL(videoUrl);
+        }
+        
         const videoBlob = new Blob([res.data], { type: "video/mp4" });
         setVideoUrl(URL.createObjectURL(videoBlob));
 

@@ -47,10 +47,25 @@ function AICounterPage() {
       }
 
       try {
+        // 캐시 방지를 위한 타임스탬프 추가
+        const timestamp = new Date().getTime();
         const videoRes = await axios.get(
-          `/api/debate/${state.debateId}/ai-counter-rebuttal-video`,
-          { responseType: "blob" }
+          `/api/debate/${state.debateId}/ai-counter-rebuttal-video?t=${timestamp}`,
+          { 
+            responseType: "blob",
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }
         );
+        
+        // 이전 비디오 URL 정리
+        if (aiVideoUrl) {
+          URL.revokeObjectURL(aiVideoUrl);
+        }
+        
         const videoBlobUrl = URL.createObjectURL(videoRes.data);
         setAiVideoUrl(videoBlobUrl);
       } catch (err) {

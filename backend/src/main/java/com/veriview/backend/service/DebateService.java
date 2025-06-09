@@ -150,7 +150,7 @@ public class DebateService {
     }
 
     public ResponseEntity<Resource> getAIOpeningVideo(int debateId) {
-        DebateAnswer opening = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+        DebateAnswer opening = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Opening phase not found"));
     
         String videoPath = opening.getAiVideoPath();
         if (videoPath == null || !new File(videoPath).exists()) {
@@ -162,6 +162,13 @@ public class DebateService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("video/mp4"));
             headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+            
+            // 캐시 방지 헤더 추가
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            headers.set("Last-Modified", String.valueOf(System.currentTimeMillis()));
+            headers.set("ETag", String.valueOf(System.currentTimeMillis()));
 
             return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
 
@@ -319,7 +326,7 @@ public class DebateService {
 
     
     public ResponseEntity<Resource> getAIRebuttalVideo(int debateId) {
-        DebateAnswer rebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+        DebateAnswer rebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.REBUTTAL).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
     
         String videoPath = rebuttal.getAiVideoPath();
         if (videoPath == null || !new File(videoPath).exists()) {
@@ -331,6 +338,13 @@ public class DebateService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("video/mp4"));
             headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+            
+            // 캐시 방지 헤더 추가
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            headers.set("Last-Modified", String.valueOf(System.currentTimeMillis()));
+            headers.set("ETag", String.valueOf(System.currentTimeMillis()));
 
             return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
 
@@ -488,7 +502,7 @@ public class DebateService {
     }
     
     public ResponseEntity<Resource> getAICounterRebuttalVideo(int debateId) {
-        DebateAnswer counterrebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+        DebateAnswer counterrebuttal = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.COUNTER_REBUTTAL).orElseThrow(() -> new RuntimeException("Counter Rebuttal phase not found"));
     
         String videoPath = counterrebuttal.getAiVideoPath();
         if (videoPath == null || !new File(videoPath).exists()) {
@@ -500,6 +514,13 @@ public class DebateService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("video/mp4"));
             headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+            
+            // 캐시 방지 헤더 추가
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            headers.set("Last-Modified", String.valueOf(System.currentTimeMillis()));
+            headers.set("ETag", String.valueOf(System.currentTimeMillis()));
 
             return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
 
@@ -656,7 +677,7 @@ public class DebateService {
     }
 
     public ResponseEntity<Resource> getAIClosingVideo(int debateId) {
-        DebateAnswer closing = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.OPENING).orElseThrow(() -> new RuntimeException("Rebuttal phase not found"));
+        DebateAnswer closing = debateAnswerRepository.findByDebate_DebateIdAndPhase(debateId, DebateAnswer.Phase.CLOSING).orElseThrow(() -> new RuntimeException("Closing phase not found"));
     
         String videoPath = closing.getAiVideoPath();
         if (videoPath == null || !new File(videoPath).exists()) {
@@ -668,6 +689,13 @@ public class DebateService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("video/mp4"));
             headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+            
+            // 캐시 방지 헤더 추가
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            headers.setPragma("no-cache");
+            headers.setExpires(0);
+            headers.set("Last-Modified", String.valueOf(System.currentTimeMillis()));
+            headers.set("ETag", String.valueOf(System.currentTimeMillis()));
 
             return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength()).body(resource);
 
