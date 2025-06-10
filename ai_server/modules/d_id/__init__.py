@@ -4,7 +4,7 @@ VeriView 프로젝트용 AI 아바타 영상 생성
 """
 
 from .client import DIDClient
-from .video_manager import DIDVideoManager
+from .video_manager import VideoManager
 from .tts_manager import TTSManager
 
-__all__ = ['DIDClient', 'DIDVideoManager', 'TTSManager']
+__all__ = ['DIDClient', 'VideoManager', 'TTSManager']

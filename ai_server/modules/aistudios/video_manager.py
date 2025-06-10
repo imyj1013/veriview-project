@@ -11,8 +11,6 @@ logger = logging.getLogger(__name__)
 class VideoManager:
     """
     영상 파일 관리 및 캐싱 시스템
-    
-    AIStudios에서 생성된 영상 파일을 관리하고 캐싱하는 클래스입니다.
     """
     
     def __init__(self, base_dir=None, cache_expiry=86400):

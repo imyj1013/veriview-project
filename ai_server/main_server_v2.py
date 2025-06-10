@@ -136,10 +136,10 @@ class MicroserviceManager:
         
         print("=" * 80)
         print(" 서비스 상태:")
-        print(f"   - Redis: {'✅ 실행 중' if redis_started else '❌ 미실행 (동기 모드)'}")
+        print(f"   - Redis: {'실행 중' if redis_started else '미실행 (동기 모드)'}")
         for service_key, process in self.processes.items():
             service = self.services[service_key]
-            status = "✅ 실행 중" if process.poll() is None else "❌ 중지됨"
+            status = "실행 중" if process.poll() is None else "중지됨"
             print(f"   - {service['name']}: {status} (포트: {service['port']})")
         print("=" * 80)
         print(" 주요 기능:")

@@ -11,23 +11,13 @@ from typing import Optional
 # D-ID 모듈 임포트 (우선 사용)
 try:
     from modules.d_id.client import DIDClient
-    from modules.d_id.video_manager import DIDVideoManager
+    from modules.d_id.video_manager import VideoManager
     from modules.d_id.tts_manager import TTSManager
     D_ID_AVAILABLE = True
     print("D-ID 모듈 로드 성공")
 except ImportError as e:
     print(f"D-ID 모듈 로드 실패: {e}")
     D_ID_AVAILABLE = False
-
-# AIStudios 모듈 임포트 (폴백용)
-try:
-    from modules.aistudios.client import AIStudiosClient
-    from modules.aistudios.video_manager import VideoManager
-    AISTUDIOS_AVAILABLE = True
-    print("AIStudios 모듈 로드 성공 (폴백용)")
-except ImportError as e:
-    print(f"AIStudios 모듈 로드 실패: {e}")
-    AISTUDIOS_AVAILABLE = False
 
 # 기타 모듈 임포트
 try:
@@ -82,11 +72,6 @@ did_video_manager = None
 tts_manager = None
 did_initialized = False
 
-# AIStudios 관련 전역 변수 (폴백용)
-aistudios_client = None
-aistudios_video_manager = None
-aistudios_initialized = False
-
 # 분석기 전역 변수
 facial_analyzer = None
 speech_analyzer = None
@@ -122,7 +107,7 @@ def initialize_d_id():
         
         # D-ID 영상 관리자 초기화
         videos_dir = os.environ.get('D_ID_CACHE_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos'))
-        did_video_manager = DIDVideoManager(base_dir=videos_dir)
+        did_video_manager = VideoManager(base_dir=videos_dir)
         logger.info(f"D-ID 영상 관리자 초기화 완료: {videos_dir}")
         
         # TTS 관리자 초기화
@@ -137,38 +122,6 @@ def initialize_d_id():
         did_initialized = False
         return False
 
-def initialize_aistudios():
-    """AIStudios 모듈 초기화 (폴백용)"""
-    global aistudios_client, aistudios_video_manager, aistudios_initialized
-    
-    if not AISTUDIOS_AVAILABLE:
-        logger.warning("AIStudios 모듈이 사용 불가합니다")
-        return False
-    
-    try:
-        # 환경 변수에서 API 키 가져오기
-        api_key = os.environ.get('AISTUDIOS_API_KEY')
-        
-        if not api_key or api_key == 'your_actual_aistudios_api_key_here':
-            logger.warning("AISTUDIOS_API_KEY가 설정되지 않음")
-            return False
-        
-        # AIStudios 클라이언트 초기화
-        aistudios_client = AIStudiosClient(api_key=api_key)
-        logger.info("AIStudios 클라이언트 초기화 완료 (폴백용)")
-        
-        # AIStudios 영상 관리자 초기화
-        videos_dir = os.environ.get('AISTUDIOS_CACHE_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'aistudios_cache'))
-        aistudios_video_manager = VideoManager(base_dir=videos_dir)
-        logger.info(f"AIStudios 영상 관리자 초기화 완료 (폴백용): {videos_dir}")
-        
-        aistudios_initialized = True
-        return True
-        
-    except Exception as e:
-        logger.error(f"AIStudios 모듈 초기화 실패: {str(e)}")
-        aistudios_initialized = False
-        return False
 
 def generate_avatar_video_unified(script: str, video_type: str = 'interview', gender: str = 'male', phase: str = 'general') -> Optional[str]:
     """
@@ -250,23 +203,7 @@ def generate_avatar_video_unified(script: str, video_type: str = 'interview', ge
             except Exception as e:
                 logger.error(f"D-ID 영상 생성 중 오류: {str(e)}")
         
-        # 2순위: AIStudios 폴백
-        if use_fallback and aistudios_initialized:
-            try:
-                logger.info("AIStudios로 폴백 영상 생성 시도")
-                
-                if aistudios_client:
-                    video_path = aistudios_client.generate_avatar_video(script)
-                    
-                    if video_path and os.path.exists(video_path):
-                        logger.info(f"AIStudios 폴백 영상 생성 완료: {video_path}")
-                        return video_path
-                    else:
-                        logger.warning("AIStudios 폴백 영상 생성 실패")
                         
-            except Exception as e:
-                logger.error(f"AIStudios 폴백 영상 생성 중 오류: {str(e)}")
-        
         # 3순위: 샘플 영상 반환
         logger.warning("모든 AI 아바타 서비스 실패 - 샘플 영상 반환")
         return generate_sample_video_fallback(video_type, phase)
@@ -472,7 +409,7 @@ def generate_ai_interview_video():
         if tts_manager:
             formatted_script = tts_manager.format_script_for_interview(question_text)
         else:
-            formatted_script = f"안녕하세요. {question_text}"
+            formatted_script = f"{question_text}"
         
         # D-ID로 면접관 영상 생성
         video_path = generate_avatar_video_unified(
@@ -741,9 +678,9 @@ def generate_ai_opening(debate_id):
         position = data.get('position', 'PRO')
         
         if position == 'PRO':
-            ai_opening_text = f"안녕하세요. 저는 '{topic}'에 대해 찬성하는 입장에서 말씀드리겠습니다."
+            ai_opening_text = f"{topic}에 대해 찬성하는 입장에서 말씀드리겠습니다."
         else:
-            ai_opening_text = f"안녕하세요. 저는 '{topic}'에 대해 반대하는 입장에서 말씀드리겠습니다."
+            ai_opening_text = f"{topic}에 대해 반대하는 입장에서 말씀드리겠습니다."
         
         response_data = {
             "ai_opening_text": ai_opening_text,
@@ -777,7 +714,7 @@ def generate_ai_opening_video():
         if tts_manager:
             formatted_script = tts_manager.format_script_for_debate(ai_opening_text, 'opening')
         else:
-            formatted_script = f"안녕하세요. 저는 다음과 같이 주장하겠습니다. {ai_opening_text}"
+            formatted_script = f"{ai_opening_text}"
         
         video_path = generate_avatar_video_unified(
             script=formatted_script,
@@ -848,14 +785,7 @@ def generate_ai_debate_video_unified(phase='opening'):
         if tts_manager:
             formatted_script = tts_manager.format_script_for_debate(ai_text, phase)
         else:
-            phase_greetings = {
-                'opening': '안녕하세요. 저는 다음과 같이 주장하겠습니다.',
-                'rebuttal': '상대측 주장에 대해 반박하겠습니다.',
-                'counter_rebuttal': '추가로 반박 논리를 제시하겠습니다.',
-                'closing': '마지막으로 정리하자면 다음과 같습니다.'
-            }
-            greeting = phase_greetings.get(phase, '다음과 같이 말씀드리겠습니다.')
-            formatted_script = f"{greeting} {ai_text}"
+            formatted_script = ai_text
         
         video_path = generate_avatar_video_unified(
             script=formatted_script,
@@ -1092,7 +1022,6 @@ def test_connection():
     
     # 각 모듈 상태 확인
     did_status = "사용 가능" if did_initialized else "사용 불가"
-    aistudios_status = "사용 가능 (폴백)" if aistudios_initialized else "사용 불가"
     facial_status = "사용 가능" if facial_analyzer else "사용 불가"
     speech_status = "사용 가능" if speech_analyzer else "사용 불가"
     tts_status = "사용 가능" if tts_manager else "사용 불가"
@@ -1110,7 +1039,6 @@ def test_connection():
         "avatar_services": {
             "D-ID (우선)": did_status,
             "D-ID 연결상태": did_connection_status,
-            "AIStudios (폴백)": aistudios_status
         },
         "modules": {
             "TTS Manager": tts_status,
@@ -1121,7 +1049,6 @@ def test_connection():
             "preferred_service": os.environ.get('PREFERRED_AVATAR_SERVICE', 'D_ID'),
             "use_fallback": os.environ.get('USE_FALLBACK_SERVICE', 'True'),
             "d_id_api_key_configured": "Yes" if os.environ.get('D_ID_API_KEY') and os.environ.get('D_ID_API_KEY') != 'your_actual_d_id_api_key_here' else "No",
-            "aistudios_api_key_configured": "Yes" if os.environ.get('AISTUDIOS_API_KEY') and os.environ.get('AISTUDIOS_API_KEY') != 'your_actual_aistudios_api_key_here' else "No"
         },
         "endpoints": {
             "job_recommendation": "/ai/recruitment/posting",
@@ -1149,12 +1076,6 @@ if __name__ == "__main__":
     else:
         print("D-ID 통합 실패 - 폴백 모드 사용")
         
-        # AIStudios 폴백 초기화
-        if initialize_aistudios():
-            print("AIStudios 폴백 사용 가능")
-        else:
-            print("AIStudios 폴백도 사용 불가 - 샘플 영상 모드")
-    
     # 기타 분석기 초기화
     initialize_analyzers()
     

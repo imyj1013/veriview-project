@@ -14,8 +14,31 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
-class DIDVideoManager:
+class VideoManager:
     """D-ID 영상 캐싱 및 관리 클래스"""
+    
+    def get_cached_video(self, cache_key: str) -> Optional[str]:
+        """간단한 캐시 조회 메서드 (라우트와 호환)"""
+        # 메타데이터에서 캐시 키 조회
+        if cache_key in self.metadata:
+            video_info = self.metadata[cache_key]
+            file_path = video_info.get('file_path')
+            
+            # 파일 존재 확인
+            if file_path and os.path.exists(file_path):
+                return file_path
+        
+        return None
+    
+    def cache_video(self, cache_key: str, video_path: str):
+        """간단한 캐시 저장 메서드 (라우트와 호환)"""
+        if os.path.exists(video_path):
+            self.metadata[cache_key] = {
+                'file_path': video_path,
+                'created_at': datetime.now().isoformat(),
+                'file_size': os.path.getsize(video_path)
+            }
+            self._save_metadata()
     
     def __init__(self, base_dir: str = 'videos'):
         """
@@ -128,7 +151,13 @@ class DIDVideoManager:
             # 파일명 생성
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"{video_type}_{timestamp}.mp4"
+            # os.path.join을 사용하여 플랫폼에 맞는 경로 생성
             final_path = os.path.join(target_dir, filename)
+            # 경로를 절대 경로로 변환
+            final_path = os.path.abspath(final_path)
+            
+            # 디렉토리가 없으면 생성
+            os.makedirs(os.path.dirname(final_path), exist_ok=True)
             
             # 파일 복사 또는 이동
             if os.path.exists(video_path):

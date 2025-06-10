@@ -1,0 +1,178 @@
+{
+  "7ea08ed42394214f494fbf02b60a014e": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104119.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '지속 가능한 발전을 위한 기업의 역할은?'에 대해 반대하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:41:19.770337",
+    "file_size": 42608
+  },
+  "4ba516d49091b7bc1b610e055d9a7b60": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104119.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '유전자 조작 기술의 윤리적 한계는 어디까지인가?'에 대해 찬성하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:41:19.892452",
+    "file_size": 42608
+  },
+  "cf3b95bf1c7c5c3b82b1a8b117a37073": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104503.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '사회적 미디어가 민주주의에 미치는 영향은?'에 대해 찬성하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:45:03.532972",
+    "file_size": 42608
+  },
+  "f5e4fef3116d515a253f732e4b38eeb2": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104503.mp4",
+    "content": "안녕하세요. 저는 다음과 같이 주장하겠습니다. 안녕하세요. 저는 '디지털 프라이버시와 국가 보안 간의 균형은?'에 대해 반대하는 입장에서 말씀드리겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T10:45:03.553248",
+    "file_size": 42608
+  },
+  "10b421ef71a65a1718c15d5826ec823d": {
+    "file_path": "./videos/cache\\debates\\debate_20250609_104530.mp4",
+    "content": "상대측 주장에 대해 반박하겠습니다. 입론에 대한 AI의 반론입니다. 제시된 근거에 대한 반박을 하겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "rebuttal"
+    },
+    "created_at": "2025-06-09T10:45:30.303288",
+    "file_size": 101664
+  },
+  "9616bc4ef980b4858679a6da7da8e7a8": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250609_153509.mp4",
+    "content": "안녕하세요. 저는 '세계화는 경제 불평등을 심화시키는가?'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T15:35:09.715138",
+    "file_size": 42608
+  },
+  "773e7c813a9bb1c5e52b417c2221f378": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250609_153510.mp4",
+    "content": "안녕하세요. 저는 '보편적 기본소득은 경제적으로 실현 가능한가?'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-09T15:35:10.091748",
+    "file_size": 42608
+  },
+  "e94c3486a6aa09028970a9e7ff964c57": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_143033.mp4",
+    "content": "'세계화는 경제 불평등을 심화시키는가?'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T14:30:33.713964",
+    "file_size": 42608
+  },
+  "3d7613ab435ef4d91fd29026eb32a4e1": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_143033.mp4",
+    "content": "'보편적 기본소득은 경제적으로 실현 가능한가?'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T14:30:33.843527",
+    "file_size": 42608
+  },
+  "7a749b37d2e52d4274ad4a7626416536": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_143100.mp4",
+    "content": "입론에 대한 AI의 반론입니다. 제시된 근거에 대한 반박을 하겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "rebuttal"
+    },
+    "created_at": "2025-06-10T14:31:00.204752",
+    "file_size": 101664
+  },
+  "347c38ad1993922d4eb354e15a7a588a": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_144614.mp4",
+    "content": "'사회적 미디어가 민주주의에 미치는 영향은?'에 대해 찬성하는 입장에서 말씀드리겠습니다. 이 주제에 대한 핵심 논거는 다음과 같습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T14:46:14.396376",
+    "file_size": 42608
+  },
+  "4f6abcba8d76ee03c63ae77e1b1802c3": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_144614.mp4",
+    "content": "'세계화는 경제 불평등을 심화시키는가?'에 대해 찬성하는 입장에서 말씀드리겠습니다. 이 주제에 대한 핵심 논거는 다음과 같습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T14:46:14.465639",
+    "file_size": 42608
+  },
+  "c3533fba1176cca56177c780a866c458": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_145452.mp4",
+    "content": "'지속 가능한 발전을 위한 기업의 역할은?'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T14:54:52.897144",
+    "file_size": 42608
+  },
+  "e4511781fcffa9bb6eea8fb8bcbb10f6": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_145453.mp4",
+    "content": "'유전자 조작 기술의 윤리적 한계는 어디까지인가?'에 대해 찬성하는 입장에서 말씀드리겠습니다. 이 주제에 대한 핵심 논거는 다음과 같습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T14:54:53.082495",
+    "file_size": 42608
+  },
+  "f920371027e2cc0636b4f881fbc89584": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_145935.mp4",
+    "content": "'보편적 기본소득은 경제적으로 실현 가능한가?'에 대해 찬성하는 입장에서 말씀드리겠습니다. 이 주제에 대한 핵심 논거는 다음과 같습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T14:59:35.747553",
+    "file_size": 42608
+  },
+  "16884d6bafc42b50683720a84f1e9df0": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_151629.mp4",
+    "content": "'지속 가능한 발전을 위한 기업의 역할은?'에 대해 찬성하는 입장에서 말씀드리겠습니다. 이 주제에 대한 핵심 논거는 다음과 같습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T15:16:29.187886",
+    "file_size": 42608
+  }
+}

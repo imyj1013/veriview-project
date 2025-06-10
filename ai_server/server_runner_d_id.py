@@ -11,23 +11,13 @@ from typing import Optional
 # D-ID 모듈 임포트
 try:
     from modules.d_id.client import DIDClient
-    from modules.d_id.video_manager import DIDVideoManager
+    from modules.d_id.video_manager import VideoManager
     from modules.d_id.tts_manager import TTSManager
     D_ID_AVAILABLE = True
     print("D-ID 모듈 로드 성공")
 except ImportError as e:
     print(f"D-ID 모듈 로드 실패: {e}")
     D_ID_AVAILABLE = False
-
-# AIStudios 모듈 임포트 (폴백용)
-try:
-    from modules.aistudios.client import AIStudiosClient
-    from modules.aistudios.video_manager import VideoManager
-    AISTUDIOS_AVAILABLE = True
-    print("AIStudios 모듈 로드 성공 (폴백용)")
-except ImportError as e:
-    print(f"AIStudios 모듈 로드 실패: {e}")
-    AISTUDIOS_AVAILABLE = False
 
 # 기타 모듈 임포트
 try:
@@ -40,6 +30,10 @@ except ImportError as e:
 
 app = Flask(__name__)
 CORS(app)
+
+# 정적 파일 제공을 위한 설정
+app.static_folder = os.path.abspath('videos')
+app.static_url_path = '/videos'
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -55,13 +49,9 @@ did_video_manager = None
 tts_manager = None
 did_initialized = False
 
-# AIStudios 관련 전역 변수 (폴백용)
-aistudios_client = None
-aistudios_video_manager = None
-aistudios_initialized = False
 
 def initialize_d_id():
-    """D-ID 모듈 초기화"""
+    """D-ID 모듈 초기화 - 개선된 버전"""
     global did_client, did_video_manager, tts_manager, did_initialized
     
     if not D_ID_AVAILABLE:
@@ -75,23 +65,31 @@ def initialize_d_id():
         if not api_key or api_key == 'your_actual_d_id_api_key_here':
             logger.warning("D_ID_API_KEY가 설정되지 않음")
             logger.warning("환경 변수를 설정하세요: D_ID_API_KEY='your_api_key'")
+            logger.warning("Windows: set D_ID_API_KEY=your_api_key")
+            logger.warning("Linux/Mac: export D_ID_API_KEY=your_api_key")
+            return False
+        
+        # API 키 형식 확인
+        if len(api_key) < 10:
+            logger.error(f"D-ID API 키가 너무 짧습니다: {len(api_key)} 글자")
             return False
         
         # D-ID 클라이언트 초기화
         base_url = os.environ.get('D_ID_API_URL', 'https://api.d-id.com')
         did_client = DIDClient(api_key=api_key, base_url=base_url)
-        logger.info("D-ID 클라이언트 초기화 완료")
+        logger.info(f"D-ID 클라이언트 초기화 완료: {base_url}")
         
         # 연결 테스트
+        logger.info("D-ID API 연결 테스트 중...")
         if did_client.test_connection():
-            logger.info("D-ID API 연결 성공")
+            logger.info("D-ID API 연결 성공!")
         else:
             logger.warning("D-ID API 연결 실패 - 폴백 모드 사용")
             return False
         
         # D-ID 영상 관리자 초기화
         videos_dir = os.environ.get('D_ID_CACHE_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos'))
-        did_video_manager = DIDVideoManager(base_dir=videos_dir)
+        did_video_manager = VideoManager(base_dir=videos_dir)
         logger.info(f"D-ID 영상 관리자 초기화 완료: {videos_dir}")
         
         # TTS 관리자 초기화
@@ -99,6 +97,7 @@ def initialize_d_id():
         logger.info("TTS 관리자 초기화 완료")
         
         did_initialized = True
+        logger.info("D-ID 모듈 초기화 완료!")
         return True
         
     except Exception as e:
@@ -106,43 +105,11 @@ def initialize_d_id():
         did_initialized = False
         return False
 
-def initialize_aistudios():
-    """AIStudios 모듈 초기화 (폴백용)"""
-    global aistudios_client, aistudios_video_manager, aistudios_initialized
-    
-    if not AISTUDIOS_AVAILABLE:
-        logger.warning("AIStudios 모듈이 사용 불가합니다")
-        return False
-    
-    try:
-        # 환경 변수에서 API 키 가져오기
-        api_key = os.environ.get('AISTUDIOS_API_KEY')
-        
-        if not api_key or api_key == 'your_actual_aistudios_api_key_here':
-            logger.warning("AISTUDIOS_API_KEY가 설정되지 않음")
-            return False
-        
-        # AIStudios 클라이언트 초기화
-        aistudios_client = AIStudiosClient(api_key=api_key)
-        logger.info("AIStudios 클라이언트 초기화 완료 (폴백용)")
-        
-        # AIStudios 영상 관리자 초기화
-        videos_dir = os.environ.get('AISTUDIOS_CACHE_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'aistudios_cache'))
-        aistudios_video_manager = VideoManager(base_dir=videos_dir)
-        logger.info(f"AIStudios 영상 관리자 초기화 완료 (폴백용): {videos_dir}")
-        
-        aistudios_initialized = True
-        return True
-        
-    except Exception as e:
-        logger.error(f"AIStudios 모듈 초기화 실패: {str(e)}")
-        aistudios_initialized = False
-        return False
 
 def generate_avatar_video_unified(script: str, video_type: str = 'interview', gender: str = 'male', phase: str = 'general') -> Optional[str]:
     """
-    통합 아바타 영상 생성 함수
-    D-ID 우선 사용, 실패시 AIStudios 폴백
+    통합 아바타 영상 생성 함수 - D-ID TTS 최적화
+    D-ID API 및 자체 TTS 기능 사용
     
     Args:
         script: 음성 텍스트
@@ -154,44 +121,48 @@ def generate_avatar_video_unified(script: str, video_type: str = 'interview', ge
         생성된 영상 파일 경로 또는 None
     """
     try:
+        # 텍스트 길이 사전 검증
+        if not script or len(script.strip()) < 10:
+            logger.error(f"텍스트가 너무 짧습니다: '{script}' (길이: {len(script) if script else 0})")
+            return generate_sample_video_fallback(video_type, phase)
+        
+        if len(script) > 500:
+            logger.warning(f"텍스트가 길어서 잘라서 처리합니다: {len(script)} → 500글자")
+            script = script[:497] + "..."
+        
+        # TTS 관리자를 통한 스크립트 최적화
+        if tts_manager:
+            optimized_script = tts_manager.optimize_script_for_speech(script)
+            if len(optimized_script.strip()) > 0:
+                script = optimized_script
+        
         preferred_service = os.environ.get('PREFERRED_AVATAR_SERVICE', 'D_ID')
-        use_fallback = os.environ.get('USE_FALLBACK_SERVICE', 'True').lower() == 'true'
         
-        logger.info(f"아바타 영상 생성 시작: type={video_type}, gender={gender}, phase={phase}")
-        logger.info(f"우선 서비스: {preferred_service}, 폴백 사용: {use_fallback}")
+        logger.info(f"🎬 D-ID 아바타 영상 생성 시작")
+        logger.info(f"   📝 스크립트: {script[:50]}{'...' if len(script) > 50 else ''}")
+        logger.info(f"   🎭 타입: {video_type}, 성별: {gender}, 단계: {phase}")
+        logger.info(f"   🔊 D-ID TTS: 한국어 음성 자동 적용")
         
-        # 1순위: D-ID 사용
+        # D-ID 사용 (캐시 없이 직접 생성)
         if preferred_service == 'D_ID' and did_initialized:
             try:
-                logger.info("D-ID로 영상 생성 시도")
+                logger.info("🚀 D-ID API로 영상 생성 시도")
                 
-                # 캐시 확인
-                if did_video_manager:
-                    cached_video = did_video_manager.get_cached_video(
-                        content=script,
-                        video_type=video_type,
-                        gender=gender,
-                        phase=phase
-                    )
-                    
-                    if cached_video:
-                        logger.info(f"D-ID 캐시된 영상 반환: {cached_video}")
-                        return cached_video
+                video_path = None
                 
-                # D-ID로 새 영상 생성
                 if video_type == 'interview':
+                    # 면접관 영상 - D-ID 자체 TTS 사용
                     video_path = did_client.generate_interview_video(script, gender)
                 elif video_type == 'debate':
+                    # 토론자 영상 - D-ID 자체 TTS 사용
                     video_path = did_client.generate_debate_video(script, gender, phase)
                 else:
                     # 일반 아바타 영상
                     avatar_type = f"{video_type}_{gender}"
-                    voice_id = tts_manager.get_voice_for_interviewer(gender) if video_type == 'interview' else tts_manager.get_voice_for_debater(gender)
                     
                     video_url = did_client.create_avatar_video(
                         script=script,
-                        avatar_type=avatar_type,
-                        voice_id=voice_id
+                        avatar_type=avatar_type
                     )
                     
                     if video_url:
@@ -201,85 +172,106 @@ def generate_avatar_video_unified(script: str, video_type: str = 'interview', ge
                         video_path = os.path.join('videos', filename)
                         
                         if did_client.download_video(video_url, video_path):
-                            video_path = video_path
+                            # 다운로드 후 파일 크기 재확인
+                            if os.path.exists(video_path):
+                                file_size = os.path.getsize(video_path)
+                                if file_size == 0:
+                                    logger.error("❌ 다운로드된 파일이 0바이트입니다")
+                                    video_path = None
+                                elif file_size < 1000:
+                                    logger.warning(f"⚠️ 다운로드된 파일이 작습니다: {file_size} bytes")
                         else:
                             video_path = None
                     else:
                         video_path = None
                 
+                # 결과 검증
                 if video_path and os.path.exists(video_path):
-                    # 캐시에 저장
-                    if did_video_manager:
-                        final_path = did_video_manager.save_video(
-                            video_path=video_path,
-                            content=script,
-                            video_type=video_type,
-                            gender=gender,
-                            phase=phase
-                        )
-                        logger.info(f"D-ID 영상 생성 완료: {final_path}")
-                        return final_path
-                    else:
-                        logger.info(f"D-ID 영상 생성 완료 (캐시 없음): {video_path}")
-                        return video_path
-                else:
-                    logger.warning("D-ID 영상 생성 실패")
+                    file_size = os.path.getsize(video_path)
+                    logger.info(f"✅ D-ID 영상 생성 성공: {video_path} ({file_size:,} bytes)")
                     
-            except Exception as e:
-                logger.error(f"D-ID 영상 생성 중 오류: {str(e)}")
-        
-        # 2순위: AIStudios 폴백
-        if use_fallback and aistudios_initialized:
-            try:
-                logger.info("AIStudios로 폴백 영상 생성 시도")
+                    if file_size > 1000:  # 1KB 이상
+                        return video_path
+                    else:
+                        logger.error(f"❌ 생성된 영상 파일이 너무 작음: {file_size} bytes")
+                        # 작은 파일은 삭제
+                        try:
+                            os.remove(video_path)
+                            logger.info("🗑️ 잘못된 영상 파일 삭제됨")
+                        except:
+                            pass
+                        video_path = None
                 
-                if aistudios_client:
-                    video_path = aistudios_client.generate_avatar_video(script)
+                if not video_path:
+                    logger.warning("⚠️ D-ID 영상 생성 실패")
                     
-                    if video_path and os.path.exists(video_path):
-                        logger.info(f"AIStudios 폴백 영상 생성 완료: {video_path}")
-                        return video_path
-                    else:
-                        logger.warning("AIStudios 폴백 영상 생성 실패")
-                        
             except Exception as e:
-                logger.error(f"AIStudios 폴백 영상 생성 중 오류: {str(e)}")
+                logger.error(f"❌ D-ID 영상 생성 중 오류: {str(e)}")
         
-        # 3순위: 샘플 영상 반환
-        logger.warning("모든 AI 아바타 서비스 실패 - 샘플 영상 반환")
+        # 폴백: 샘플 영상 반환
+        logger.warning("🔄 D-ID 서비스 실패 - 샘플 영상 반환")
         return generate_sample_video_fallback(video_type, phase)
         
     except Exception as e:
-        logger.error(f"통합 아바타 영상 생성 중 오류: {str(e)}")
+        logger.error(f"❌ 통합 아바타 영상 생성 중 오류: {str(e)}")
         return generate_sample_video_fallback(video_type, phase)
 
 def generate_sample_video_fallback(video_type='general', phase='opening'):
-    """폴백: 샘플 영상 반환"""
+    """폴백: 샘플 영상 반환 - 개선된 버전"""
     try:
+        logger.info(f"📦 샘플 영상 생성: {video_type}/{phase}")
+        
+        # 샘플 비디오 경로 매핑
+        sample_mapping = {
+            ('interview', 'question'): 'interview_question_sample.mp4',
+            ('interview', 'general'): 'interview_general_sample.mp4',
+            ('interview', 'opening'): 'interview_opening_sample.mp4',
+            ('debate', 'opening'): 'debate_opening_sample.mp4',
+            ('debate', 'rebuttal'): 'debate_rebuttal_sample.mp4',
+            ('debate', 'counter_rebuttal'): 'debate_counter_rebuttal_sample.mp4',
+            ('debate', 'closing'): 'debate_closing_sample.mp4',
+            ('general', 'opening'): 'general_opening_sample.mp4'
+        }
+        
+        # 매핑된 파일명 가져오기
+        filename = sample_mapping.get((video_type, phase), f'{video_type}_{phase}_sample.mp4')
+        
         # 샘플 비디오 경로
         sample_video_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 
             'videos', 
-            f'sample_{video_type}_{phase}_video.mp4'
+            'samples',
+            filename
         )
         
         # 디렉토리가 없으면 생성
         os.makedirs(os.path.dirname(sample_video_path), exist_ok=True)
         
-        # 샘플 비디오 파일이 없으면 임시 비디오 생성
+        # 샘플 비디오 파일이 없으면 더 큰 테스트 비디오 생성
         if not os.path.exists(sample_video_path):
+            logger.info(f"📝 샘플 비디오 파일 생성: {filename}")
+            
+            # 더 큰 MP4 샘플 파일 생성 (최소 유효한 MP4 구조)
+            mp4_header = (
+                b'\x00\x00\x00\x20ftypmp42\x00\x00\x00\x00'
+                b'mp42mp41isomiso2\x00\x00\x00\x08wide'
+                b'\x00\x00\x01\x00mdat'
+            )
+            
             with open(sample_video_path, 'wb') as f:
-                f.write(f'Sample AI {video_type} {phase} Video Content'.encode())
-            logger.info(f"샘플 {video_type} {phase} 비디오 파일 생성됨: {sample_video_path}")
+                f.write(mp4_header)
+                # 더 많은 더미 데이터 추가 (약 5KB)
+                for i in range(100):
+                    f.write(b'\x00' * 50 + b'\xFF' * 50)
+            
+            file_size = os.path.getsize(sample_video_path)
+            logger.info(f"✅ 샘플 {video_type}/{phase} 비디오 생성됨: {sample_video_path} ({file_size:,} bytes)")
         
         return sample_video_path
         
     except Exception as e:
-        logger.error(f"샘플 비디오 생성 오류: {str(e)}")
+        logger.error(f"❌ 샘플 비디오 생성 오류: {str(e)}")
         return None
-
-# 나머지 기존 코드는 동일하게 유지...
-# (채용 공고 추천, 면접 질문 생성, 답변 처리 등)
 
 # 채용 공고 추천 관련 엔드포인트
 
@@ -407,43 +399,64 @@ def recommend_job_postings():
 @app.route('/ai/interview/ai-video', methods=['POST'])
 def generate_ai_video():
     """AI 면접관 영상 생성 엔드포인트 - D-ID 통합"""
-    logger.info(f"AI 면접관 영상 생성 요청 받음: /ai/interview/ai-video")
+    logger.info(f"🎬 AI 면접관 영상 생성 요청 받음: /ai/interview/ai-video")
     
     try:
         data = request.json or {}
         question_text = data.get('question_text', '안녕하세요, 면접에 참여해 주셔서 감사합니다.')
         interviewer_gender = data.get('interviewer_gender', 'male')
         
-        # TTS로 텍스트 포맷팅
-        if tts_manager:
-            formatted_script = tts_manager.format_script_for_interview(question_text)
-        else:
-            formatted_script = f"안녕하세요. {question_text}"
+        # 텍스트 검증
+        if not question_text or len(question_text.strip()) < 5:
+            logger.error(f"❌ 질문 텍스트가 너무 짧습니다: '{question_text}'")
+            question_text = "안녕하세요, 면접에 참여해 주셔서 감사합니다. 자기소개를 부탁드립니다."
+        
+        logger.info(f"   📝 질문: {question_text[:50]}{'...' if len(question_text) > 50 else ''}")
+        logger.info(f"   👤 성별: {interviewer_gender}")
         
         # D-ID로 면접관 영상 생성
         video_path = generate_avatar_video_unified(
-            script=formatted_script,
+            script=question_text,
             video_type='interview',
             gender=interviewer_gender,
             phase='question'
         )
         
         if video_path and os.path.exists(video_path):
-            logger.info(f"AI 면접관 영상 생성 완료: {video_path}")
-            return send_file(video_path, mimetype='video/mp4')
-        else:
-            # 폴백: 샘플 영상 반환
-            logger.warning("AI 면접관 영상 생성 실패 - 샘플 영상 반환")
-            sample_path = generate_sample_video_fallback('interview', 'question')
-            if sample_path and os.path.exists(sample_path):
-                return send_file(sample_path, mimetype='video/mp4')
+            # 파일 크기 확인
+            file_size = os.path.getsize(video_path)
+            logger.info(f"✅ AI 면접관 영상 준비 완료: {video_path} ({file_size:,} bytes)")
+            
+            # 절대 경로로 변환하여 전송
+            abs_path = os.path.abspath(video_path)
+            if os.path.exists(abs_path):
+                return send_file(abs_path, mimetype='video/mp4', as_attachment=False)
             else:
-                return Response(b'Sample Interview Video', mimetype='video/mp4')
+                logger.error(f"❌ 영상 파일을 찾을 수 없음: {abs_path}")
+                
+        # 폴백: 샘플 영상 반환
+        logger.warning("🔄 AI 면접관 영상 생성 실패 - 샘플 영상 반환")
+        sample_path = generate_sample_video_fallback('interview', 'question')
+        if sample_path and os.path.exists(sample_path):
+            return send_file(os.path.abspath(sample_path), mimetype='video/mp4')
+        else:
+            # 최후 폴백: 빈 응답
+            return Response(b'', mimetype='video/mp4', status=204)
         
     except Exception as e:
-        error_msg = f"AI 면접관 영상 생성 중 오류 발생: {str(e)}"
+        error_msg = f"❌ AI 면접관 영상 생성 중 오류 발생: {str(e)}"
         logger.error(error_msg)
-        return Response(b'Error generating interview video', mimetype='video/mp4')
+        
+        # 에러 시에도 샘플 영상 시도
+        try:
+            sample_path = generate_sample_video_fallback('interview', 'question')
+            if sample_path and os.path.exists(sample_path):
+                return send_file(os.path.abspath(sample_path), mimetype='video/mp4')
+        except:
+            pass
+            
+        return Response(b'', mimetype='video/mp4', status=500)
+
 
 @app.route('/ai/interview/generate-question', methods=['POST'])
 def generate_interview_question():
@@ -726,11 +739,11 @@ def generate_ai_opening(debate_id):
         topic = data.get('topic', '기본 토론 주제')
         position = data.get('position', 'PRO')
         
-        # AI 입론 생성 (간단한 템플릿 기반)
+        # AI 입론 생성 (간단한 템플릿 기반) - 인사말 제외
         if position == 'PRO':
-            ai_opening_text = f"안녕하세요. 저는 '{topic}'에 대해 찬성하는 입장에서 말씀드리겠습니다. 이 주제에 대한 핵심 논거는 다음과 같습니다."
+            ai_opening_text = f"'{topic}'에 대해 찬성하는 입장에서 말씀드리겠습니다. 이 주제에 대한 핵심 논거는 다음과 같습니다."
         else:
-            ai_opening_text = f"안녕하세요. 저는 '{topic}'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다."
+            ai_opening_text = f"'{topic}'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다."
         
         response_data = {
             "ai_opening_text": ai_opening_text,
@@ -754,43 +767,60 @@ def generate_ai_opening(debate_id):
 @app.route('/ai/debate/ai-opening-video', methods=['POST'])
 def generate_ai_opening_video():
     """AI 입론 영상 생성 엔드포인트 - D-ID 통합"""
-    logger.info("AI 입론 영상 생성 요청 받음: /ai/debate/ai-opening-video")
+    logger.info("🎬 AI 입론 영상 생성 요청 받음: /ai/debate/ai-opening-video")
     
     try:
         data = request.json or {}
         ai_opening_text = data.get('ai_opening_text', '기본 입론 텍스트')
         debater_gender = data.get('debater_gender', 'male')
         
-        # TTS로 토론 텍스트 포맷팅
-        if tts_manager:
-            formatted_script = tts_manager.format_script_for_debate(ai_opening_text, 'opening')
-        else:
-            formatted_script = f"안녕하세요. 저는 다음과 같이 주장하겠습니다. {ai_opening_text}"
+        # 텍스트 검증
+        if not ai_opening_text or len(ai_opening_text.strip()) < 10:
+            logger.error(f"❌ 입론 텍스트가 너무 짧습니다: '{ai_opening_text}'")
+            ai_opening_text = "토론 주제에 대해 찬성하는 입장에서 의견을 말씀드리겠습니다."
+        
+        logger.info(f"   📝 입론: {ai_opening_text[:50]}{'...' if len(ai_opening_text) > 50 else ''}")
+        logger.info(f"   👤 성별: {debater_gender}")
         
         # D-ID로 토론자 영상 생성
         video_path = generate_avatar_video_unified(
-            script=formatted_script,
+            script=ai_opening_text,
             video_type='debate',
             gender=debater_gender,
             phase='opening'
         )
         
         if video_path and os.path.exists(video_path):
-            logger.info(f"AI 토론 입론 영상 생성 완료: {video_path}")
-            return send_file(video_path, mimetype='video/mp4')
-        else:
-            # 폴백: 샘플 영상 반환
-            logger.warning("AI 토론 입론 영상 생성 실패 - 샘플 영상 반환")
-            sample_path = generate_sample_video_fallback('debate', 'opening')
-            if sample_path and os.path.exists(sample_path):
-                return send_file(sample_path, mimetype='video/mp4')
+            file_size = os.path.getsize(video_path)
+            logger.info(f"✅ AI 토론 입론 영상 준비 완료: {video_path} ({file_size:,} bytes)")
+            
+            abs_path = os.path.abspath(video_path)
+            if os.path.exists(abs_path):
+                return send_file(abs_path, mimetype='video/mp4', as_attachment=False)
             else:
-                return Response(b'Sample Debate Opening Video', mimetype='video/mp4')
+                logger.error(f"❌ 영상 파일을 찾을 수 없음: {abs_path}")
+                
+        # 폴백: 샘플 영상 반환
+        logger.warning("🔄 AI 토론 입론 영상 생성 실패 - 샘플 영상 반환")
+        sample_path = generate_sample_video_fallback('debate', 'opening')
+        if sample_path and os.path.exists(sample_path):
+            return send_file(os.path.abspath(sample_path), mimetype='video/mp4')
+        else:
+            return Response(b'', mimetype='video/mp4', status=204)
         
     except Exception as e:
-        error_msg = f"AI 입론 영상 생성 중 오류 발생: {str(e)}"
+        error_msg = f"❌ AI 입론 영상 생성 중 오류 발생: {str(e)}"
         logger.error(error_msg)
-        return Response(b'Error generating debate opening video', mimetype='video/mp4')
+        
+        # 에러 시에도 샘플 영상 시도
+        try:
+            sample_path = generate_sample_video_fallback('debate', 'opening')
+            if sample_path and os.path.exists(sample_path):
+                return send_file(os.path.abspath(sample_path), mimetype='video/mp4')
+        except:
+            pass
+            
+        return Response(b'', mimetype='video/mp4', status=500)
 
 @app.route('/ai/debate/ai-rebuttal-video', methods=['POST'])
 def generate_ai_rebuttal_video():
@@ -802,11 +832,8 @@ def generate_ai_rebuttal_video():
         ai_rebuttal_text = data.get('ai_rebuttal_text', '기본 반론 텍스트')
         debater_gender = data.get('debater_gender', 'male')
         
-        # TTS로 토론 텍스트 포맷팅
-        if tts_manager:
-            formatted_script = tts_manager.format_script_for_debate(ai_rebuttal_text, 'rebuttal')
-        else:
-            formatted_script = f"상대측 주장에 대해 반박하겠습니다. {ai_rebuttal_text}"
+        # D-ID API에서 TTS를 처리하므로 추가 포맷팅 불필요
+        formatted_script = ai_rebuttal_text
         
         # D-ID로 토론자 영상 생성
         video_path = generate_avatar_video_unified(
@@ -843,11 +870,8 @@ def generate_ai_counter_rebuttal_video():
         ai_counter_rebuttal_text = data.get('ai_counter_rebuttal_text', '기본 재반론 텍스트')
         debater_gender = data.get('debater_gender', 'male')
         
-        # TTS로 토론 텍스트 포맷팅
-        if tts_manager:
-            formatted_script = tts_manager.format_script_for_debate(ai_counter_rebuttal_text, 'counter_rebuttal')
-        else:
-            formatted_script = f"추가로 반박 논리를 제시하겠습니다. {ai_counter_rebuttal_text}"
+        # D-ID API에서 TTS를 처리하므로 추가 포맷팅 불필요
+        formatted_script = ai_counter_rebuttal_text
         
         # D-ID로 토론자 영상 생성
         video_path = generate_avatar_video_unified(
@@ -884,11 +908,8 @@ def generate_ai_closing_video():
         ai_closing_text = data.get('ai_closing_text', '기본 최종변론 텍스트')
         debater_gender = data.get('debater_gender', 'male')
         
-        # TTS로 토론 텍스트 포맷팅
-        if tts_manager:
-            formatted_script = tts_manager.format_script_for_debate(ai_closing_text, 'closing')
-        else:
-            formatted_script = f"마지막으로 정리하자면 다음과 같습니다. {ai_closing_text}"
+        # D-ID API에서 TTS를 처리하므로 추가 포맷팅 불필요
+        formatted_script = ai_closing_text
         
         # D-ID로 토론자 영상 생성
         video_path = generate_avatar_video_unified(
@@ -920,8 +941,9 @@ def generate_ai_closing_video():
 
 @app.route('/ai/debate/<int:debate_id>/opening-video', methods=['POST'])
 def process_opening_video(debate_id):
-    """사용자 입론 영상 처리 엔드포인트"""
-    logger.info(f"사용자 입론 영상 처리 요청 받음: /ai/debate/{debate_id}/opening-video")
+    """사용자 입론 영상 처리 엔드포인트 - D-ID API 호출 안함"""
+    logger.info(f"📺 사용자 입론 영상 처리 요청 받음: /ai/debate/{debate_id}/opening-video")
+    logger.info(f"⚠️ D-ID API 호출 안함 - 크레딧 소모 없음")
     
     if 'file' not in request.files:
         logger.warning("파일이 제공되지 않음")
@@ -953,7 +975,7 @@ def process_opening_video(debate_id):
         # 음성 인식 (기본값 사용)
         user_opening_text = "사용자의 입론 내용입니다. 주장에 대한 근거를 제시하였습니다."
         
-        # AI 반론 생성
+        # AI 반론 생성 (텍스트만, D-ID API 호출 안함)
         ai_rebuttal_text = "입론에 대한 AI의 반론입니다. 제시된 근거에 대한 반박을 하겠습니다."
         
         # 임시 파일 삭제
@@ -981,7 +1003,7 @@ def process_opening_video(debate_id):
             "sample_answer": "더 강력한 근거와 통계 자료를 활용하면 더욱 설득력 있는 입론이 될 것입니다."
         }
         
-        logger.info(f"사용자 입론 영상 처리 완료: {debate_id}")
+        logger.info(f"✅ 사용자 입론 영상 처리 완료: {debate_id} (D-ID API 호출 없음)")
         return jsonify(response_data)
         
     except Exception as e:
@@ -990,6 +1012,267 @@ def process_opening_video(debate_id):
         return jsonify({
             "user_opening_text": "처리 중 오류가 발생했습니다.",
             "ai_rebuttal_text": "기본 AI 반론입니다.",
+            "initiative_score": 3.0,
+            "collaborative_score": 3.0,
+            "communication_score": 3.0,
+            "logic_score": 3.0,
+            "problem_solving_score": 3.0,
+            "voice_score": 3.0,
+            "action_score": 3.0,
+            "initiative_feedback": "처리 실패",
+            "collaborative_feedback": "처리 실패",
+            "communication_feedback": "처리 실패",
+            "logic_feedback": "처리 실패",
+            "problem_solving_feedback": "처리 실패",
+            "feedback": f"처리 중 오류: {str(e)}",
+            "sample_answer": "오류로 인해 예시 답안을 제공할 수 없습니다."
+        }), 200
+
+@app.route('/ai/debate/<int:debate_id>/rebuttal-video', methods=['POST'])
+def process_rebuttal_video(debate_id):
+    """사용자 반론 영상 처리 엔드포인트 - D-ID API 호출 안함"""
+    logger.info(f"📺 사용자 반론 영상 처리 요청 받음: /ai/debate/{debate_id}/rebuttal-video")
+    logger.info(f"⚠️ D-ID API 호출 안함 - 크레딧 소모 없음")
+    
+    if 'file' not in request.files:
+        logger.warning("파일이 제공되지 않음")
+        return jsonify({
+            "user_rebuttal_text": "파일이 제공되지 않았습니다.",
+            "ai_counter_rebuttal_text": "기본 AI 재반론입니다.",
+            "initiative_score": 3.0,
+            "collaborative_score": 3.0,
+            "communication_score": 3.0,
+            "logic_score": 3.0,
+            "problem_solving_score": 3.0,
+            "voice_score": 3.0,
+            "action_score": 3.0,
+            "initiative_feedback": "적극성 피드백",
+            "collaborative_feedback": "협력적 태도 피드백",
+            "communication_feedback": "의사소통 피드백",
+            "logic_feedback": "논리력 피드백",
+            "problem_solving_feedback": "문제해결능력 피드백",
+            "feedback": "종합 피드백",
+            "sample_answer": "예시 답안입니다."
+        })
+    
+    file = request.files['file']
+    
+    try:
+        temp_path = f"temp_debate_rebuttal_{debate_id}.mp4"
+        file.save(temp_path)
+        
+        # 음성 인식 (기본값 사용)
+        user_rebuttal_text = "사용자의 반론 내용입니다. 상대방 주장에 대해 반박하였습니다."
+        
+        # AI 재반론 생성 (텍스트만, D-ID API 호출 안함)
+        ai_counter_rebuttal_text = "반론에 대한 AI의 재반론입니다. 추가적인 논거를 제시하겠습니다."
+        
+        # 임시 파일 삭제
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        # 점수 계산 (3.0-4.5 범위)
+        import random
+        response_data = {
+            "user_rebuttal_text": user_rebuttal_text,
+            "ai_counter_rebuttal_text": ai_counter_rebuttal_text,
+            "initiative_score": round(random.uniform(3.0, 4.5), 1),
+            "collaborative_score": round(random.uniform(3.0, 4.5), 1),
+            "communication_score": round(random.uniform(3.0, 4.5), 1),
+            "logic_score": round(random.uniform(3.0, 4.5), 1),
+            "problem_solving_score": round(random.uniform(3.0, 4.5), 1),
+            "voice_score": round(random.uniform(3.0, 4.5), 1),
+            "action_score": round(random.uniform(3.0, 4.5), 1),
+            "initiative_feedback": "적극적으로 반박 논리를 전개했습니다.",
+            "collaborative_feedback": "상대방의 주장을 정확히 파악하고 반박했습니다.",
+            "communication_feedback": "명확하고 논리적으로 반론을 전개했습니다.",
+            "logic_feedback": "반박 논리가 체계적이고 설득력이 있습니다.",
+            "problem_solving_feedback": "상대방 주장의 약점을 잘 지적했습니다.",
+            "feedback": "효과적인 반론이었습니다. 논리적 반박과 근거 제시가 우수합니다.",
+            "sample_answer": "구체적인 사례나 데이터를 활용하여 반박을 강화하면 더욱 설득력이 있을 것입니다."
+        }
+        
+        logger.info(f"✅ 사용자 반론 영상 처리 완료: {debate_id} (D-ID API 호출 없음)")
+        return jsonify(response_data)
+        
+    except Exception as e:
+        error_msg = f"반론 영상 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({
+            "user_rebuttal_text": "처리 중 오류가 발생했습니다.",
+            "ai_counter_rebuttal_text": "기본 AI 재반론입니다.",
+            "initiative_score": 3.0,
+            "collaborative_score": 3.0,
+            "communication_score": 3.0,
+            "logic_score": 3.0,
+            "problem_solving_score": 3.0,
+            "voice_score": 3.0,
+            "action_score": 3.0,
+            "initiative_feedback": "처리 실패",
+            "collaborative_feedback": "처리 실패",
+            "communication_feedback": "처리 실패",
+            "logic_feedback": "처리 실패",
+            "problem_solving_feedback": "처리 실패",
+            "feedback": f"처리 중 오류: {str(e)}",
+            "sample_answer": "오류로 인해 예시 답안을 제공할 수 없습니다."
+        }), 200
+
+@app.route('/ai/debate/<int:debate_id>/counter-rebuttal-video', methods=['POST'])
+def process_counter_rebuttal_video(debate_id):
+    """사용자 재반론 영상 처리 엔드포인트 - D-ID API 호출 안함"""
+    logger.info(f"📺 사용자 재반론 영상 처리 요청 받음: /ai/debate/{debate_id}/counter-rebuttal-video")
+    logger.info(f"⚠️ D-ID API 호출 안함 - 크레딧 소모 없음")
+    
+    if 'file' not in request.files:
+        logger.warning("파일이 제공되지 않음")
+        return jsonify({
+            "user_counter_rebuttal_text": "파일이 제공되지 않았습니다.",
+            "ai_closing_text": "기본 AI 최종변론입니다.",
+            "initiative_score": 3.0,
+            "collaborative_score": 3.0,
+            "communication_score": 3.0,
+            "logic_score": 3.0,
+            "problem_solving_score": 3.0,
+            "voice_score": 3.0,
+            "action_score": 3.0,
+            "initiative_feedback": "적극성 피드백",
+            "collaborative_feedback": "협력적 태도 피드백",
+            "communication_feedback": "의사소통 피드백",
+            "logic_feedback": "논리력 피드백",
+            "problem_solving_feedback": "문제해결능력 피드백",
+            "feedback": "종합 피드백",
+            "sample_answer": "예시 답안입니다."
+        })
+    
+    file = request.files['file']
+    
+    try:
+        temp_path = f"temp_debate_counter_rebuttal_{debate_id}.mp4"
+        file.save(temp_path)
+        
+        # 음성 인식 (기본값 사용)
+        user_counter_rebuttal_text = "사용자의 재반론 내용입니다. 추가적인 근거를 제시하였습니다."
+        
+        # AI 최종변론 생성 (텍스트만, D-ID API 호출 안함)
+        ai_closing_text = "재반론에 대한 AI의 최종변론입니다. 지금까지의 논의를 정리하겠습니다."
+        
+        # 임시 파일 삭제
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        # 점수 계산 (3.0-4.5 범위)
+        import random
+        response_data = {
+            "user_counter_rebuttal_text": user_counter_rebuttal_text,
+            "ai_closing_text": ai_closing_text,
+            "initiative_score": round(random.uniform(3.0, 4.5), 1),
+            "collaborative_score": round(random.uniform(3.0, 4.5), 1),
+            "communication_score": round(random.uniform(3.0, 4.5), 1),
+            "logic_score": round(random.uniform(3.0, 4.5), 1),
+            "problem_solving_score": round(random.uniform(3.0, 4.5), 1),
+            "voice_score": round(random.uniform(3.0, 4.5), 1),
+            "action_score": round(random.uniform(3.0, 4.5), 1),
+            "initiative_feedback": "재반론에서 추가 논거를 잘 제시했습니다.",
+            "collaborative_feedback": "논의 흐름을 이해하고 적절히 대응했습니다.",
+            "communication_feedback": "자신의 입장을 체계적으로 강화했습니다.",
+            "logic_feedback": "논리적 일관성을 유지하며 주장을 전개했습니다.",
+            "problem_solving_feedback": "열린 사고로 다양한 가능성을 고려했습니다.",
+            "feedback": "잘 짜인 재반론이었습니다. 추가 논거와 근거 보강이 효과적이었습니다.",
+            "sample_answer": "구체적인 사례나 데이터로 주장을 뒷받침하면 더욱 강력할 것입니다."
+        }
+        
+        logger.info(f"✅ 사용자 재반론 영상 처리 완료: {debate_id} (D-ID API 호출 없음)")
+        return jsonify(response_data)
+        
+    except Exception as e:
+        error_msg = f"재반론 영상 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({
+            "user_counter_rebuttal_text": "처리 중 오류가 발생했습니다.",
+            "ai_closing_text": "기본 AI 최종변론입니다.",
+            "initiative_score": 3.0,
+            "collaborative_score": 3.0,
+            "communication_score": 3.0,
+            "logic_score": 3.0,
+            "problem_solving_score": 3.0,
+            "voice_score": 3.0,
+            "action_score": 3.0,
+            "initiative_feedback": "처리 실패",
+            "collaborative_feedback": "처리 실패",
+            "communication_feedback": "처리 실패",
+            "logic_feedback": "처리 실패",
+            "problem_solving_feedback": "처리 실패",
+            "feedback": f"처리 중 오류: {str(e)}",
+            "sample_answer": "오류로 인해 예시 답안을 제공할 수 없습니다."
+        }), 200
+
+@app.route('/ai/debate/<int:debate_id>/closing-video', methods=['POST'])
+def process_closing_video(debate_id):
+    """사용자 최종변론 영상 처리 엔드포인트 - D-ID API 호출 안함"""
+    logger.info(f"📺 사용자 최종변론 영상 처리 요청 받음: /ai/debate/{debate_id}/closing-video")
+    logger.info(f"⚠️ D-ID API 호출 안함 - 크레딧 소모 없음")
+    
+    if 'file' not in request.files:
+        logger.warning("파일이 제공되지 않음")
+        return jsonify({
+            "user_closing_text": "파일이 제공되지 않았습니다.",
+            "initiative_score": 3.0,
+            "collaborative_score": 3.0,
+            "communication_score": 3.0,
+            "logic_score": 3.0,
+            "problem_solving_score": 3.0,
+            "voice_score": 3.0,
+            "action_score": 3.0,
+            "initiative_feedback": "적극성 피드백",
+            "collaborative_feedback": "협력적 태도 피드백",
+            "communication_feedback": "의사소통 피드백",
+            "logic_feedback": "논리력 피드백",
+            "problem_solving_feedback": "문제해결능력 피드백",
+            "feedback": "종합 피드백",
+            "sample_answer": "예시 답안입니다."
+        })
+    
+    file = request.files['file']
+    
+    try:
+        temp_path = f"temp_debate_closing_{debate_id}.mp4"
+        file.save(temp_path)
+        
+        # 음성 인식 (기본값 사용)
+        user_closing_text = "사용자의 최종변론 내용입니다. 지금까지의 논의를 정리하고 최종 주장을 제시하였습니다."
+        
+        # 임시 파일 삭제
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        # 점수 계산 (3.0-4.5 범위)
+        import random
+        response_data = {
+            "user_closing_text": user_closing_text,
+            "initiative_score": round(random.uniform(3.0, 4.5), 1),
+            "collaborative_score": round(random.uniform(3.0, 4.5), 1),
+            "communication_score": round(random.uniform(3.0, 4.5), 1),
+            "logic_score": round(random.uniform(3.0, 4.5), 1),
+            "problem_solving_score": round(random.uniform(3.0, 4.5), 1),
+            "voice_score": round(random.uniform(3.0, 4.5), 1),
+            "action_score": round(random.uniform(3.0, 4.5), 1),
+            "initiative_feedback": "최종변론에서 강력한 마무리를 보여주었습니다.",
+            "collaborative_feedback": "전체 논의의 흐름을 잘 이해하고 정리했습니다.",
+            "communication_feedback": "체계적이고 설득력 있는 마무리였습니다.",
+            "logic_feedback": "논리적 일관성을 유지하며 결론을 도출했습니다.",
+            "problem_solving_feedback": "최종적으로 명확한 대안을 제시했습니다.",
+            "feedback": "효과적인 최종변론이었습니다. 논의를 잘 정리하고 강력한 결론을 도출했습니다.",
+            "sample_answer": "구체적인 액션 플랜이나 실천 방안을 더해주면 더욱 인상적인 마무리가 될 것입니다."
+        }
+        
+        logger.info(f"✅ 사용자 최종변론 영상 처리 완료: {debate_id} (D-ID API 호출 없음)")
+        return jsonify(response_data)
+        
+    except Exception as e:
+        error_msg = f"최종변론 영상 처리 중 오류 발생: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({
+            "user_closing_text": "처리 중 오류가 발생했습니다.",
             "initiative_score": 3.0,
             "collaborative_score": 3.0,
             "communication_score": 3.0,
@@ -1022,6 +1305,20 @@ def initialize_analyzers():
     except Exception as e:
         logger.error(f"분석기 초기화 실패: {str(e)}")
 
+@app.route('/videos/<path:filename>')
+def serve_video(filename):
+    """영상 파일 제공 엔드포인트"""
+    try:
+        video_path = os.path.join('videos', filename)
+        if os.path.exists(video_path):
+            return send_file(video_path, mimetype='video/mp4')
+        else:
+            logger.error(f"영상 파일을 찾을 수 없음: {video_path}")
+            return Response(b'Video not found', status=404)
+    except Exception as e:
+        logger.error(f"영상 파일 제공 중 오류: {str(e)}")
+        return Response(b'Error serving video', status=500)
+
 @app.route('/ai/test', methods=['GET'])
 def test_connection():
     """연결 테스트 엔드포인트 - D-ID 통합 상태 표시"""
@@ -1029,49 +1326,62 @@ def test_connection():
     logger.info("연결 테스트 요청 받음: /ai/test")
     
     # 각 모듈 상태 확인
-    did_status = "사용 가능" if did_initialized else "사용 불가"
-    aistudios_status = "사용 가능 (폴백)" if aistudios_initialized else "사용 불가"
-    facial_status = "사용 가능" if facial_analyzer else "사용 불가"
-    speech_status = "사용 가능" if speech_analyzer else "사용 불가"
-    tts_status = "사용 가능" if tts_manager else "사용 불가"
+    did_status = "✅ 사용 가능" if did_initialized else "❌ 사용 불가"
+    facial_status = "✅ 사용 가능" if facial_analyzer else "❌ 사용 불가"
+    speech_status = "✅ 사용 가능" if speech_analyzer else "❌ 사용 불가"
+    tts_status = "✅ 사용 가능" if tts_manager else "❌ 사용 불가"
     
     # D-ID 연결 테스트
-    did_connection_status = "연결 실패"
+    did_connection_status = "❌ 연결 실패"
+    korean_tts_status = "❌ 미설정"
+    
     if did_client:
         if did_client.test_connection():
-            did_connection_status = "연결 성공"
+            did_connection_status = "✅ 연결 성공"
+            korean_tts_status = "✅ 한국어 TTS 설정 완료"
         else:
-            did_connection_status = "연결 실패"
+            did_connection_status = "❌ 연결 실패"
+    
+    # TTS 음성 정보
+    tts_voices = {}
+    if tts_manager:
+        tts_voices = {
+            "면접관 남성": "ko-KR-InJoonNeural",
+            "면접관 여성": "ko-KR-SunHiNeural",
+            "토론자 남성": "ko-KR-InJoonNeural",
+            "토론자 여성": "ko-KR-SunHiNeural"
+        }
     
     test_response = {
-        "status": "AI 서버가 정상 작동 중입니다 (D-ID 통합)",
-        "avatar_services": {
-            "D-ID (우선)": did_status,
-            "D-ID 연결상태": did_connection_status,
-            "AIStudios (폴백)": aistudios_status
+        "status": "🚀 VeriView AI 서버 - D-ID API 통합 완료",
+        "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+        "d_id_integration": {
+            "service_status": did_status,
+            "api_connection": did_connection_status,
+            "korean_tts": korean_tts_status,
+            "voices_configured": tts_voices
         },
-        "modules": {
-            "TTS Manager": tts_status,
-            "OpenFace/Librosa": facial_status,
-            "Whisper/STT": speech_status
+        "ai_modules": {
+            "🔊 TTS Manager": tts_status,
+            "👁️ OpenFace/Librosa": facial_status,
+            "🎤 Whisper/STT": speech_status
         },
         "configuration": {
-            "preferred_service": os.environ.get('PREFERRED_AVATAR_SERVICE', 'D_ID'),
-            "use_fallback": os.environ.get('USE_FALLBACK_SERVICE', 'True'),
-            "api_key_configured": "Yes" if os.environ.get('D_ID_API_KEY') and os.environ.get('D_ID_API_KEY') != 'your_actual_d_id_api_key_here' else "No"
+            "preferred_avatar_service": "D-ID API",
+            "tts_provider": "Microsoft Azure TTS",
+            "cache_enabled": "No (사용자 설정)",
+            "api_key_status": "✅ 설정됨" if os.environ.get('D_ID_API_KEY') and os.environ.get('D_ID_API_KEY') != 'your_actual_d_id_api_key_here' else "❌ 미설정"
         },
-        "endpoints": {
-            "job_recommendation": "/ai/recruitment/posting",
-            "interview_question_generation": "/ai/interview/generate-question",
-            "interview_ai_video": "/ai/interview/ai-video (D-ID 통합)",
-            "interview_answer_processing": "/ai/interview/<interview_id>/<question_type>/answer-video",
-            "followup_question": "/ai/interview/<interview_id>/genergate-followup-question",
-            "debate_ai_opening": "/ai/debate/<debate_id>/ai-opening",
-            "debate_ai_videos": "/ai/debate/ai-opening-video, /ai/debate/ai-rebuttal-video, /ai/debate/ai-counter-rebuttal-video, /ai/debate/ai-closing-video (D-ID 통합)",
-            "debate_opening_video": "/ai/debate/<debate_id>/opening-video",
-            "debate_rebuttal_video": "/ai/debate/<debate_id>/rebuttal-video",
-            "debate_counter_rebuttal_video": "/ai/debate/<debate_id>/counter-rebuttal-video",
-            "debate_closing_video": "/ai/debate/<debate_id>/closing-video"
+        "supported_features": {
+            "🎤 면접 AI 영상": "/ai/interview/ai-video",
+            "🎭 토론 AI 영상": [
+                "/ai/debate/ai-opening-video",
+                "/ai/debate/ai-rebuttal-video", 
+                "/ai/debate/ai-counter-rebuttal-video",
+                "/ai/debate/ai-closing-video"
+            ],
+            "💼 채용 추천": "/ai/recruitment/posting",
+            "📊 면접 분석": "/ai/interview/<interview_id>/<question_type>/answer-video"
         }
     }
     
@@ -1089,12 +1399,6 @@ if __name__ == "__main__":
     else:
         print("D-ID 통합 실패 - 폴백 모드 사용")
         
-        # AIStudios 폴백 초기화
-        if initialize_aistudios():
-            print("AIStudios 폴백 사용 가능")
-        else:
-            print("AIStudios 폴백도 사용 불가 - 샘플 영상 모드")
-    
     # 기타 분석기 초기화
     initialize_analyzers()
     

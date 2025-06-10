@@ -6,9 +6,6 @@ services:
     ports:
       - "5000:5000"
     environment:
-      # 환경 변수로 API 키 전달 (권장)
-      - AISTUDIOS_API_KEY=${AISTUDIOS_API_KEY}
-      - ENVIRONMENT=production
       
       # 선택적 환경 변수들
       - VERIVIEW_AISTUDIOS_API_KEY=${AISTUDIOS_API_KEY}
