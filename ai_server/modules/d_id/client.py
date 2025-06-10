@@ -38,9 +38,11 @@ class DIDClient:
         
         # 기본 아바타 이미지 URLs - D-ID에서 제공하는 샘플 이미지 사용
         self.default_avatars = {
-            'interviewer_male': 'https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg',
+            # 'interviewer_male': 'https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg',
+            'interviewer_male': 'https://storage.googleapis.com/d-id-avatar-bucket-2025/ai_avatar.png',
             'interviewer_female': 'https://create-images-results.d-id.com/DefaultPresenters/Emma_f/image.jpeg', 
-            'debater_male': 'https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg',
+            # 'debater_male': 'https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg',
+            'debater_male': 'https://storage.googleapis.com/d-id-avatar-bucket-2025/ai_avatar.png',
             'debater_female': 'https://create-images-results.d-id.com/DefaultPresenters/Emma_f/image.jpeg'
         }
         
