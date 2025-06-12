@@ -73,7 +73,7 @@ def main():
     parser = argparse.ArgumentParser(description='VeriView AI 서버 실행')
     parser.add_argument(
         '--mode', 
-        choices=['production', 'test', 'debug'], 
+        choices=['main', 'production', 'test', 'debug'], 
         default='production',
         help='실행 모드 선택 (기본값: production)'
     )
@@ -92,7 +92,11 @@ def main():
     args = parser.parse_args()
     
     # 모드에 따른 설정
-    if args.mode == 'test':
+    if args.mode == 'main':
+        set_production_mode()  # 메인 모드는 프로덕션 설정 사용
+        debug_mode = False
+        print("\n=== 메인 모드 실행 ===\n")
+    elif args.mode == 'test':
         set_test_mode()
         debug_mode = True
     elif args.mode == 'debug':
@@ -111,8 +115,12 @@ def main():
     
     # 서버 모듈 임포트 및 실행
     try:
-        # server_runner_d_id.py의 app 임포트
-        from server_runner_d_id import app, initialize_d_id, initialize_analyzers
+        if args.mode == 'main':
+            # 메인 모드: 완전 통합 서버 실행
+            from veriview_main_server import app, initialize_d_id, initialize_analyzers, initialize_ai_systems
+        else:
+            # 테스트/디버그 모드: 기존 서버 실행
+            from server_runner_d_id import app, initialize_d_id, initialize_analyzers
         
         # 초기화
         print("=== 모듈 초기화 ===")
@@ -130,6 +138,12 @@ def main():
         # 분석기 초기화
         initialize_analyzers()
         print("분석기 초기화 완료")
+        
+        # 메인 모드에서는 AI 시스템도 초기화
+        if args.mode == 'main' and 'initialize_ai_systems' in globals():
+            initialize_ai_systems()
+            print("AI 시스템 초기화 완료 (LLM, OpenFace 등)")
+        
         print()
         
         # 서버 실행

@@ -97,33 +97,29 @@ class TFIDFJobRecommendationModule:
                 logger.warning(f"백엔드 CSV 임포트 시도 실패: {str(e)}")
             
             # 백엔드 API 호출 - 임시로 샘플 데이터 생성
-            # response = requests.get(f"{self.backend_url}/api/job-postings/all", timeout=10)
+            response = requests.get(f"{self.backend_url}/api/job-postings/all", timeout=10)
             
-            # if response.status_code == 200:
-            #     job_postings = response.json()
+            if response.status_code == 200:
+                job_postings = response.json()
                 
-            #     if isinstance(job_postings, list) and len(job_postings) > 0:
-            #         self.job_posting_cache = job_postings
-            #         self.cache_last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(job_postings, list) and len(job_postings) > 0:
+                    self.job_posting_cache = job_postings
+                    self.cache_last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     
-            #         # TF-IDF 행렬 업데이트
-            #         self._update_tfidf_matrix()
+                    # TF-IDF 행렬 업데이트
+                    self._update_tfidf_matrix()
                     
-            #         logger.info(f"채용공고 캐시 업데이트 완료: {len(job_postings)}개 공고")
-            #         return True
-            #     else:
-            #         logger.warning("백엔드에서 받은 채용공고 데이터가 없습니다. 샘플 데이터 사용")
-            #         self._generate_sample_job_postings()
-            #         return False
-            # else:
-            #     logger.error(f"백엔드 API 호출 실패: {response.status_code}")
-            #     self._generate_sample_job_postings()
-            #     return False
-                
-            # 임시로 샘플 데이터 생성 (백엔드 API 미완성)
-            logger.info("임시로 샘플 데이터 생성 중...")
-            self._generate_sample_job_postings()
-            return True
+                    logger.info(f"채용공고 캐시 업데이트 완료: {len(job_postings)}개 공고")
+                    return True
+                else:
+                    logger.warning("백엔드에서 받은 채용공고 데이터가 없습니다. 샘플 데이터 사용")
+                    self._generate_sample_job_postings()
+                    return False
+            else:
+                logger.error(f"백엔드 API 호출 실패: {response.status_code}")
+                self._generate_sample_job_postings()
+                return False
+            
                 
         except Exception as e:
             logger.error(f"채용공고 캐시 업데이트 오류: {str(e)}")
