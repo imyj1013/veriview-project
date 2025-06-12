@@ -101,8 +101,7 @@ function DebateAiOpeningPage() {
             <video
               src={aiVideoUrl}
               autoPlay
-              controls
-              className="w-[480px] h-[360px] bg-black object-cover rounded-lg"
+              className="w-[480px] h-[360px] bg-black object-contain rounded-lg"
             />
           ) : (
             <div className="w-[480px] h-[360px] bg-gray-600 rounded-lg flex items-center justify-center text-white">

@@ -182,17 +182,16 @@ function InterviewQ3() {
            <img
               src="/images/interviewer_static.png" 
               alt="AI 면접관"
-              className="w-[500px] h-[400px] object-cover rounded-lg bg-black"
+              className="w-[500px] h-[400px] object-contain rounded-lg bg-black"
             />
           ) : (
           <video
             src={aiVideoUrl}
             ref={aiVideoRef}
-            controls
             playsInline
             autoPlay
             onEnded={() => setShowAiImage(true)} 
-            className="w-[500px] h-[400px] object-cover rounded-lg bg-black"
+            className="w-[500px] h-[400px] object-contain rounded-lg bg-black"
           />
           )}
           <p className="mt-2 text-base font-medium">AI 면접관</p>

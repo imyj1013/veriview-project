@@ -152,7 +152,7 @@ function DebateUserRebuttalPage() {
           <img
             src="/images/ai_avatar.png"
             alt="AI Avatar"
-            className="w-[480px] h-[360px] object-cover rounded-lg bg-gray-200"
+            className="w-[480px] h-[360px] object-contain rounded-lg bg-gray-200"
           />
           <p className="mt-2 text-base font-medium">AI 토론자</p>
         </div>
