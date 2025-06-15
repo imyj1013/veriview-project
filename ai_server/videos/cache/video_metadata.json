@@ -1,0 +1,24 @@
+{
+  "b6803bedc3352bec1294d0d7cc5b3cf9": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_162546.mp4",
+    "content": "'사회적 미디어가 민주주의에 미치는 영향은?'에 대해 반대하는 입장에서 말씀드리겠습니다. 이 주제의 문제점들을 지적하고자 합니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "opening"
+    },
+    "created_at": "2025-06-10T16:25:46.745990",
+    "file_size": 888720
+  },
+  "7a749b37d2e52d4274ad4a7626416536": {
+    "file_path": "C:\\Users\\junsa\\capstone_7\\veriview-project\\ai_server\\videos\\cache\\debates\\debate_20250610_162618.mp4",
+    "content": "입론에 대한 AI의 반론입니다. 제시된 근거에 대한 반박을 하겠습니다.",
+    "video_type": "debate",
+    "params": {
+      "gender": "male",
+      "phase": "rebuttal"
+    },
+    "created_at": "2025-06-10T16:26:18.763110",
+    "file_size": 720051
+  }
+}

@@ -1,0 +1,87 @@
+2025-05-30 03:07:20,126 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 03:07:30,705 - ai_server - ERROR - ¼­¹ö ½ÇÇà Áß ¿À·ù ¹ß»ý: unterminated string literal (detected at line 534) (tfidf_job_recommendation_module.py, line 534)
+2025-05-30 03:16:31,088 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 03:17:10,561 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-05-30 03:17:12,074 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.17:5000
+2025-05-30 03:17:12,102 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-30 03:17:12,150 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 03:17:30,869 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 03:18:14,456 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-05-30 03:18:14,492 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 03:18:14,522 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-30 03:23:26,536 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\system_status.py', reloading
+2025-05-30 03:23:27,689 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 03:23:34,330 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 03:24:13,009 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-05-30 03:24:13,049 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 03:24:13,067 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-30 03:24:42,997 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\test_server.py', reloading
+2025-05-30 03:24:44,092 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 03:24:52,032 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 03:25:33,717 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-05-30 03:25:33,847 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 03:25:33,892 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-30 03:51:45,261 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\test_features\\debate\\main.py', reloading
+2025-05-30 03:51:46,340 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 03:51:52,581 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 03:52:06,327 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Max retries exceeded with url: /api/job-postings/import (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001ED77186350>: Failed to establish a new connection: [WinError 10061] ´ë»ó ÄÄÇ»ÅÍ¿¡¼­ ¿¬°áÀ» °ÅºÎÇßÀ¸¹Ç·Î ¿¬°áÇÏÁö ¸øÇß½À´Ï´Ù'))
+2025-05-30 03:52:06,366 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 03:52:06,375 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-30 16:13:19,258 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 16:13:34,737 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Max retries exceeded with url: /api/job-postings/import (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002530F3B6260>: Failed to establish a new connection: [WinError 10061] ´ë»ó ÄÄÇ»ÅÍ¿¡¼­ ¿¬°áÀ» °ÅºÎÇßÀ¸¹Ç·Î ¿¬°áÇÏÁö ¸øÇß½À´Ï´Ù'))
+2025-05-30 16:13:34,823 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.16.17.131:5000
+2025-05-30 16:13:34,823 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-30 16:13:34,827 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 16:13:40,388 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 16:13:52,778 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Max retries exceeded with url: /api/job-postings/import (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A9C47C6320>: Failed to establish a new connection: [WinError 10061] ´ë»ó ÄÄÇ»ÅÍ¿¡¼­ ¿¬°áÀ» °ÅºÎÇßÀ¸¹Ç·Î ¿¬°áÇÏÁö ¸øÇß½À´Ï´Ù'))
+2025-05-30 16:13:52,824 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 16:13:52,837 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-30 17:28:05,757 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:28:05] "[33mGET /ai/tts-test?text=¾È³çÇÏ¼¼¿ä HTTP/1.1[0m" 404 -
+2025-05-30 17:28:05,919 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:28:05] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-05-30 17:28:11,667 - werkzeug - INFO - 127.0.0.1 - - [30/May/2025 17:28:11] "[33mGET /ai/tts-test HTTP/1.1[0m" 404 -
+2025-05-30 17:43:59,296 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\test_server.py', reloading
+2025-05-30 17:44:01,198 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 17:44:09,299 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 17:44:48,155 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-05-30 17:44:48,202 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 17:44:48,202 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-05-30 17:46:46,899 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\backend_integration_test.py', reloading
+2025-05-30 17:46:47,701 - werkzeug - INFO -  * Restarting with stat
+2025-05-30 17:46:53,110 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-05-30 17:47:30,325 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-05-30 17:47:30,382 - werkzeug - WARNING -  * Debugger is active!
+2025-05-30 17:47:30,389 - werkzeug - INFO -  * Debugger PIN: 141-841-773
+2025-06-01 23:49:55,800 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-06-01 23:50:16,319 - modules.job_recommendation_module - INFO - °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-06-01 23:50:17,292 - modules.tfidf_job_recommendation_module - INFO - ¹é¿£µå¿¡¼­ Ã¤¿ë°ø°í µ¥ÀÌÅÍ °¡Á®¿À´Â Áß...
+2025-06-01 23:50:47,321 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-06-01 23:50:47,321 - modules.tfidf_job_recommendation_module - INFO - ÀÓ½Ã·Î »ùÇÃ µ¥ÀÌÅÍ »ý¼º Áß...
+2025-06-01 23:50:47,321 - modules.tfidf_job_recommendation_module - INFO - »ùÇÃ Ã¤¿ë°ø°í µ¥ÀÌÅÍ »ý¼º Áß...
+2025-06-01 23:50:47,325 - modules.tfidf_job_recommendation_module - INFO - TF-IDF Çà·Ä »ý¼º ¿Ï·á: (100, 136)
+2025-06-01 23:50:47,325 - modules.tfidf_job_recommendation_module - INFO - »ùÇÃ Ã¤¿ë°ø°í µ¥ÀÌÅÍ »ý¼º ¿Ï·á: 100°³ °ø°í
+2025-06-01 23:50:47,325 - modules.tfidf_job_recommendation_module - INFO - TF-IDF ±â¹Ý °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-06-01 23:50:48,679 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.17:5000
+2025-06-01 23:50:48,679 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-06-01 23:50:48,679 - werkzeug - INFO -  * Restarting with stat
+2025-06-01 23:50:55,734 - ai_server - INFO - Test Server ½ÇÇà Áß (Æ÷Æ®: 5000)...
+2025-06-01 23:51:05,667 - modules.job_recommendation_module - INFO - °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-06-01 23:51:05,819 - modules.tfidf_job_recommendation_module - INFO - ¹é¿£µå¿¡¼­ Ã¤¿ë°ø°í µ¥ÀÌÅÍ °¡Á®¿À´Â Áß...
+2025-06-01 23:51:35,842 - modules.tfidf_job_recommendation_module - WARNING - ¹é¿£µå CSV ÀÓÆ÷Æ® ½Ãµµ ½ÇÆÐ: HTTPConnectionPool(host='localhost', port=4000): Read timed out. (read timeout=30)
+2025-06-01 23:51:35,842 - modules.tfidf_job_recommendation_module - INFO - ÀÓ½Ã·Î »ùÇÃ µ¥ÀÌÅÍ »ý¼º Áß...
+2025-06-01 23:51:35,843 - modules.tfidf_job_recommendation_module - INFO - »ùÇÃ Ã¤¿ë°ø°í µ¥ÀÌÅÍ »ý¼º Áß...
+2025-06-01 23:51:35,850 - modules.tfidf_job_recommendation_module - INFO - TF-IDF Çà·Ä »ý¼º ¿Ï·á: (100, 189)
+2025-06-01 23:51:35,851 - modules.tfidf_job_recommendation_module - INFO - »ùÇÃ Ã¤¿ë°ø°í µ¥ÀÌÅÍ »ý¼º ¿Ï·á: 100°³ °ø°í
+2025-06-01 23:51:35,851 - modules.tfidf_job_recommendation_module - INFO - TF-IDF ±â¹Ý °ø°íÃßÃµ ¸ðµâ ÃÊ±âÈ­ ¿Ï·á
+2025-06-01 23:51:35,889 - werkzeug - WARNING -  * Debugger is active!
+2025-06-01 23:51:35,903 - werkzeug - INFO -  * Debugger PIN: 927-069-963
+2025-06-01 23:56:25,445 - werkzeug - INFO -  * Detected change in 'C:\\Users\\junsa\\capstone_5\\veriview-project\\ai_server\\run.py', reloading
+2025-06-01 23:56:26,534 - werkzeug - INFO -  * Restarting with stat

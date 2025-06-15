@@ -1,0 +1,21 @@
+{
+  "environment": "production",
+  "api_keys": {
+    "AISTUDIOS_API_KEY": "your_production_api_key_here"
+  },
+  "aistudios": {
+    "base_url": "https://app.aistudios.com/api",
+    "default_avatar_id": "prod_avatar_id",
+    "timeout": 300,
+    "max_retries": 3
+  },
+  "cache": {
+    "enabled": true,
+    "directory": "./aistudios_cache",
+    "expiry_seconds": 86400
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "ai_server_prod.log"
+  }
+}

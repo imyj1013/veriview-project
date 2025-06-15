@@ -1,0 +1,53 @@
+# Python 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 분포 / 패키징
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 임시 파일
+temp_*
+*.mp4
+*.wav
+*.webm
+*.log
+
+# 환경 파일
+.env
+venv/
+.venv/
+env/
+ENV/
+
+# IDE 설정
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# AI 서버 특정 파일/디렉토리
+ai_server/**/__pycache__/
+ai_server/facial_output/
+ai_server/models/*.pkl
+ai_server/backup/
+
+# 운영체제 관련 파일
+.DS_Store
+Thumbs.db
