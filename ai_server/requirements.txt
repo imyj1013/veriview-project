@@ -10,23 +10,21 @@ requests==2.31.0
 
 # 환경 변수
 python-dotenv==1.0.0
-
-
-# numpy==1.24.3
-# opencv-python==4.8.1.78
-# torch==2.0.1
-# torchvision==0.15.2
-# whisper==1.1.10
+numpy==1.24.3
+opencv-python==4.8.1.78
+torch==2.0.1
+torchvision==0.15.2
+whisper==1.1.10
 
 # 음성 처리
-# librosa==0.10.1
-# soundfile==0.12.1
-# pydub==0.25.1
+librosa==0.10.1
+soundfile==0.12.1
+pydub==0.25.1
 
 # 비디오 처리
-# moviepy==1.0.3
-# imageio==2.31.1
-# imageio-ffmpeg==0.4.8
+moviepy==1.0.3
+imageio==2.31.1
+imageio-ffmpeg==0.4.8
 
 # 로깅 및 유틸리티
 colorlog==6.7.0
